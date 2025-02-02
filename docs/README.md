@@ -13,14 +13,13 @@ title:
 
 #### Team
 
-- eNumber, Name, [email](mailto:name@email.com)
-- eNumber, Name, [email](mailto:name@email.com)
-- eNumber, Name, [email](mailto:name@email.com)
+- E/19/095, E.M.L.K. Edirisinghe, [email](mailto:e19095@eng.pdn.ac.lk)
+- E/19/170, K.N.N. Jayawardhana, [email](mailto:e19170@eng.pdn.ac.lk)
+- E/19/306, M.M.P.N. Rajakaruna, [email](mailto:e19306@eng.pdn.ac.lk)
 
 #### Supervisors
 
-- Name, [email](mailto:name@eng.pdn.ac.lk)
-- Name, [email](mailto:name@eng.pdn.ac.lk)
+- Dr. Upul Jayasinghe
 
 #### Table of content
 
