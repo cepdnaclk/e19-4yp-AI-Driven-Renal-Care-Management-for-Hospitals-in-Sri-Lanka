@@ -1,13 +1,4 @@
----
-layout: home
-permalink: index.html
-
-# Please update this with your repository name and title
-repository-name: eYY-4yp-project-template
-title:
----
-
-# Project Title
+# AI-Driven Renal Care Management for Hospitals in Sri Lanka
 
 #### Team
 
