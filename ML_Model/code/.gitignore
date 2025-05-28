@@ -1,0 +1,19 @@
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore Python cache files
+__pycache__/
+*.py[cod]
+
+# Ignore virtual environment folders
+venv/
+env/
+
+# Ignore Jupyter Notebook runtime files
+*.local/share/jupyter/runtime/
+
+# Ignore temporary files
+*.log
+*.tmp
+*.swp
+*.bak
