@@ -152,7 +152,7 @@ This AI-powered system seeks to transform renal care by enabling real-time, data
 
 ## Links
 
-- [Project Repository](https://github.com/cepdnaclk/ai-driven-renal-care-management)
+- [Project Repository](https://github.com/cepdnaclk/e19-4yp-AI-Driven-Renal-Care-Management-for-Hospitals-in-Sri-Lanka)
 - [Project Page](https://cepdnaclk.github.io/ai-driven-renal-care-management)
 - [Department of Computer Engineering](http://www.ce.pdn.ac.lk/)
 - [University of Peradeniya](https://eng.pdn.ac.lk/)
