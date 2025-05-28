@@ -2,166 +2,140 @@
 layout: home
 permalink: index.html
 
-# Please update this with your repository name and title
-repository-name: eYY-4yp-project-template
-title:
+repository-name: ai-driven-renal-care-management
+title: AI-Driven Renal Care Management – Teaching Hospital Peradeniya
 ---
 
-# Project Title
+# AI-Driven Renal Care Management – Teaching Hospital Peradeniya
 
 #### Team
 
 - E/19/095, E.M.L.K. Edirisinghe, [email](mailto:e19095@eng.pdn.ac.lk)
 - E/19/170, K.N.N. Jayawardhana, [email](mailto:e19170@eng.pdn.ac.lk)
-- E/19/306, M.M.P.N. Rajakaruna, [email](mailto:e19306@eng.pdn.ac.lk)
+- E/19/306, M.M.P.N. Rajakaruna, [email](mailto=e19306@eng.pdn.ac.lk)
 
-#### Supervisors
+#### Supervisor
 
 - Dr. Upul Jayasinghe
 
-#### Table of contents
+#### Table of Contents
 
 1. [Abstract](#abstract)
-2. [Related works](#related-works)
-3. [Methodology](#methodology)
-4. [Experiment Setup and Implementation](#experiment-setup-and-implementation)
-5. [Results and Analysis](#results-and-analysis)
-7. [Conclusion](#conclusion)
-8. [Publications](#publications)
-9. [Links](#links)
+2. [Problem Statement](#problem-statement)
+3. [Objectives](#objectives)
+4. [Methodology](#methodology)
+5. [Technologies Used](#technologies-used)
+6. [Ethics and Privacy](#ethics-and-privacy)
+7. [Results and Analysis](#results-and-analysis)
+8. [Documents](#documents)
+9. [Conclusion](#conclusion)
+10. [Publications](#publications)
+11. [Links](#links)
 
 ---
 
 ## Abstract
-<p> Chronic Kidney Disease (CKD) is a growing health burden, with hemodialysis being a critical intervention for patients with end-stage renal disease. Effective management of hemodialysis patients requires continuous monitoring to address complications such as acute kidney injury, hypotension, arteriovenous (AV) fistula obstruction, infections, and cardiovascular stress. A comprehensive approach is essential, including personalized treatments such as anemia management, strict control of comorbid conditions like intradialytic hypotension and diabetes, and pharmacological optimization, including the precise dosing of erythropoiesis-stimulating agents (ESAs). Additionally, lifestyle modifications play a crucial role in improving patient status. </p>
 
-<p> This project aims to develop an <b>AI-powered patient management system for the Renal Care Unit at Teaching Hospital Peradeniya. </b> By integrating AI and ML, the system will enable real-time monitoring, predictive analytics, and clinical decision support, enhancing treatment outcomes. Furthermore, the system will include software for recording medical parameters such as lab reports and hemodialysis-specific data. This digital approach will reduce paper usage in the ward and facilitate easy access to patient data, improving overall efficiency in patient management. </p>
+<p>Chronic Kidney Disease (CKD) is a growing burden in Sri Lanka. This project aims to develop an <b>AI-powered expert system</b> to assist in the management of hemodialysis patients at the Teaching Hospital Peradeniya. The system provides real-time monitoring, predictive analytics, and clinical decision support. By digitizing medical records and integrating advanced AI tools, it aims to improve patient outcomes, reduce complications, and enhance treatment personalization.</p>
 
 <img src='https://github.com/user-attachments/assets/dc5b1669-8d62-49a1-b514-16a9689174b2' width=300 />
-<p><i>Figure 1.1: Chronic kidney disease (CKD) prevalence rates across the most affected districts in Sri Lanka, 2009–2016. <a href='https://doi.org/10.1016/j.scitotenv.2019.133767'>https://doi.org/10.1016/j.scitotenv.2019.133767</a></i></p>
-
-## Related works
-- Project Proposal: https://drive.google.com/file/d/1mGDrJs-V_gSJg8q4qCwjG41z0nMPyLlk/view?usp=sharing
-- Literature Review: https://drive.google.com/file/d/1lSuoPDBZSQUCuIswwqZkcL0fXzvE-obs/view?usp=sharing
-- 
-## Methodology
-## Methodology
-
-### a) System Overview
-
-The proposed system is an **AI-driven expert system** developed to assist clinicians in the real-time monitoring, diagnosis, and personalized treatment of hemodialysis patients at the Renal Care Unit of Teaching Hospital Peradeniya. The architecture of the system consists of several core components:
-
-- **Data Integration Layer**  
-  Aggregates and pre-processes patient data from multiple sources including Electronic Health Records (EHRs), dialysis machine logs, laboratory reports, and demographic records.
-
-- **Machine Learning Engine**  
-  Implements multiple supervised learning models including:
-  - Random Forest (RF)
-  - XGBoost (XGB)
-  - Support Vector Machine (SVM)
-  - Artificial Neural Network (ANN)  
-  An ensemble method may be adopted to combine the strengths of individual models.
-
-- **Inference Engine**  
-  Applies trained ML models to new data in real time, identifying early warning signs of complications (e.g., anemia, intradialytic hypotension) and recommending appropriate interventions.
-
-- **Knowledge Base**  
-  Contains curated clinical guidelines, historical patient records, and best practices specific to dialysis care.
-
-- **User Interface**  
-  Built with **React.js**, providing an intuitive dashboard for clinicians to:
-  - Input patient data
-  - View alerts and predictions
-  - Receive personalized treatment suggestions
-
-- **Backend Services**  
-  Powered by **FastAPI** and **Express.js**, enabling efficient API handling, data validation, and real-time ML model inference.
-
-- **MLOps Pipeline**  
-  Includes Continuous Integration and Continuous Deployment (CI/CD) processes to support regular model retraining and updates using real-world streaming data.
+<p><i>Figure 1.1: CKD prevalence rates in Sri Lanka (2009–2016). <a href='https://doi.org/10.1016/j.scitotenv.2019.133767'>Source</a></i></p>
 
 ---
 
-### b) Experiment Setup and Implementation
+## Problem Statement
 
-#### Phase 1: Data Collection and Preprocessing
+Traditional dialysis monitoring is manual, reactive, and prone to delays in detecting complications. With limited medical infrastructure in Sri Lanka, the need for scalable, intelligent systems is high. This project introduces an AI-driven approach to enable proactive care, address model adaptability challenges, and improve clinical trust through explainable AI (XAI).
 
-- **Study Setting**: Renal Care Unit, Teaching Hospital, Peradeniya
-- **Inclusion Criteria**:
-  - Adults (>18 years) undergoing regular hemodialysis
-- **Exclusion Criteria**:
-  - Pregnant/lactating women
-  - Patients scheduled for renal transplant
-- **Data Types**:
-  - *Demographics*: Age, sex, address, income, education
-  - *Clinical Vitals*: Blood pressure, heart rate, oxygen saturation, weight
-  - *Lab Results*: Hemoglobin, creatinine, sodium, potassium, iron studies
-  - *Dialysis Metrics*: Access flow rate, transmembrane pressure, KT/V
-  - *Derived Values*: BMI, dry weight, urea reduction ratio
-- **Data Handling**:
-  - Manually extracted and digitized into structured formats (e.g., CSV, SQL)
-  - Handled missing values, normalized continuous features, and encoded categorical data
+---
 
-#### Phase 2: Model Training and Evaluation
+## Objectives
 
-- **Data Split**: 80% for training, 20% for validation
-- **Models Evaluated**:
-  - Random Forest (robust and interpretable)
-  - XGBoost (high performance on tabular data)
-  - SVM (for binary classification tasks)
-  - ANN (for modeling complex nonlinearities)
-- **Evaluation Metrics**:
-  - Accuracy
-  - ROC-AUC
-  - Precision & Recall
-  - F1 Score
-  - Sensitivity & Specificity
-- **Libraries & Tools**:
-  - Python, TensorFlow, Scikit-learn, Keras, XGBoost
+### General Objective
+To develop and validate an AI expert system that enhances dialysis management through real-time monitoring and predictive support.
 
-#### Phase 3: System Development
+### Specific Objectives
 
-- **Expert System**:
-  - Integrated the selected ML model into a logic-based inference engine
-  - Mapped clinical rules and alert thresholds into the knowledge base
-- **Frontend**: Developed with React.js, includes dashboards, alerts, and patient data visualization
-- **Backend**: APIs built with FastAPI and Express.js to handle inference and data communication
-- **Database**: MySQL is used for storing structured patient records
+- Develop an ensemble ML model using Random Forest, XGBoost, and ANN.
+- Identify essential clinical and demographic data for accurate predictions.
+- Compare the AI system with traditional care models in terms of outcomes.
+- Build an integrated expert system with a user-friendly clinical dashboard.
+- Pilot the system at Teaching Hospital Peradeniya and gather clinical feedback.
 
-#### Phase 4: Pilot Deployment and Feedback
+---
 
-- **Deployment Location**: Renal Care Unit servers or cloud (subject to privacy compliance)
-- **Training Sessions**: Conducted with doctors, nurses, and IT staff
-- **Pilot Study**: Run in a controlled clinical setting with real-time monitoring
-- **Feedback Mechanism**:
-  - Structured interviews and surveys
-  - Evaluation based on usability, interpretability, system impact, and workflow integration
+## Methodology
 
+### Phase 1: Machine Learning Model
+- Supervised learning with 80/20 train-validation split
+- Algorithms: RF, XGBoost, SVM, ANN
+- Metrics: ROC-AUC, Accuracy, Precision, F1 Score
 
-## Experiment Setup and Implementation
-<img src='https://github.com/user-attachments/assets/99f30d88-679e-40b2-a729-e8c329afb1cc' />
-<img src='https://github.com/user-attachments/assets/a792e6e1-ff8e-4d22-814d-e029bab5431b' />
-<img src='https://github.com/user-attachments/assets/e834e6f7-88a8-4ece-84c6-100670d43595' />
+### Phase 2: AI Expert System
+- **Knowledge Base**: Dialysis protocols and clinical history
+- **Inference Engine**: Real-time monitoring with alerts
+- **UI**: Clinician dashboard for data input and insights
+
+### Phase 3: Pilot Study
+- Conducted at Teaching Hospital Peradeniya
+- Staff training and usability evaluation
+- Feedback loop for iterative improvement
+
+---
+
+## Technologies Used
+
+- **Programming**: Python
+- **ML Frameworks**: TensorFlow, Scikit-learn, XGBoost, Keras
+- **Backend**: FastAPI, Express.js
+- **Frontend**: React.js
+- **Database**: MySQL
+- **MLOps**: CI/CD for real-time model deployment and monitoring
+
+---
+
+## Ethics and Privacy
+
+- Ethical clearance from Faculty of Medicine, University of Peradeniya
+- Approvals from Ministry of Health and hospital administration
+- Informed consent from all patients and staff
+- Adherence to strict data privacy and security protocols
+
+---
 
 ## Results and Analysis
 
+*To be updated after pilot testing phase.*
+
+---
+
+## Documents
+
+- 📄 [Project Proposal](https://drive.google.com/file/d/1mGDrJs-V_gSJg8q4qCwjG41z0nMPyLlk/view?usp=sharing)
+- 📘 [Literature Review](https://drive.google.com/file/d/1lSuoPDBZSQUCuIswwqZkcL0fXzvE-obs/view?usp=sharing)
+
+---
+
 ## Conclusion
 
-## Publications
-[//]: # "Note: Uncomment each once you uploaded the files to the repository"
+This AI-powered system seeks to transform renal care by enabling real-time, data-driven decisions. The solution supports clinicians, enhances patient safety, and provides a sustainable digital transformation for dialysis units.
 
+---
+
+## Publications
+
+<!-- Uncomment and add links after uploading to repo -->
 <!-- 1. [Semester 7 report](./) -->
 <!-- 2. [Semester 7 slides](./) -->
 <!-- 3. [Semester 8 report](./) -->
 <!-- 4. [Semester 8 slides](./) -->
-<!-- 5. Author 1, Author 2 and Author 3 "Research paper title" (2021). [PDF](./). -->
+<!-- 5. Author 1, Author 2 and Author 3 "Research paper title" (2025). [PDF](./). -->
 
+---
 
 ## Links
 
-- [Project Repository](https://github.com/cepdnaclk/repository-name)
-- [Project Page](https://cepdnaclk.github.io/repository-name)
+- [Project Repository](https://github.com/cepdnaclk/ai-driven-renal-care-management)
+- [Project Page](https://cepdnaclk.github.io/ai-driven-renal-care-management)
 - [Department of Computer Engineering](http://www.ce.pdn.ac.lk/)
 - [University of Peradeniya](https://eng.pdn.ac.lk/)
-
-
