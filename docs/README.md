@@ -23,14 +23,15 @@ title: AI-Driven Renal Care Management – Teaching Hospital Peradeniya
 1. [Abstract](#abstract)
 2. [Problem Statement](#problem-statement)
 3. [Objectives](#objectives)
-4. [Methodology](#methodology)
-5. [Technologies Used](#technologies-used)
-6. [Ethics and Privacy](#ethics-and-privacy)
-7. [Results and Analysis](#results-and-analysis)
-8. [Documents](#documents)
-9. [Conclusion](#conclusion)
-10. [Publications](#publications)
-11. [Links](#links)
+4. [System Design](#system-design)
+5. [Methodology](#methodology)
+6. [Technologies Used](#technologies-used)
+7. [Ethics and Privacy](#ethics-and-privacy)
+8. [Results and Analysis](#results-and-analysis)
+9. [Documents](#documents)
+10. [Conclusion](#conclusion)
+11. [Publications](#publications)
+12. [Links](#links)
 
 ---
 
@@ -61,6 +62,22 @@ To develop and validate an AI expert system that enhances dialysis management th
 - Compare the AI system with traditional care models in terms of outcomes.
 - Build an integrated expert system with a user-friendly clinical dashboard.
 - Pilot the system at Teaching Hospital Peradeniya and gather clinical feedback.
+
+---
+
+## System Design
+
+### 🧩 Workflow Diagram
+<img src="./docs/images/workflow.drawio.png" alt="Workflow Diagram" width="600"/>
+<p><i>Figure: Overall workflow of the AI-driven renal care system.</i></p>
+
+### 🏗️ System Architecture
+<img src="./docs/images/system architecture design.drawio.png" alt="System Architecture Design" width="600"/>
+<p><i>Figure: System architecture showing data pipelines, model inference, and interface components.</i></p>
+
+### 🎯 Use Case Diagram
+<img src="./docs/images/usecase.drawio.png" alt="Use Case Diagram" width="600"/>
+<p><i>Figure: Use case diagram highlighting interactions between clinicians, AI system, and patient records.</i></p>
 
 ---
 
