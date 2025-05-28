@@ -7,8 +7,6 @@ repository-name: eYY-4yp-project-template
 title:
 ---
 
-[comment]: # "This is the standard layout for the project, but you can clean this and use your own template"
-
 # Project Title
 
 #### Team
@@ -35,20 +33,13 @@ title:
 
 ---
 
-<!-- 
-DELETE THIS SAMPLE before publishing to GitHub Pages !!!
-This is a sample image, to show how to add images to your page. To learn more options, please refer [this](https://projects.ce.pdn.ac.lk/docs/faq/how-to-add-an-image/)
-![Sample Image](./images/sample.png) 
--->
-
-
 ## Abstract
 <p> Chronic Kidney Disease (CKD) is a growing health burden, with hemodialysis being a critical intervention for patients with end-stage renal disease. Effective management of hemodialysis patients requires continuous monitoring to address complications such as acute kidney injury, hypotension, arteriovenous (AV) fistula obstruction, infections, and cardiovascular stress. A comprehensive approach is essential, including personalized treatments such as anemia management, strict control of comorbid conditions like intradialytic hypotension and diabetes, and pharmacological optimization, including the precise dosing of erythropoiesis-stimulating agents (ESAs). Additionally, lifestyle modifications play a crucial role in improving patient status. </p>
 
 <p> This project aims to develop an <b>AI-powered patient management system for the Renal Care Unit at Teaching Hospital Peradeniya. </b> By integrating AI and ML, the system will enable real-time monitoring, predictive analytics, and clinical decision support, enhancing treatment outcomes. Furthermore, the system will include software for recording medical parameters such as lab reports and hemodialysis-specific data. This digital approach will reduce paper usage in the ward and facilitate easy access to patient data, improving overall efficiency in patient management. </p>
 
 <img src='https://github.com/user-attachments/assets/dc5b1669-8d62-49a1-b514-16a9689174b2' width=300 />
-<p><i>Figure 1.1: Chronic kidney disease (CKD) prevalence rates across the most affected districts in Sri Lanka, 2009–2016. https://doi.org/10.1016/j.scitotenv.2019.133767</i></p>
+<p><i>Figure 1.1: Chronic kidney disease (CKD) prevalence rates across the most affected districts in Sri Lanka, 2009–2016. <a fref='https://doi.org/10.1016/j.scitotenv.2019.133767'>https://doi.org/10.1016/j.scitotenv.2019.133767</a></i></p>
 
 ## Related works
 
