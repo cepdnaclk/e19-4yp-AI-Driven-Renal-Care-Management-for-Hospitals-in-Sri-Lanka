@@ -1,10 +1,4 @@
----
-layout: home
-permalink: index.html
 
-repository-name: ai-driven-renal-care-management
-title: AI-Driven Renal Care Management – Teaching Hospital Peradeniya
----
 
 # AI-Driven Renal Care Management – Teaching Hospital Peradeniya
 
