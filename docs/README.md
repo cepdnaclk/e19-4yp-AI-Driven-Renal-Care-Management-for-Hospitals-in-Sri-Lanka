@@ -67,10 +67,6 @@ To develop and validate an AI expert system that enhances dialysis management th
 
 ## System Design
 
-### 🧩 Workflow Diagram
-<img src="./images/workflow.drawio.png" alt="Workflow Diagram" width="300"/>
-<p><i>Figure: Overall workflow of the AI-driven renal care system.</i></p>
-
 ### 🏗️ System Architecture
 <img src="./images/system architecture design.drawio.png" alt="System Architecture Design" width="600"/>
 <p><i>Figure: System architecture showing data pipelines, model inference, and interface components.</i></p>
@@ -78,6 +74,10 @@ To develop and validate an AI expert system that enhances dialysis management th
 ### 🎯 Use Case Diagram
 <img src="./images/usecase.drawio.png" alt="Use Case Diagram" width="300"/>
 <p><i>Figure: Use case diagram highlighting interactions between clinicians, AI system, and patient records.</i></p>
+
+### 🧩 Workflow Diagram
+<img src="./images/workflow.drawio.png" alt="Workflow Diagram" width="300"/>
+<p><i>Figure: Overall workflow of the AI-driven renal care system.</i></p>
 
 ---
 
