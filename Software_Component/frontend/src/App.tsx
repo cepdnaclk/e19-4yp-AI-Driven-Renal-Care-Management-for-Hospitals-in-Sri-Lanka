@@ -19,6 +19,7 @@ import NurseMonthlyInvestigation from './pages/nurse/MonthlyInvestigation';
 import NurseSubmissionStatus from './pages/nurse/SubmissionStatus';
 import NurseNotifications from './pages/nurse/Notifications';
 import NurseTrendAnalysis from './pages/nurse/TrendAnalysis';
+import AddPatient from './pages/nurse/AddNewPatient';
 
 import DoctorDashboard from './pages/doctor/Dashboard';
 import DoctorPatientSearch from './pages/doctor/PatientSearch';
@@ -94,6 +95,7 @@ function App() {
           <Route path="submission-status" element={<NurseSubmissionStatus />} />
           <Route path="notifications" element={<NurseNotifications />} />
           <Route path="trend-analysis/:patientId" element={<NurseTrendAnalysis />} />
+          <Route path="patients/add" element={<AddPatient />} />
         </Route>
 
         {/* Doctor Routes */}
