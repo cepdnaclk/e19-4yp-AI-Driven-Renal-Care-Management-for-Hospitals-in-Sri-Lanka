@@ -112,7 +112,7 @@ const NursePatientSearch: React.FC = () => {
 
   const handleAddNewPatient = () => {
     // In a real app, this would navigate to a form or open a modal
-    alert('Add new patient functionality would be implemented here');
+    navigate(`/nurse/patients/add`);
   };
 
   return (
