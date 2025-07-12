@@ -22,6 +22,7 @@ const notificationRoutes = require('./routes/notifications');
 const aiPredictionRoutes = require('./routes/aiPredictions');
 const dashboardRoutes = require('./routes/dashboard');
 const reportRoutes = require('./routes/reports');
+const trendsRoutes = require('./routes/trends');
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
@@ -129,6 +130,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/ai-predictions', aiPredictionRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/trends', trendsRoutes);
 
 // Error handling middleware
 app.use(errorHandler);

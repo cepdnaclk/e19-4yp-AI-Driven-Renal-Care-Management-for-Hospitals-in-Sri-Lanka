@@ -154,7 +154,7 @@ describe('Utility Functions', () => {
   });
 
   it('should validate patient ID format', () => {
-    expect(ValidationUtils.isValidPatientId('P-2024-0001')).toBe(true);
+    expect(ValidationUtils.isValidPatientId('RHD_THP_001')).toBe(true);
     expect(ValidationUtils.isValidPatientId('invalid-id')).toBe(false);
   });
 

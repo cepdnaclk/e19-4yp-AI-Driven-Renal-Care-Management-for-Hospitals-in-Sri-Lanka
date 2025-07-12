@@ -68,8 +68,8 @@ class ValidationUtils {
    * @returns {boolean} - True if valid patient ID
    */
   static isValidPatientId(patientId) {
-    // Format: P-YYYY-NNNN (e.g., P-2024-0001)
-    const patientIdRegex = /^P-\d{4}-\d{4}$/;
+    // Format: RHD_THP_XXX (e.g., RHD_THP_001)
+    const patientIdRegex = /^RHD_THP_\d{3}$/;
     return patientIdRegex.test(patientId);
   }
 

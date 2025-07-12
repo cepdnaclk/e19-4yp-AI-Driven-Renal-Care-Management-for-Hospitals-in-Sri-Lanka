@@ -44,11 +44,11 @@ const patientSchema = new mongoose.Schema({
   bloodType: {
     type: String,
     enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
-    required: [true, 'Blood type is required']
+    required: false
   },
   contactNumber: {
     type: String,
-    required: [true, 'Contact number is required'],
+    required: false,
     trim: true
   },
   address: {
@@ -64,28 +64,25 @@ const patientSchema = new mongoose.Schema({
   emergencyContact: {
     name: {
       type: String,
-      required: true
+      required: false
     },
     relationship: {
       type: String,
-      required: true
+      required: false
     },
     phone: {
       type: String,
-      required: true
+      required: false
     },
     email: String
   },
   medicalHistory: {
     renalDiagnosis: {
       type: String,
-      required: true,
+      required: false,
       trim: true
     },
-    aetiology: {
-      type: String,
-      trim: true
-    },
+
     medicalProblems: [medicalProblemSchema],
     allergies: [{
       allergen: String,
@@ -110,25 +107,7 @@ const patientSchema = new mongoose.Schema({
       }
     }]
   },
-  transplantInfo: {
-    workUpStatus: {
-      type: String,
-      enum: ['NOT_EVALUATED', 'IN_PROGRESS', 'COMPLETED', 'CONTRAINDICATED'],
-      default: 'NOT_EVALUATED'
-    },
-    transplantDate: Date,
-    donorType: {
-      type: String,
-      enum: ['LIVING_RELATED', 'LIVING_UNRELATED', 'DECEASED', 'NONE'],
-      default: 'NONE'
-    },
-    rejectionEpisodes: [{
-      date: Date,
-      severity: String,
-      treatment: String,
-      outcome: String
-    }]
-  },
+  
   dialysisInfo: {
     dialysisType: {
       type: String,
@@ -137,7 +116,7 @@ const patientSchema = new mongoose.Schema({
     },
     startDate: {
       type: Date,
-      required: true
+      required: false
     },
     frequency: {
       type: String,
@@ -147,12 +126,12 @@ const patientSchema = new mongoose.Schema({
     accessType: {
       type: String,
       enum: ['AVF', 'AVG', 'CENTRAL_CATHETER', 'PERITONEAL_CATHETER'],
-      required: true
+      required: false
     },
     accessSite: String,
     dryWeight: {
       type: Number,
-      required: true,
+      required: false,
       min: 0
     },
     targetUfr: {
@@ -163,7 +142,7 @@ const patientSchema = new mongoose.Schema({
   assignedDoctor: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: false
   },
   assignedNurse: {
     type: mongoose.Schema.Types.ObjectId,

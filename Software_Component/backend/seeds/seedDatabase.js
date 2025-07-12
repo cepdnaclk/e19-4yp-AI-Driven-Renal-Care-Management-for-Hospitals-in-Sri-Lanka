@@ -99,7 +99,7 @@ const seedDatabase = async () => {
     const patients = [
       {
         name: 'Nimal Wijesekera',
-        patientId: 'P-2024-0001',
+        patientId: 'RHD_THP_001',
         dateOfBirth: new Date('1979-05-15'),
         gender: 'Male',
         contactNumber: '+94771234567',
@@ -138,7 +138,7 @@ const seedDatabase = async () => {
       },
       {
         name: 'Kamala Senarath',
-        patientId: 'P-2024-0002',
+        patientId: 'RHD_THP_002',
         dateOfBirth: new Date('1972-08-22'),
         gender: 'Female',
         contactNumber: '+94712345678',
@@ -177,7 +177,7 @@ const seedDatabase = async () => {
       },
       {
         name: 'Sunil Perera',
-        patientId: 'P-2024-0003',
+        patientId: 'RHD_THP_003',
         dateOfBirth: new Date('1986-12-10'),
         gender: 'Male',
         contactNumber: '+94723456789',
