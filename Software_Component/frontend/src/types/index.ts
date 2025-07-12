@@ -1,8 +1,8 @@
 // Role enum
 export enum Role {
-  NURSE = 'NURSE',
-  DOCTOR = 'DOCTOR',
-  ADMIN = 'ADMIN'
+  NURSE = 'nurse',
+  DOCTOR = 'doctor',
+  ADMIN = 'admin'
 }
 
 // User interface
