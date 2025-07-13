@@ -19,6 +19,7 @@
     "@types/react-dom": "^19.1.5",
     "@types/react-router-dom": "^5.3.3",
     "@types/recharts": "^1.8.29",
+    "axios": "^1.10.0",
     "baseui": "^0.0.0-next-2113e1821",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
