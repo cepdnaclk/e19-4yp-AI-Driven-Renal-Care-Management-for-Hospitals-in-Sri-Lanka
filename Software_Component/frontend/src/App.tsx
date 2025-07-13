@@ -58,6 +58,7 @@ function App() {
   const handleLogout = () => {
     setUser(null);
     localStorage.removeItem('user');
+    localStorage.removeItem('userToken');
   };
 
   if (isLoading) {
@@ -80,7 +81,7 @@ function App() {
             )
           }
         />
-
+ 
         {/* Nurse Routes */}
         <Route path="/nurse" element={  // Parent route for all nurse paths. Only users with the Role.NURSE role can access children.
           <ProtectedRoute user={user} allowedRoles={[Role.NURSE]}>
