@@ -1,0 +1,29 @@
+{
+  "name": "renal-care-data-import",
+  "version": "1.0.0",
+  "description": "Data import scripts for renal care management system",
+  "main": "importPatients.js",
+  "scripts": {
+    "test-connection": "node test-connection.js",
+    "import-patients": "node importPatients.js",
+    "import-investigations": "node importInvestigations.js",
+    "import-sessions": "node importSessions.js"
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5",
+    "mongoose": "^7.0.0",
+    "dotenv": "^16.0.0",
+    "bcryptjs": "^2.4.3"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
+  },
+  "keywords": [
+    "data-import",
+    "excel",
+    "mongodb",
+    "healthcare"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
