@@ -13,43 +13,46 @@ import { Block } from 'baseui/block';
 import { User, Role } from '../../types/index';
 import data from "../../data.json"
 
+import axios from 'axios';
+
 interface LoginProps {
   onLogin: (user: User) => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [role, setRole] = useState<{ label: string; id: Role }[]>([])
-  const navigate = useNavigate()
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!email || !password || role.length === 0) {
-      toaster.negative('Please fill in all fields', {})
-      return
-    }
+    try {
+      const loginResponse = await axios.post('http://localhost:5000/api/auth/login', {
+        email: formData.email,
+        password: formData.password,
+      })
 
-    const user: User = {
-      id: '1',
-      name: email.split('@')[0],
-      email,
-      role: role[0].id,
-    }
+      const { token, user } = loginResponse.data
 
-    onLogin(user);
+      localStorage.setItem('userToken', token)
 
-    // Redirect based on role
-    if (role[0].id === Role.NURSE) {
-      navigate('/nurse/dashboard');
-    } else if (role[0].id === Role.DOCTOR) {
-      navigate('/doctor/dashboard');
-    } else {
-      navigate('/admin/dashboard');
+      const loggedInUser: User = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+
+      onLogin(loggedInUser)
+      toaster.positive('Login successful', { autoHideDuration: 4000 });
+    } 
+    catch (error: any) {
+      toaster.negative('Login credentials are wrong', { autoHideDuration: 3000 });
     }
-  };
+  }
 
   return (
     <Block
@@ -79,8 +82,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         <form onSubmit={handleSubmit}>
           <FormControl label="Email">
             <Input
-              value={email}
-              onChange={e => setEmail(e.currentTarget.value)}
+              value={formData.email}
+              onChange={e => setFormData({ ...formData, email: e.currentTarget.value })}
               placeholder="Enter your email"
               type="email"
               required
@@ -89,26 +92,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
           <FormControl label="Password">
             <Input
-              value={password}
-              onChange={e => setPassword(e.currentTarget.value)}
+              value={formData.password}
+              onChange={e => setFormData({ ...formData, password: e.currentTarget.value })}
               placeholder="Enter your password"
               type="password"
-              required
-            />
-          </FormControl>
-
-          <FormControl label="Role">
-            <Select
-              options={[
-                { label: 'Nurse', id: Role.NURSE },
-                { label: 'Doctor', id: Role.DOCTOR },
-                { label: 'Admin', id: Role.ADMIN },
-              ]}
-              value={role}
-              placeholder="Select your role"
-              onChange={params =>
-                setRole([...params.value] as { label: string; id: Role }[])
-              }
               required
             />
           </FormControl>
