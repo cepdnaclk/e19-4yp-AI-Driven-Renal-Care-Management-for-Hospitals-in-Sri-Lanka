@@ -2,18 +2,18 @@
   "title": "Patient Management System",
   "subtitle": "Renal Care Unit, Teaching hospital Peradeniya",
   "navigation": {
-    "NURSE": [
+    "nurse": [
       { "name": "Dashboard", "path": "/nurse/dashboard" },
       { "name": "Patients", "path": "/nurse/patients" },
       { "name": "Submissions", "path": "/nurse/submission-status" },
       { "name": "Notifications", "path": "/nurse/notifications" }
     ],
-    "DOCTOR": [
+    "doctor": [
       { "name": "Dashboard", "path": "/doctor/dashboard" },
       { "name": "Patients", "path": "/doctor/patients" },
       { "name": "Notifications", "path": "/doctor/notifications" }
     ],
-    "ADMIN": [
+    "admin": [
       { "name": "Dashboard", "path": "/admin/dashboard" },
       { "name": "User Management", "path": "/admin/user-management" }
     ]
