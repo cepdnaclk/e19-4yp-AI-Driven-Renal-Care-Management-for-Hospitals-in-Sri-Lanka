@@ -4,9 +4,11 @@ A Django-based ML server providing machine learning model predictions for renal 
 
 ## Features
 
-- **Dry Weight Prediction**: Predicts optimal dry weight for dialysis patients
-- **URR Prediction**: Predicts Urea Reduction Ratio for dialysis sessions  
-- **Hemoglobin Prediction**: Predicts next month's Hb level with clinical recommendations
+- **JWT Authentication**: Secure endpoints using the same JWT tokens as Express.js backend
+- **Role-based Access**: Restrict prediction endpoints to doctors and nurses only
+- **Dry Weight Change Prediction**: Predicts if dry weight will change in next dialysis session
+- **URR Risk Prediction**: Predicts if URR will go to risk region (inadequate) next month  
+- **Hemoglobin Risk Prediction**: Predicts if Hb will go to risk region next month with clinical recommendations
 
 ## API Endpoints
 
@@ -19,9 +21,31 @@ GET /api/ml/models/ - Information about available models
 
 ### Predictions
 ```
-POST /api/ml/predict/dry-weight/ - Predict dry weight
-POST /api/ml/predict/urr/ - Predict URR
-POST /api/ml/predict/hb/ - Predict hemoglobin
+POST /api/ml/predict/dry-weight/ - Predict dry weight change
+POST /api/ml/predict/urr/ - Predict URR risk
+POST /api/ml/predict/hb/ - Predict hemoglobin risk
+```
+
+## Authentication
+
+The ML server uses JWT authentication compatible with the Express.js backend.
+
+### Protected Endpoints
+All prediction endpoints require authentication:
+- `POST /api/ml/predict/dry-weight/` - Requires DOCTOR or NURSE role
+- `POST /api/ml/predict/urr/` - Requires DOCTOR or NURSE role  
+- `POST /api/ml/predict/hb/` - Requires DOCTOR or NURSE role
+
+### Public Endpoints
+These endpoints don't require authentication:
+- `GET /health/` - Server health check
+- `GET /api/ml/health/` - ML models health check
+- `GET /api/ml/models/` - Information about available models
+
+### Authorization Header
+Include JWT token in requests:
+```
+Authorization: Bearer <your-jwt-token>
 ```
 
 ## Patient ID Format
@@ -72,6 +96,7 @@ The server runs on port 8001 and provides REST API endpoints for ML predictions.
 ```bash
 curl -X POST http://localhost:8001/api/ml/predict/dry-weight/ \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-jwt-token>" \
   -d '{
     "patient_id": "RHD_THP_001",
     "age": 45,
@@ -91,6 +116,7 @@ curl -X POST http://localhost:8001/api/ml/predict/dry-weight/ \
 ```bash
 curl -X POST http://localhost:8001/api/ml/predict/urr/ \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-jwt-token>" \
   -d '{
     "patient_id": "RHD_THP_002",
     "pre_dialysis_urea": 120,
@@ -107,16 +133,21 @@ curl -X POST http://localhost:8001/api/ml/predict/urr/ \
 ```bash
 curl -X POST http://localhost:8001/api/ml/predict/hb/ \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-jwt-token>" \
   -d '{
     "patient_id": "RHD_THP_003",
-    "current_hb": 9.5,
-    "ferritin": 150,
-    "iron": 80,
-    "transferrin_saturation": 25,
-    "epo_dose": 4000,
-    "iron_supplement": true,
-    "dialysis_adequacy": 1.3,
-    "comorbidities": ["diabetes", "hypertension"]
+    "albumin": 35.2,
+    "bu_post_hd": 8.5,
+    "bu_pre_hd": 25.3,
+    "s_ca": 2.3,
+    "scr_post_hd": 450,
+    "scr_pre_hd": 890,
+    "serum_k_post_hd": 3.8,
+    "serum_k_pre_hd": 5.2,
+    "serum_na_pre_hd": 138,
+    "ua": 6.8,
+    "hb_diff": -0.5,
+    "hb": 9.5
   }'
 ```
 
@@ -177,9 +208,37 @@ ML_Server/
 ## Development Notes
 
 - The server uses dummy models for development if real model files are not available
-- All endpoints validate the patient ID format (RHD_THP_XXX)
+- All prediction endpoints validate the patient ID format (RHD_THP_XXX)
+- JWT authentication uses the same secret as the Express.js backend for token compatibility
+- Prediction endpoints require DOCTOR or NURSE roles for access
+- Public endpoints (health checks, models info) don't require authentication
 - Comprehensive error handling and logging
 - REST API with proper HTTP status codes
 - Input validation using Django REST Framework serializers
 - CORS configured for integration with Express.js backend
 - Swagger/OpenAPI documentation support (via drf-spectacular)
+
+## Security Configuration
+
+### Environment Variables
+Make sure to set the same JWT_SECRET in both servers:
+
+**Express.js Backend (.env):**
+```
+JWT_SECRET=your-super-secret-jwt-key-here-change-in-production
+```
+
+**ML Server (.env):**
+```
+JWT_SECRET=your-super-secret-jwt-key-here-change-in-production
+```
+
+### Role-based Access Control
+- **DOCTOR**: Full access to all prediction endpoints
+- **NURSE**: Full access to all prediction endpoints  
+- **ADMIN**: Currently not required for ML predictions (can be added if needed)
+
+### Token Requirements
+- Valid JWT token in Authorization header
+- Token must contain 'id' and 'role' fields
+- Token must be signed with the correct JWT_SECRET

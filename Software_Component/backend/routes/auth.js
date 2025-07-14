@@ -49,8 +49,11 @@ router.post('/register', [
       specialization
     });
 
-    // Generate token
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    // Generate token with user role
+    const token = jwt.sign({ 
+      id: user._id,
+      role: user.role 
+    }, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_EXPIRE
     });
 
@@ -127,8 +130,11 @@ router.post('/login', [
     user.lastLogin = new Date();
     await user.save();
 
-    // Generate token
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    // Generate token with user role
+    const token = jwt.sign({ 
+      id: user._id,
+      role: user.role 
+    }, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_EXPIRE
     });
 

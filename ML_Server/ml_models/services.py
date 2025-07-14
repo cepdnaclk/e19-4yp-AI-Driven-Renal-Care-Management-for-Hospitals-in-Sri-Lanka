@@ -67,24 +67,32 @@ class DummyModel:
             n_samples = 1
             
         if self.model_type == 'dry_weight':
-            # Generate realistic dry weight predictions (45-85 kg)
-            return np.random.uniform(45, 85, n_samples)
+            # Generate binary classification predictions (0: No change, 1: Change expected)
+            return np.random.choice([0, 1], n_samples, p=[0.7, 0.3])
         elif self.model_type == 'urr':
-            # Generate realistic URR predictions (60-90%)
-            return np.random.uniform(60, 90, n_samples)
+            # Generate binary classification predictions (0: No risk, 1: Risk of inadequate URR)
+            return np.random.choice([0, 1], n_samples, p=[0.8, 0.2])
         elif self.model_type == 'hb':
-            # Generate realistic Hb predictions (8-14 g/dL)
-            return np.random.uniform(8, 14, n_samples)
+            # Generate binary classification predictions (0: No risk, 1: Risk region)
+            return np.random.choice([0, 1], n_samples, p=[0.75, 0.25])
         else:
-            return np.random.uniform(0, 1, n_samples)
+            return np.random.choice([0, 1], n_samples)
             
     def predict_proba(self, features):
-        """Generate dummy probability predictions"""
+        """Generate dummy probability predictions for classification"""
         if hasattr(features, 'shape'):
             n_samples = features.shape[0]
         else:
             n_samples = 1
-        return np.random.uniform(0.6, 0.95, n_samples)
+        
+        # Return probabilities for binary classification [prob_class_0, prob_class_1]
+        prob_class_1 = np.random.uniform(0.1, 0.9, n_samples)
+        prob_class_0 = 1 - prob_class_1
+        
+        if n_samples == 1:
+            return np.array([[prob_class_0[0], prob_class_1[0]]])
+        else:
+            return np.column_stack([prob_class_0, prob_class_1])
 
 
 class DryWeightPredictor:
@@ -98,7 +106,7 @@ class DryWeightPredictor:
         
     def predict(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Predict dry weight for a patient
+        Predict if dry weight will change in next session
         """
         try:
             # Load model
@@ -107,15 +115,27 @@ class DryWeightPredictor:
             # Prepare features
             features = self._prepare_features(input_data)
             
-            # Make prediction
+            # Make classification prediction
             prediction = model.predict([features])[0]
             
-            # Calculate confidence (dummy implementation)
-            confidence = np.random.uniform(0.7, 0.95)
+            # Get prediction probabilities
+            if hasattr(model, 'predict_proba'):
+                probabilities = model.predict_proba([features])[0]
+                confidence = max(probabilities)
+                risk_probability = probabilities[1] if len(probabilities) > 1 else probabilities[0]
+            else:
+                confidence = np.random.uniform(0.7, 0.95)
+                risk_probability = np.random.uniform(0.1, 0.9)
+            
+            # Interpret prediction
+            will_change = bool(prediction)
+            status = "Change Expected" if will_change else "Stable"
             
             return {
                 'patient_id': input_data['patient_id'],
-                'predicted_dry_weight': round(float(prediction), 2),
+                'dry_weight_change_predicted': will_change,
+                'prediction_status': status,
+                'change_probability': round(float(risk_probability), 3),
                 'confidence_score': round(float(confidence), 3),
                 'model_version': self.model_manager.get_model_version(self.model_name),
                 'prediction_date': datetime.now().isoformat()
@@ -154,7 +174,7 @@ class URRPredictor:
         
     def predict(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Predict URR for a patient
+        Predict if URR will go to risk region next month
         """
         try:
             # Load model
@@ -163,19 +183,29 @@ class URRPredictor:
             # Prepare features
             features = self._prepare_features(input_data)
             
-            # Make prediction
+            # Make classification prediction
             prediction = model.predict([features])[0]
             
-            # Calculate confidence
-            confidence = np.random.uniform(0.7, 0.95)
+            # Get prediction probabilities
+            if hasattr(model, 'predict_proba'):
+                probabilities = model.predict_proba([features])[0]
+                confidence = max(probabilities)
+                risk_probability = probabilities[1] if len(probabilities) > 1 else probabilities[0]
+            else:
+                confidence = np.random.uniform(0.7, 0.95)
+                risk_probability = np.random.uniform(0.1, 0.9)
             
-            # Determine adequacy status
-            adequacy_status = "Adequate" if prediction >= 65 else "Inadequate"
+            # Interpret prediction
+            at_risk = bool(prediction)
+            risk_status = "At Risk" if at_risk else "Safe"
+            adequacy_status = "Predicted Inadequate" if at_risk else "Predicted Adequate"
             
             return {
                 'patient_id': input_data['patient_id'],
-                'predicted_urr': round(float(prediction), 2),
+                'urr_risk_predicted': at_risk,
+                'risk_status': risk_status,
                 'adequacy_status': adequacy_status,
+                'risk_probability': round(float(risk_probability), 3),
                 'confidence_score': round(float(confidence), 3),
                 'model_version': self.model_manager.get_model_version(self.model_name),
                 'prediction_date': datetime.now().isoformat()
@@ -210,7 +240,7 @@ class HbPredictor:
         
     def predict(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Predict Hb for next month
+        Predict if Hb will go to risk region next month
         """
         try:
             # Load model
@@ -219,29 +249,45 @@ class HbPredictor:
             # Prepare features
             features = self._prepare_features(input_data)
             
-            # Make prediction
+            # Make classification prediction
             prediction = model.predict([features])[0]
             
-            # Calculate confidence
-            confidence = np.random.uniform(0.7, 0.95)
-            
-            # Determine trend
-            current_hb = input_data['current_hb']
-            if prediction > current_hb + 0.3:
-                trend = "Increasing"
-            elif prediction < current_hb - 0.3:
-                trend = "Decreasing"
+            # Get prediction probabilities
+            if hasattr(model, 'predict_proba'):
+                probabilities = model.predict_proba([features])[0]
+                confidence = max(probabilities)
+                risk_probability = probabilities[1] if len(probabilities) > 1 else probabilities[0]
             else:
-                trend = "Stable"
+                confidence = np.random.uniform(0.7, 0.95)
+                risk_probability = np.random.uniform(0.1, 0.9)
+            
+            # Interpret prediction
+            at_risk = bool(prediction)
+            risk_status = "At Risk" if at_risk else "Safe"
+            
+            # Determine trend based on current Hb and risk prediction
+            current_hb = input_data['hb']
+            if at_risk:
+                if current_hb < 10:
+                    trend = "Declining to Critical"
+                elif current_hb > 12:
+                    trend = "Rising to Excessive"
+                else:
+                    trend = "Moving to Risk Zone"
+            else:
+                trend = "Stable in Target Range"
             
             # Generate recommendations
-            recommendations = self._generate_recommendations(input_data, prediction)
+            recommendations = self._generate_recommendations(input_data, at_risk, current_hb)
             
             return {
                 'patient_id': input_data['patient_id'],
-                'predicted_hb_next_month': round(float(prediction), 2),
+                'hb_risk_predicted': at_risk,
+                'risk_status': risk_status,
                 'hb_trend': trend,
+                'current_hb': current_hb,
                 'target_hb_range': {'min': 10.0, 'max': 12.0},
+                'risk_probability': round(float(risk_probability), 3),
                 'recommendations': recommendations,
                 'confidence_score': round(float(confidence), 3),
                 'model_version': self.model_manager.get_model_version(self.model_name),
@@ -253,36 +299,66 @@ class HbPredictor:
             raise
     
     def _prepare_features(self, input_data: Dict[str, Any]) -> List[float]:
-        """Prepare features for the model"""
+        """Prepare features for the model based on actual feature columns"""
+        # Feature order based on model training:
+        # ['Albumin (g/L)', 'BU - post HD', 'BU - pre HD', 'S Ca (mmol/L)',
+        #  'SCR- post HD (µmol/L)', 'SCR- pre HD (µmol/L)',
+        #  'Serum K Post-HD (mmol/L)', 'Serum K Pre-HD (mmol/L)',
+        #  'Serum Na Pre-HD (mmol/L)', 'UA (mg/dL)', 'Hb_diff', 'Hb (g/dL)']
+        
         features = [
-            input_data['current_hb'],
-            input_data['ferritin'],
-            input_data['iron'],
-            input_data['transferrin_saturation'],
-            input_data.get('epo_dose', 0),
-            1 if input_data.get('iron_supplement', False) else 0,
-            input_data.get('dialysis_adequacy', 1.2),
-            len(input_data.get('comorbidities', []))
+            input_data['albumin'],                  # Albumin (g/L)
+            input_data['bu_post_hd'],              # BU - post HD
+            input_data['bu_pre_hd'],               # BU - pre HD
+            input_data['s_ca'],                    # S Ca (mmol/L)
+            input_data['scr_post_hd'],             # SCR- post HD (µmol/L)
+            input_data['scr_pre_hd'],              # SCR- pre HD (µmol/L)
+            input_data['serum_k_post_hd'],         # Serum K Post-HD (mmol/L)
+            input_data['serum_k_pre_hd'],          # Serum K Pre-HD (mmol/L)
+            input_data['serum_na_pre_hd'],         # Serum Na Pre-HD (mmol/L)
+            input_data['ua'],                      # UA (mg/dL)
+            input_data['hb_diff'],                 # Hb_diff
+            input_data['hb']                       # Hb (g/dL)
         ]
         return features
     
-    def _generate_recommendations(self, input_data: Dict[str, Any], predicted_hb: float) -> List[str]:
-        """Generate clinical recommendations based on prediction"""
+    def _generate_recommendations(self, input_data: Dict[str, Any], at_risk: bool, current_hb: float) -> List[str]:
+        """Generate clinical recommendations based on risk prediction and lab values"""
         recommendations = []
         
-        if predicted_hb < 10:
-            recommendations.append("Consider increasing EPO dose")
-            if input_data['ferritin'] < 200:
-                recommendations.append("Iron supplementation recommended")
-        elif predicted_hb > 12:
-            recommendations.append("Consider reducing EPO dose")
-            recommendations.append("Monitor for hypertension")
+        # Risk-based recommendations
+        if at_risk:
+            recommendations.append("⚠️ Patient predicted to enter Hb risk zone next month")
+            if current_hb < 10:
+                recommendations.append("Current Hb below target - urgent intervention needed")
+                recommendations.append("Consider increasing EPO dose or iron supplementation")
+            elif current_hb > 12:
+                recommendations.append("Current Hb above target - risk of cardiovascular complications")
+                recommendations.append("Consider reducing EPO dose and monitor closely")
+            else:
+                recommendations.append("Monitor closely and consider preventive measures")
+        else:
+            recommendations.append("✅ Hb levels predicted to remain stable")
+            recommendations.append("Continue current treatment regimen")
         
-        if input_data['transferrin_saturation'] < 20:
-            recommendations.append("Iron deficiency detected - start iron therapy")
+        # Lab-based recommendations
+        if input_data['albumin'] < 35:
+            recommendations.append("Low albumin - nutritional counseling recommended")
         
-        if input_data.get('dialysis_adequacy', 1.2) < 1.2:
-            recommendations.append("Improve dialysis adequacy (target Kt/V > 1.2)")
+        if input_data['s_ca'] < 2.1:
+            recommendations.append("Low calcium - consider calcium supplementation")
+        elif input_data['s_ca'] > 2.6:
+            recommendations.append("High calcium - review phosphate binders")
+        
+        if input_data['serum_k_pre_hd'] > 5.5:
+            recommendations.append("High potassium - dietary restriction advised")
+        elif input_data['serum_k_pre_hd'] < 3.5:
+            recommendations.append("Low potassium - monitor for arrhythmias")
+        
+        # Dialysis adequacy
+        bu_reduction = ((input_data['bu_pre_hd'] - input_data['bu_post_hd']) / input_data['bu_pre_hd']) * 100
+        if bu_reduction < 65:
+            recommendations.append("Inadequate dialysis - consider increasing treatment time/frequency")
         
         return recommendations
 

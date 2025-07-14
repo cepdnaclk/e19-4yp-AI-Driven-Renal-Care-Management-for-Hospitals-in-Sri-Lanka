@@ -15,6 +15,7 @@ from .serializers import (
     ErrorResponseSerializer
 )
 from .services import dry_weight_predictor, urr_predictor, hb_predictor
+from .middleware.auth import require_auth, require_role
 
 logger = logging.getLogger(__name__)
 
@@ -30,15 +31,18 @@ def validate_patient_id(patient_id: str) -> bool:
     responses={
         200: DryWeightPredictionResponseSerializer,
         400: ErrorResponseSerializer,
+        401: ErrorResponseSerializer,
         500: ErrorResponseSerializer
     },
-    summary="Predict Dry Weight",
-    description="Predict optimal dry weight for a dialysis patient based on clinical parameters"
+    summary="Predict Dry Weight Change",
+    description="Predict if dry weight will change in the next dialysis session based on clinical parameters"
 )
 @api_view(['POST'])
+@require_auth
+@require_role(['DOCTOR', 'NURSE'])
 def predict_dry_weight(request):
     """
-    Predict dry weight for a dialysis patient
+    Predict if dry weight will change in next session
     """
     try:
         # Validate input data
@@ -79,15 +83,18 @@ def predict_dry_weight(request):
     responses={
         200: URRPredictionResponseSerializer,
         400: ErrorResponseSerializer,
+        401: ErrorResponseSerializer,
         500: ErrorResponseSerializer
     },
-    summary="Predict URR",
-    description="Predict Urea Reduction Ratio (URR) for a dialysis session"
+    summary="Predict URR Risk",
+    description="Predict if URR will go to risk region (inadequate) in next month"
 )
 @api_view(['POST'])
+@require_auth
+@require_role(['DOCTOR', 'NURSE'])
 def predict_urr(request):
     """
-    Predict URR (Urea Reduction Ratio) for a dialysis session
+    Predict if URR will go to risk region next month
     """
     try:
         # Validate input data
@@ -128,15 +135,18 @@ def predict_urr(request):
     responses={
         200: HbPredictionResponseSerializer,
         400: ErrorResponseSerializer,
+        401: ErrorResponseSerializer,
         500: ErrorResponseSerializer
     },
-    summary="Predict Hemoglobin",
-    description="Predict next month's hemoglobin level and provide clinical recommendations"
+    summary="Predict Hemoglobin Risk",
+    description="Predict if hemoglobin will go to risk region next month and provide clinical recommendations"
 )
 @api_view(['POST'])
+@require_auth
+@require_role(['DOCTOR', 'NURSE'])
 def predict_hb(request):
     """
-    Predict hemoglobin level for next month
+    Predict if hemoglobin will go to risk region next month
     """
     try:
         # Validate input data
@@ -192,34 +202,34 @@ def models_info(request):
     """
     models_info = {
         'dry_weight': {
-            'name': 'Dry Weight Prediction',
-            'description': 'Predicts optimal dry weight for dialysis patients',
+            'name': 'Dry Weight Change Prediction',
+            'description': 'Predicts if dry weight will change in next dialysis session',
             'input_parameters': [
                 'patient_id', 'age', 'gender', 'height', 'weight',
                 'systolic_bp', 'diastolic_bp', 'pre_dialysis_weight',
                 'post_dialysis_weight', 'ultrafiltration_volume', 'dialysis_duration'
             ],
-            'output': 'Predicted dry weight in kg'
+            'output': 'Binary classification: will dry weight change (True/False) with probability'
         },
         'urr': {
-            'name': 'URR Prediction',
-            'description': 'Predicts Urea Reduction Ratio for dialysis sessions',
+            'name': 'URR Risk Prediction',
+            'description': 'Predicts if URR will go to risk region (inadequate) next month',
             'input_parameters': [
                 'patient_id', 'pre_dialysis_urea', 'dialysis_duration',
                 'blood_flow_rate', 'dialysate_flow_rate', 'ultrafiltration_rate',
                 'access_type', 'kt_v'
             ],
-            'output': 'Predicted URR percentage and adequacy status'
+            'output': 'Binary classification: URR at risk (True/False) with probability and adequacy status'
         },
         'hb': {
-            'name': 'Hemoglobin Prediction',
-            'description': 'Predicts next month hemoglobin level with clinical recommendations',
+            'name': 'Hemoglobin Risk Prediction',
+            'description': 'Predicts if hemoglobin will go to risk region next month',
             'input_parameters': [
-                'patient_id', 'current_hb', 'ferritin', 'iron',
-                'transferrin_saturation', 'epo_dose', 'iron_supplement',
-                'dialysis_adequacy', 'comorbidities'
+                'patient_id', 'albumin', 'bu_post_hd', 'bu_pre_hd', 's_ca',
+                'scr_post_hd', 'scr_pre_hd', 'serum_k_post_hd', 'serum_k_pre_hd',
+                'serum_na_pre_hd', 'ua', 'hb_diff', 'hb'
             ],
-            'output': 'Predicted Hb level, trend, and clinical recommendations'
+            'output': 'Binary classification: Hb at risk (True/False) with probability and clinical recommendations'
         }
     }
     

@@ -20,10 +20,12 @@ class DryWeightPredictionSerializer(serializers.Serializer):
 
 class DryWeightPredictionResponseSerializer(serializers.Serializer):
     """
-    Serializer for dry weight prediction response
+    Serializer for dry weight change prediction response
     """
     patient_id = serializers.CharField()
-    predicted_dry_weight = serializers.FloatField()
+    dry_weight_change_predicted = serializers.BooleanField()
+    prediction_status = serializers.CharField()  # "Change Expected" or "Stable"
+    change_probability = serializers.FloatField()
     confidence_score = serializers.FloatField()
     model_version = serializers.CharField()
     prediction_date = serializers.DateTimeField()
@@ -45,11 +47,13 @@ class URRPredictionSerializer(serializers.Serializer):
 
 class URRPredictionResponseSerializer(serializers.Serializer):
     """
-    Serializer for URR prediction response
+    Serializer for URR risk prediction response
     """
     patient_id = serializers.CharField()
-    predicted_urr = serializers.FloatField()
-    adequacy_status = serializers.CharField()  # Adequate/Inadequate based on URR > 65%
+    urr_risk_predicted = serializers.BooleanField()
+    risk_status = serializers.CharField()  # "At Risk" or "Safe"
+    adequacy_status = serializers.CharField()  # "Predicted Adequate" or "Predicted Inadequate"
+    risk_probability = serializers.FloatField()
     confidence_score = serializers.FloatField()
     model_version = serializers.CharField()
     prediction_date = serializers.DateTimeField()
@@ -58,33 +62,39 @@ class URRPredictionResponseSerializer(serializers.Serializer):
 class HbPredictionSerializer(serializers.Serializer):
     """
     Serializer for Hemoglobin (Hb) prediction input data
+    Based on the actual model features
     """
     patient_id = serializers.CharField(max_length=20, help_text="Patient ID in format RHD_THP_XXX")
-    current_hb = serializers.FloatField(min_value=4, max_value=20, help_text="Current Hb level g/dL")
-    ferritin = serializers.FloatField(min_value=5, max_value=2000, help_text="Ferritin level ng/mL")
-    iron = serializers.FloatField(min_value=5, max_value=200, help_text="Serum iron μg/dL")
-    transferrin_saturation = serializers.FloatField(min_value=5, max_value=100, help_text="TSAT %")
-    epo_dose = serializers.FloatField(min_value=0, max_value=20000, help_text="EPO dose units/week", required=False)
-    iron_supplement = serializers.BooleanField(help_text="Iron supplementation status", required=False)
-    dialysis_adequacy = serializers.FloatField(min_value=0.5, max_value=3.0, help_text="Kt/V ratio", required=False)
-    comorbidities = serializers.ListField(
-        child=serializers.CharField(max_length=50),
-        help_text="List of comorbidities",
-        required=False
-    )
+    
+    # Laboratory parameters
+    albumin = serializers.FloatField(min_value=10, max_value=60, help_text="Albumin (g/L)")
+    bu_post_hd = serializers.FloatField(min_value=5, max_value=50, help_text="BU - post HD (mmol/L)")
+    bu_pre_hd = serializers.FloatField(min_value=10, max_value=100, help_text="BU - pre HD (mmol/L)")
+    s_ca = serializers.FloatField(min_value=1.5, max_value=3.5, help_text="S Ca (mmol/L)")
+    scr_post_hd = serializers.FloatField(min_value=200, max_value=1500, help_text="SCR- post HD (µmol/L)")
+    scr_pre_hd = serializers.FloatField(min_value=300, max_value=2000, help_text="SCR- pre HD (µmol/L)")
+    serum_k_post_hd = serializers.FloatField(min_value=2.0, max_value=7.0, help_text="Serum K Post-HD (mmol/L)")
+    serum_k_pre_hd = serializers.FloatField(min_value=2.5, max_value=8.0, help_text="Serum K Pre-HD (mmol/L)")
+    serum_na_pre_hd = serializers.FloatField(min_value=130, max_value=150, help_text="Serum Na Pre-HD (mmol/L)")
+    ua = serializers.FloatField(min_value=3.0, max_value=15.0, help_text="UA (mg/dL)")
+    hb_diff = serializers.FloatField(min_value=-5.0, max_value=5.0, help_text="Hb_diff (g/dL)")
+    hb = serializers.FloatField(min_value=4, max_value=20, help_text="Current Hb (g/dL)")
 
 
 class HbPredictionResponseSerializer(serializers.Serializer):
     """
-    Serializer for Hb prediction response
+    Serializer for Hb risk prediction response
     """
     patient_id = serializers.CharField()
-    predicted_hb_next_month = serializers.FloatField()
-    hb_trend = serializers.CharField()  # Increasing/Decreasing/Stable
+    hb_risk_predicted = serializers.BooleanField()
+    risk_status = serializers.CharField()  # "At Risk" or "Safe"
+    hb_trend = serializers.CharField()  # Risk-based trend description
+    current_hb = serializers.FloatField()
     target_hb_range = serializers.DictField()  # {min: 10, max: 12}
+    risk_probability = serializers.FloatField()
     recommendations = serializers.ListField(
         child=serializers.CharField(),
-        help_text="Clinical recommendations"
+        help_text="Clinical recommendations based on risk prediction"
     )
     confidence_score = serializers.FloatField()
     model_version = serializers.CharField()
