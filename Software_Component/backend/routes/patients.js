@@ -9,50 +9,21 @@ const router = express.Router();
 // @access  Private
 router.get('/', protect, async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
-
-    let query = {};
-
-    // Role-based filtering
-    if (req.user.role === 'doctor') {
-      query.assignedDoctor = req.user.id;
-    } else if (req.user.role === 'nurse') {
-      query.assignedNurse = req.user.id;
-    }
-    // admin can see all patients
-
-    // Filter by status
-    if (req.query.status) {
-      query.status = req.query.status;
+    // Only allow doctor and nurse to view patient data
+    if (req.user.role !== 'doctor' && req.user.role !== 'nurse') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied: Only doctors and nurses can view patients'
+      });
     }
 
-    // Search functionality
-    if (req.query.search) {
-      query.$or = [
-        { name: { $regex: req.query.search, $options: 'i' } },
-        { patientId: { $regex: req.query.search, $options: 'i' } },
-        { 'medicalHistory.renalDiagnosis': { $regex: req.query.search, $options: 'i' } }
-      ];
-    }
-
-    // Filter by dialysis type
-    if (req.query.dialysisType) {
-      query['dialysisInfo.dialysisType'] = req.query.dialysisType;
-    }
-
-    // Filter by assigned doctor
-    if (req.query.assignedDoctor) {
-      query.assignedDoctor = req.query.assignedDoctor;
-    }
+    const query = {};
 
     const patients = await Patient.find(query)
-      .populate('assignedDoctor', 'name email')
-      .populate('assignedNurse', 'name email')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+      .select('id patientId name gender dateOfBirth bloodType contactNumber assignedDoctor')
+      .populate('assignedDoctor', 'name')
+      .populate('assignedNurse', 'name')
+      .sort({ createdAt: -1 });
 
     const total = await Patient.countDocuments(query);
 
@@ -60,14 +31,10 @@ router.get('/', protect, async (req, res) => {
       success: true,
       count: patients.length,
       total,
-      pagination: {
-        page,
-        limit,
-        pages: Math.ceil(total / limit)
-      },
       patients
     });
-  } catch (error) {
+  } 
+  catch (error) {
     res.status(500).json({
       success: false,
       message: 'Server error',
@@ -75,6 +42,7 @@ router.get('/', protect, async (req, res) => {
     });
   }
 });
+
 
 // @desc    Get patient by ID
 // @route   GET /api/patients/:id

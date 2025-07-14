@@ -48,7 +48,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
       onLogin(loggedInUser)
       toaster.positive('Login successful', { autoHideDuration: 4000 });
-    } 
+    }
     catch (error: any) {
       toaster.negative('Login credentials are wrong', { autoHideDuration: 3000 });
     }
@@ -61,7 +61,13 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       justifyContent="center"
       alignItems="center"
       height="100vh"
-      backgroundColor="#f6f6f6"
+      overrides={{
+        Block: {
+          style: {
+            background: "linear-gradient(to bottom left, #6b7280,  #262729ff, #000000, #262729ff, #6b7280)",
+          },
+        },
+      }}
     >
       <Card
         overrides={{
@@ -101,7 +107,23 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </FormControl>
 
           <Block marginTop="2rem">
-            <Button type="submit" overrides={{ BaseButton: { style: { width: '100%' } } }}> Log In </Button>
+            <Button
+              type="submit"
+              overrides={{
+                BaseButton: {
+                  style: {
+                    width: '100%',
+                    backgroundColor: '#398de0ff', // your custom blue
+                    color: 'white',
+                    ':hover': {
+                      backgroundColor: '#1159a0ff', // darker blue on hover
+                    },
+                  },
+                },
+              }}
+            >
+              Log In 🔓
+            </Button>
           </Block>
         </form>
       </Card>
