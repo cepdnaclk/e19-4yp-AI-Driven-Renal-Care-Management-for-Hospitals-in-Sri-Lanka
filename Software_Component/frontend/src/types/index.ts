@@ -28,6 +28,19 @@ export interface Patient {
   registrationDate: string;
 }
 
+export interface PatientCatalogue {
+  id: string
+  patientId: string
+  name: string
+  age?: number
+  gender: string
+  bloodType: string
+  contactNumber: string
+  assignedDoctor?: {
+    name: string
+  }
+}
+
 // Dialysis Session interface
 export interface DialysisSession {
   id: string;
