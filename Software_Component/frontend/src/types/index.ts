@@ -1,8 +1,8 @@
 // Role enum
 export enum Role {
-  NURSE = 'NURSE',
-  DOCTOR = 'DOCTOR',
-  ADMIN = 'ADMIN'
+  NURSE = 'nurse',
+  DOCTOR = 'doctor',
+  ADMIN = 'admin'
 }
 
 // User interface
@@ -26,6 +26,19 @@ export interface Patient {
   medicalHistory: string;
   assignedDoctor: string;
   registrationDate: string;
+}
+
+export interface PatientCatalogue {
+  id: string
+  patientId: string
+  name: string
+  age?: number
+  gender: string
+  bloodType: string
+  contactNumber: string
+  assignedDoctor?: {
+    name: string
+  }
 }
 
 // Dialysis Session interface

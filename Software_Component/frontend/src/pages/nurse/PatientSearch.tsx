@@ -1,124 +1,76 @@
-import React, { useState, useEffect } from 'react';
-import { HeadingLarge, HeadingMedium } from 'baseui/typography';
-import { Card, StyledBody } from 'baseui/card';
-import { Grid, Cell } from 'baseui/layout-grid';
-import { Block } from 'baseui/block';
-import { Button } from 'baseui/button';
-import { useNavigate } from 'react-router-dom';
-import { Input } from 'baseui/input';
-import { FormControl } from 'baseui/form-control';
-import { Select } from 'baseui/select';
-import { Table } from 'baseui/table-semantic';
-import { Patient } from '../../types';
+import React, { useState, useEffect } from 'react'
+import { HeadingLarge } from 'baseui/typography'
+import { Card, StyledBody } from 'baseui/card'
+import { Grid, Cell } from 'baseui/layout-grid'
+import { Block } from 'baseui/block'
+import { Button } from 'baseui/button'
+import { useNavigate } from 'react-router-dom'
+import { Input } from 'baseui/input'
+import { FormControl } from 'baseui/form-control'
+import { Table } from 'baseui/table-semantic'
+import { PatientCatalogue } from '../../types'
+import { toaster } from 'baseui/toast'
 
-// Mock data
-const mockPatients: Patient[] = [
-  {
-    id: '101',
-    name: 'John Doe',
-    age: 45,
-    gender: 'Male',
-    bloodType: 'A+',
-    contactNumber: '555-123-4567',
-    address: '123 Main St, Anytown, USA',
-    emergencyContact: '555-987-6543',
-    medicalHistory: 'Hypertension, Diabetes',
-    assignedDoctor: 'Dr. Smith',
-    registrationDate: '2024-01-15'
-  },
-  {
-    id: '102',
-    name: 'Sarah Smith',
-    age: 38,
-    gender: 'Female',
-    bloodType: 'O-',
-    contactNumber: '555-234-5678',
-    address: '456 Oak Ave, Somewhere, USA',
-    emergencyContact: '555-876-5432',
-    medicalHistory: 'Chronic Kidney Disease',
-    assignedDoctor: 'Dr. Johnson',
-    registrationDate: '2024-02-20'
-  },
-  {
-    id: '103',
-    name: 'Michael Johnson',
-    age: 52,
-    gender: 'Male',
-    bloodType: 'B+',
-    contactNumber: '555-345-6789',
-    address: '789 Pine Rd, Elsewhere, USA',
-    emergencyContact: '555-765-4321',
-    medicalHistory: 'Hypertension, Coronary Artery Disease',
-    assignedDoctor: 'Dr. Williams',
-    registrationDate: '2024-03-10'
-  },
-  {
-    id: '104',
-    name: 'Emily Davis',
-    age: 29,
-    gender: 'Female',
-    bloodType: 'AB+',
-    contactNumber: '555-456-7890',
-    address: '101 Elm St, Nowhere, USA',
-    emergencyContact: '555-654-3210',
-    medicalHistory: 'Lupus Nephritis',
-    assignedDoctor: 'Dr. Smith',
-    registrationDate: '2024-04-05'
-  },
-  {
-    id: '105',
-    name: 'Robert Wilson',
-    age: 67,
-    gender: 'Male',
-    bloodType: 'A-',
-    contactNumber: '555-567-8901',
-    address: '202 Maple Dr, Anyplace, USA',
-    emergencyContact: '555-543-2109',
-    medicalHistory: 'Diabetes, End-Stage Renal Disease',
-    assignedDoctor: 'Dr. Johnson',
-    registrationDate: '2024-05-12'
-  }
-];
+import axios from 'axios'
 
 const NursePatientSearch: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [filteredPatients, setFilteredPatients] = useState<Patient[]>([]);
-  const [sortDirection, setSortDirection] = useState<[string, string]>(['id', 'ASC']);
-  const navigate = useNavigate();
+  const token = localStorage.getItem('userToken')
+  const navigate = useNavigate()
 
+  const [searchTerm, setSearchTerm] = useState('')
+  const [patients, setPatients] = useState<PatientCatalogue[]>([])
+  const [filteredPatients, setFilteredPatients] = useState<PatientCatalogue[]>([])
+
+  // Fetch Patient Catalogue data from the API
+  const fetchAllPatients = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/patients', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      })
+      setPatients(response.data.patients)
+      setFilteredPatients(response.data.patients)
+    }
+    catch (error: any) {
+      toaster.negative('Failed to fetch the Patients', { autoHideDuration: 3000 })
+    }
+  }
+
+  // Fetch all patients on component moun
   useEffect(() => {
-    // In a real app, this would fetch from an API
-    setPatients(mockPatients);
-    setFilteredPatients(mockPatients);
-  }, []);
+    fetchAllPatients()
+  }, [])
 
+  // Filtering patients based on search term
   useEffect(() => {
     if (searchTerm) {
       const filtered = patients.filter(
-        patient => 
-          patient.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        patient =>
+          patient.patientId.toLowerCase().includes(searchTerm.toLowerCase()) ||
           patient.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredPatients(filtered);
-    } else {
-      setFilteredPatients(patients);
+      )
+      setFilteredPatients(filtered)
+    } 
+    
+    else {
+      setFilteredPatients(patients)
     }
-  }, [searchTerm, patients]);
+  }, [searchTerm, patients])
+
 
   const handleViewPatient = (patientId: string) => {
-    navigate(`/nurse/patients/${patientId}`);
-  };
+    navigate(`/nurse/patients/${patientId}`)
+  }
 
   const handleAddNewPatient = () => {
-    // In a real app, this would navigate to a form or open a modal
-    navigate(`/nurse/patients/add`);
-  };
+    navigate(`/nurse/patients/add`)
+  }
 
   return (
     <Block>
       <HeadingLarge>Patient Search</HeadingLarge>
-      
+
       <Grid gridMargins={[16, 32]} gridGutters={[16, 32]} gridMaxWidth={1200}>
         <Cell span={12}>
           <Card
@@ -143,32 +95,31 @@ const NursePatientSearch: React.FC = () => {
                 </FormControl>
                 <Button onClick={handleAddNewPatient}>Add New Patient</Button>
               </Block>
-              
+
               <Table
-                columns={['ID', 'Name', 'Age', 'Gender', 'Blood Type', 'Assigned Doctor', 'Actions']}
-                data={filteredPatients.map(patient => [
-                  patient.id,
-                  patient.name,
-                  patient.age,
-                  patient.gender,
-                  patient.bloodType,
-                  patient.assignedDoctor,
-                  <Button 
-                    key={patient.id}
-                    size="compact"
-                    onClick={() => handleViewPatient(patient.id)}
-                  >
-                    View
-                  </Button>
-                ])}
-                emptyMessage="No patients found"
+                columns={['ID', 'Name', 'Age', 'Gender', 'Blood Type', 'Contact Number', 'Assigned Doctor', 'Actions']}
+                data={filteredPatients.map(patient => {
+                  // console.log('Patient:', patient)
+                  return [
+                    patient.patientId,
+                    patient.name,
+                    patient.age,
+                    patient.gender,
+                    patient.bloodType,
+                    patient.contactNumber,
+                    patient.assignedDoctor?.name || "N/A",
+                    <Button key={patient.id} onClick={() => handleViewPatient(patient.id)} size="compact">
+                      View
+                    </Button>
+                  ]
+                })}
               />
             </StyledBody>
           </Card>
         </Cell>
       </Grid>
     </Block>
-  );
-};
+  )
+}
 
-export default NursePatientSearch;
+export default NursePatientSearch

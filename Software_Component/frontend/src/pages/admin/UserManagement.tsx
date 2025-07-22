@@ -12,115 +12,24 @@ import { Table } from 'baseui/table-semantic';
 import { toaster } from 'baseui/toast';
 import { User, Role } from '../../types';
 
-// Mock users data
-const mockUsers = [
-  {
-    id: '1',
-    name: 'John Smith',
-    email: 'john.smith@hospital.com',
-    role: Role.NURSE,
-    lastActive: '2025-05-30T14:30:00'
-  },
-  {
-    id: '2',
-    name: 'Dr. Sarah Johnson',
-    email: 'sarah.johnson@hospital.com',
-    role: Role.DOCTOR,
-    lastActive: '2025-05-31T09:15:00'
-  },
-  {
-    id: '3',
-    name: 'Admin User',
-    email: 'admin@hospital.com',
-    role: Role.ADMIN,
-    lastActive: '2025-05-31T10:00:00'
-  },
-  {
-    id: '4',
-    name: 'Michael Brown',
-    email: 'michael.brown@hospital.com',
-    role: Role.NURSE,
-    lastActive: '2025-05-29T16:45:00'
-  },
-  {
-    id: '5',
-    name: 'Dr. Emily Davis',
-    email: 'emily.davis@hospital.com',
-    role: Role.DOCTOR,
-    lastActive: '2025-05-30T11:20:00'
-  }
-];
+import axios from 'axios';
 
 const AdminUserManagement: React.FC = () => {
+  const token = localStorage.getItem('userToken')
+
   const [users, setUsers] = useState<any[]>([]);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [currentUser, setCurrentUser] = useState<any>(null)
   const [newUser, setNewUser] = useState({
     name: '',
     email: '',
-    role: [{ id: Role.NURSE, label: 'Nurse' }],
+    role: [{ id: Role.DOCTOR, label: 'Doctor' }],
     password: ''
   });
 
-  useEffect(() => {
-    // In a real app, this would fetch from an API
-    setUsers(mockUsers);
-  }, []);
-
-  const handleAddUser = () => {
-    if (!newUser.name || !newUser.email || !newUser.password || newUser.role.length === 0) {
-      toaster.negative('Please fill in all fields', {});
-      return;
-    }
-
-    // In a real app, this would make an API call
-    const user = {
-      id: (users.length + 1).toString(),
-      name: newUser.name,
-      email: newUser.email,
-      role: newUser.role[0].id,
-      lastActive: new Date().toISOString()
-    };
-
-    setUsers([...users, user]);
-    setIsAddModalOpen(false);
-    toaster.positive('User added successfully', {});
-
-    // Reset form
-    setNewUser({
-      name: '',
-      email: '',
-      role: [{ id: Role.NURSE, label: 'Nurse' }],
-      password: ''
-    });
-  };
-
-  const handleEditUser = () => {
-    if (!currentUser.name || !currentUser.email || !currentUser.role || currentUser.role.length === 0) {
-      toaster.negative('Please fill in all fields', {});
-      return;
-    }
-
-    // In a real app, this would make an API call
-    const updatedUsers = users.map(user =>
-      user.id === currentUser.id ? { ...user, ...currentUser, role: currentUser.role[0].id } : user
-    );
-
-    setUsers(updatedUsers);
-    setIsEditModalOpen(false);
-    toaster.positive('User updated successfully', {});
-  };
-
-  const handleDeleteUser = () => {
-    // In a real app, this would make an API call
-    const updatedUsers = users.filter(user => user.id !== currentUser.id);
-    setUsers(updatedUsers);
-    setIsDeleteModalOpen(false);
-    toaster.positive('User deleted successfully', {});
-  };
-
+  // Modal functionalities
   const openEditModal = (user: any) => {
     setCurrentUser({
       ...user,
@@ -147,6 +56,156 @@ const AdminUserManagement: React.FC = () => {
     }
   };
 
+  // Fetch all users at the begining
+  useEffect(() => {
+    fetchAllUsers()
+  }, []);
+
+  // Close the Modal
+  const closeAddUserModal = () => {
+    setIsAddModalOpen(false)
+    
+    setNewUser({
+      name: '',
+      email: '',
+      role: [{ id: Role.DOCTOR, label: 'Doctor' }],
+      password: ''
+    })
+  }
+
+  // 1. Function to fetch all users
+  const fetchAllUsers = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/users', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      })
+      setUsers(response.data.users);
+    }
+    catch (error: any) {
+      toaster.negative('Failed to fetch users', { autoHideDuration: 3000 });
+    }
+  }
+
+  // 2. Function to handle adding a new user
+  const handleAddUser = async () => {
+    if (!newUser.name || !newUser.email || !newUser.password || newUser.role.length === 0) {
+      toaster.negative('Please fill in all fields', { autoHideDuration: 3000 })
+      return 0
+    }
+
+    // Send data to the Database
+    try {
+      const sendData = await axios.post('http://localhost:5000/api/users',
+        {
+          name: newUser.name,
+          email: newUser.email,
+          password: newUser.password,
+          role: newUser.role[0].id
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      toaster.positive('User added successfully', { autoHideDuration: 3000 })
+
+      // Reset form
+      setNewUser({
+        name: '',
+        email: '',
+        role: [{ id: Role.DOCTOR, label: 'Doctor' }],
+        password: ''
+      })
+
+      // Take the updated users list
+      fetchAllUsers()
+
+      // Close the Modal
+      setIsAddModalOpen(false)
+    }
+
+    catch (error: any) {
+      console.log(error.response.data.errors);
+
+      if (error.response && error.response.data.errors) {
+        error.response.data.errors.forEach((err: any) => {
+          toaster.negative(err.msg, { autoHideDuration: 3000 });
+        })
+      }
+      toaster.negative('Failed to add user', { autoHideDuration: 3000 })
+    }
+  }
+
+  // 3. Function to update existing user
+  const handleEditUser = async () => {
+    if (!currentUser.name || !currentUser.email || !currentUser.role || currentUser.role.length === 0) {
+      toaster.negative('Please fill in all required fields', { autoHideDuration: 3000 })
+      return 0
+    }
+
+    try {
+      // Send PUT request with Axios
+      const updateData = await axios.put(`http://localhost:5000/api/users/${currentUser.id}`,
+        {
+          name: currentUser.name,
+          email: currentUser.email,
+          role: currentUser.role[0].id
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      toaster.positive('User Updated successfully', { autoHideDuration: 3000 });
+
+      // Take the updated users list
+      fetchAllUsers()
+
+      // Close the Modal
+      setIsEditModalOpen(false)
+    }
+
+    catch (error) {
+      toaster.negative('Failed to update user', { autoHideDuration: 3000 })
+    }
+  }
+
+  // 4. Function to delete existing user
+  const handleDeleteUser = async () => {
+    if (!currentUser || !currentUser.id) {
+      toaster.negative('Invalid user data', { autoHideDuration: 3000 })
+      return 0
+    }
+
+    console.log('Deleting user:', currentUser.id);
+
+    try {
+      const deleteData = await axios.delete(`http://localhost:5000/api/users/${currentUser.id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      toaster.positive('User Deleted successfully', { autoHideDuration: 3000 })
+
+      // Take the users list
+      fetchAllUsers()
+
+      // Close the Modal
+      setIsDeleteModalOpen(false)
+    }
+
+    catch (error) {
+      toaster.negative('Failed to Delete user', { autoHideDuration: 3000 })
+    }
+  }
+
   return (
     <Block>
       <HeadingLarge>User Management</HeadingLarge>
@@ -169,7 +228,7 @@ const AdminUserManagement: React.FC = () => {
                   user.name,
                   user.email,
                   getRoleLabel(user.role),
-                  new Date(user.lastActive).toLocaleString(),
+                  user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never',
                   <Block
                     key={`actions-${user.id}`}
                     display="flex"
@@ -207,14 +266,14 @@ const AdminUserManagement: React.FC = () => {
       {/* Add User Modal */}
       <Modal
         isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        onClose={closeAddUserModal}
         closeable
         animate
         autoFocus
       >
         <ModalHeader>Add New User</ModalHeader>
         <ModalBody>
-          <FormControl label="Name *">
+          <FormControl label="Name*">
             <Input
               value={newUser.name}
               onChange={e => setNewUser({ ...newUser, name: e.currentTarget.value })}
@@ -222,7 +281,7 @@ const AdminUserManagement: React.FC = () => {
             />
           </FormControl>
 
-          <FormControl label="Email *">
+          <FormControl label="Email*">
             <Input
               value={newUser.email}
               onChange={e => setNewUser({ ...newUser, email: e.currentTarget.value })}
@@ -231,7 +290,7 @@ const AdminUserManagement: React.FC = () => {
             />
           </FormControl>
 
-          <FormControl label="Password *">
+          <FormControl label="Password* (Password must be at least 6 characters)">
             <Input
               value={newUser.password}
               onChange={e => setNewUser({ ...newUser, password: e.currentTarget.value })}
@@ -240,12 +299,11 @@ const AdminUserManagement: React.FC = () => {
             />
           </FormControl>
 
-          <FormControl label="Role *">
+          <FormControl label="Role*">
             <Select
               options={[
                 { id: Role.NURSE, label: 'Nurse' },
-                { id: Role.DOCTOR, label: 'Doctor' },
-                { id: Role.ADMIN, label: 'Admin' }
+                { id: Role.DOCTOR, label: 'Doctor' }
               ]}
               value={newUser.role}
               placeholder="Select user role"
@@ -261,7 +319,7 @@ const AdminUserManagement: React.FC = () => {
 
         </ModalBody>
         <ModalFooter>
-          <ModalButton kind="tertiary" onClick={() => setIsAddModalOpen(false)}>
+          <ModalButton kind="tertiary" onClick={closeAddUserModal}>
             Cancel
           </ModalButton>
           <ModalButton onClick={handleAddUser}>Add User</ModalButton>
@@ -300,8 +358,7 @@ const AdminUserManagement: React.FC = () => {
               <Select
                 options={[
                   { id: Role.NURSE, label: 'Nurse' },
-                  { id: Role.DOCTOR, label: 'Doctor' },
-                  { id: Role.ADMIN, label: 'Admin' }
+                  { id: Role.DOCTOR, label: 'Doctor' }
                 ]}
                 value={currentUser.role}
                 placeholder="Select user role"
