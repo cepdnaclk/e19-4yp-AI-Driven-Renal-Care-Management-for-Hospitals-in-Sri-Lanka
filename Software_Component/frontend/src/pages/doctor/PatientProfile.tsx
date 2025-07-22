@@ -9,153 +9,9 @@ import { Tabs, Tab } from 'baseui/tabs-motion';
 import { useNavigate } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Patient, DialysisSession, MonthlyInvestigation, AIPrediction, ClinicalDecision } from '../../types';
+import axios from 'axios';
 
-// Mock data
-const mockPatients: Record<string, Patient> = {
-  '101': {
-    id: '101',
-    name: 'John Doe',
-    age: 45,
-    gender: 'Male',
-    bloodType: 'A+',
-    contactNumber: '555-123-4567',
-    address: '123 Main St, Anytown, USA',
-    emergencyContact: '555-987-6543',
-    medicalHistory: 'Hypertension, Diabetes',
-    assignedDoctor: 'Dr. Smith',
-    registrationDate: '2024-01-15'
-  },
-  '102': {
-    id: '102',
-    name: 'Sarah Smith',
-    age: 38,
-    gender: 'Female',
-    bloodType: 'O-',
-    contactNumber: '555-234-5678',
-    address: '456 Oak Ave, Somewhere, USA',
-    emergencyContact: '555-876-5432',
-    medicalHistory: 'Chronic Kidney Disease',
-    assignedDoctor: 'Dr. Johnson',
-    registrationDate: '2024-02-20'
-  },
-  '103': {
-    id: '103',
-    name: 'Michael Johnson',
-    age: 52,
-    gender: 'Male',
-    bloodType: 'B+',
-    contactNumber: '555-345-6789',
-    address: '789 Pine Rd, Elsewhere, USA',
-    emergencyContact: '555-765-4321',
-    medicalHistory: 'Hypertension, Coronary Artery Disease',
-    assignedDoctor: 'Dr. Williams',
-    registrationDate: '2024-03-10'
-  }
-};
-
-// Mock dialysis sessions
-const mockDialysisSessions: Record<string, DialysisSession[]> = {
-  '101': [
-    {
-      id: 'ds101',
-      patientId: '101',
-      date: '2025-05-29',
-      startTime: '09:00',
-      endTime: '13:00',
-      preWeight: 82.5,
-      postWeight: 80.1,
-      ufGoal: 2.5,
-      bloodPressurePre: '140/90',
-      bloodPressurePost: '130/85',
-      heartRatePre: 78,
-      heartRatePost: 72,
-      temperaturePre: 36.8,
-      temperaturePost: 36.6,
-      symptoms: ['Fatigue', 'Mild headache'],
-      complications: [],
-      notes: 'Patient tolerated session well.',
-      nurseId: '1'
-    },
-    {
-      id: 'ds102',
-      patientId: '101',
-      date: '2025-05-26',
-      startTime: '09:00',
-      endTime: '13:00',
-      preWeight: 83.2,
-      postWeight: 80.5,
-      ufGoal: 2.7,
-      bloodPressurePre: '145/92',
-      bloodPressurePost: '135/88',
-      heartRatePre: 80,
-      heartRatePost: 74,
-      temperaturePre: 36.7,
-      temperaturePost: 36.5,
-      symptoms: ['Fatigue'],
-      complications: [],
-      notes: 'No complications during session.',
-      nurseId: '1'
-    }
-  ]
-};
-
-// Mock monthly investigations
-const mockMonthlyInvestigations: Record<string, MonthlyInvestigation[]> = {
-  '101': [
-    {
-      id: 'mi101',
-      patientId: '101',
-      date: '2025-05-15',
-      hemoglobin: 11.2,
-      hematocrit: 33.6,
-      whiteBloodCellCount: 6.8,
-      plateletCount: 210,
-      sodium: 138,
-      potassium: 4.5,
-      chloride: 102,
-      bicarbonate: 22,
-      bun: 45,
-      creatinine: 4.2,
-      glucose: 110,
-      calcium: 9.2,
-      phosphorus: 5.1,
-      albumin: 3.8,
-      totalProtein: 6.9,
-      alt: 25,
-      ast: 28,
-      alkalinePhosphatase: 95,
-      notes: 'Potassium levels slightly elevated but within acceptable range.',
-      nurseId: '1'
-    },
-    {
-      id: 'mi102',
-      patientId: '101',
-      date: '2025-04-15',
-      hemoglobin: 10.8,
-      hematocrit: 32.4,
-      whiteBloodCellCount: 7.1,
-      plateletCount: 205,
-      sodium: 139,
-      potassium: 4.8,
-      chloride: 103,
-      bicarbonate: 21,
-      bun: 48,
-      creatinine: 4.5,
-      glucose: 115,
-      calcium: 9.0,
-      phosphorus: 5.3,
-      albumin: 3.7,
-      totalProtein: 6.8,
-      alt: 27,
-      ast: 30,
-      alkalinePhosphatase: 98,
-      notes: 'Hemoglobin trending downward, may need ESA adjustment.',
-      nurseId: '1'
-    }
-  ]
-};
-
-// Mock AI predictions
+// Mock AI predictions (until backend is ready)
 const mockAIPredictions: Record<string, AIPrediction[]> = {
   '101': [
     {
@@ -189,7 +45,7 @@ const mockAIPredictions: Record<string, AIPrediction[]> = {
   ]
 };
 
-// Mock clinical decisions
+// Mock clinical decisions (until backend is ready)
 const mockClinicalDecisions: Record<string, ClinicalDecision[]> = {
   '101': [
     {
@@ -228,18 +84,76 @@ const DoctorPatientProfile: React.FC = () => {
   const [monthlyInvestigations, setMonthlyInvestigations] = useState<MonthlyInvestigation[]>([]);
   const [aiPredictions, setAIPredictions] = useState<AIPrediction[]>([]);
   const [clinicalDecisions, setClinicalDecisions] = useState<ClinicalDecision[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  const fetchPatientData = async () => {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/patients/${id}`);
+      setPatient(response.data);
+    } catch (err) {
+      console.error('Error fetching patient data:', err);
+      setError('Failed to fetch patient data');
+    }
+  };
+
+  const fetchDialysisSessions = async () => {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/dialysis-sessions/${id}`);
+      setDialysisSessions(response.data);
+    } catch (err) {
+      console.error('Error fetching dialysis sessions:', err);
+      setError('Failed to fetch dialysis sessions');
+    }
+  };
+
+  const fetchMonthlyInvestigations = async () => {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/monthly-investigations/${id}`);
+      setMonthlyInvestigations(response.data);
+    } catch (err) {
+      console.error('Error fetching monthly investigations:', err);
+      setError('Failed to fetch monthly investigations');
+    }
+  };
 
   useEffect(() => {
     if (id) {
-      // In a real app, these would be API calls
-      setPatient(mockPatients[id] || null);
-      setDialysisSessions(mockDialysisSessions[id] || []);
-      setMonthlyInvestigations(mockMonthlyInvestigations[id] || []);
-      setAIPredictions(mockAIPredictions[id] || []);
-      setClinicalDecisions(mockClinicalDecisions[id] || []);
+      const fetchData = async () => {
+        setLoading(true);
+        await Promise.all([
+          fetchPatientData(),
+          fetchDialysisSessions(),
+          fetchMonthlyInvestigations()
+        ]);
+        
+        // Set mock data for AI predictions and clinical decisions (until backend is ready)
+        setAIPredictions(mockAIPredictions[id] || []);
+        setClinicalDecisions(mockClinicalDecisions[id] || []);
+        
+        setLoading(false);
+      };
+      
+      fetchData();
     }
   }, [id]);
+
+  if (loading) {
+    return (
+      <Block display="flex" justifyContent="center" alignItems="center" height="400px">
+        <Block>Loading patient data...</Block>
+      </Block>
+    );
+  }
+
+  if (error) {
+    return (
+      <Block display="flex" justifyContent="center" alignItems="center" height="400px">
+        <Block color="negative">Error: {error}</Block>
+      </Block>
+    );
+  }
 
   if (!patient) {
     return <Block>Patient not found</Block>;
@@ -249,9 +163,9 @@ const DoctorPatientProfile: React.FC = () => {
   const weightTrendData = dialysisSessions
     .map(session => ({
       date: session.date,
-      preWeight: session.preWeight,
-      postWeight: session.postWeight,
-      ufGoal: session.ufGoal
+      preWeight: session.preDialysis.weight,
+      postWeight: session.postDialysis.weight,
+      ufGoal: session.dialysisParameters.ufGoal
     }))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
@@ -450,19 +364,17 @@ const DoctorPatientProfile: React.FC = () => {
                           </Block>
                           
                           <Block marginBottom="8px">
-                            <strong>Weight:</strong> Pre: {dialysisSessions[0].preWeight} kg, Post: {dialysisSessions[0].postWeight} kg (UF Goal: {dialysisSessions[0].ufGoal} L)
+                            <strong>Weight:</strong> Pre: {dialysisSessions[0].preDialysis.weight} kg, Post: {dialysisSessions[0].postDialysis.weight} kg (UF Goal: {dialysisSessions[0].dialysisParameters.ufGoal} L)
                           </Block>
                           
                           <Block marginBottom="8px">
-                            <strong>Vitals:</strong> BP Pre: {dialysisSessions[0].bloodPressurePre}, BP Post: {dialysisSessions[0].bloodPressurePost}, 
-                            HR Pre: {dialysisSessions[0].heartRatePre}, HR Post: {dialysisSessions[0].heartRatePost}
+                            <strong>Vitals:</strong> BP Pre: {dialysisSessions[0].preDialysis.bloodPressure.systolic}/{dialysisSessions[0].preDialysis.bloodPressure.diastolic}, BP Post: {dialysisSessions[0].postDialysis.bloodPressure.systolic}/{dialysisSessions[0].postDialysis.bloodPressure.diastolic}, 
+                            HR Pre: {dialysisSessions[0].preDialysis.heartRate}, HR Post: {dialysisSessions[0].postDialysis.heartRate}
                           </Block>
                           
-                          {dialysisSessions[0].symptoms.length > 0 && (
-                            <Block marginBottom="8px">
-                              <strong>Symptoms:</strong> {dialysisSessions[0].symptoms.join(', ')}
-                            </Block>
-                          )}
+                          <Block marginBottom="8px">
+                            <strong>Vascular Access:</strong> {dialysisSessions[0].vascularAccess.type} at {dialysisSessions[0].vascularAccess.site}
+                          </Block>
                           
                           {dialysisSessions[0].complications.length > 0 && (
                             <Block marginBottom="8px">
@@ -478,7 +390,11 @@ const DoctorPatientProfile: React.FC = () => {
                         </Block>
                       </Block>
                     ) : (
-                      <Block>No dialysis sessions recorded</Block>
+                      <Block padding="16px" backgroundColor="rgba(0, 0, 0, 0.03)">
+                        <Block display="flex" justifyContent="center" color="contentTertiary">
+                          No dialysis sessions recorded for this patient.
+                        </Block>
+                      </Block>
                     )}
                   </Block>
                 </Tab>
@@ -541,7 +457,11 @@ const DoctorPatientProfile: React.FC = () => {
                         </Block>
                       </Block>
                     ) : (
-                      <Block>No monthly investigations recorded</Block>
+                      <Block padding="16px" backgroundColor="rgba(0, 0, 0, 0.03)">
+                        <Block display="flex" justifyContent="center" color="contentTertiary">
+                          No monthly investigations recorded for this patient.
+                        </Block>
+                      </Block>
                     )}
                   </Block>
                 </Tab>
@@ -683,7 +603,11 @@ const DoctorPatientProfile: React.FC = () => {
                         </Block>
                       ))
                     ) : (
-                      <Block>No clinical decisions recorded</Block>
+                      <Block padding="16px" backgroundColor="rgba(0, 0, 0, 0.03)">
+                        <Block display="flex" justifyContent="center" color="contentTertiary">
+                          No clinical decisions recorded for this patient.
+                        </Block>
+                      </Block>
                     )}
                   </Block>
                 </Tab>

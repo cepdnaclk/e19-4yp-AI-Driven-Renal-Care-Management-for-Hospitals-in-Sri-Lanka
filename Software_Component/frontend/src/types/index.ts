@@ -28,6 +28,21 @@ export interface Patient {
   registrationDate: string;
 }
 
+export interface PatientNew {
+  id: string;
+  patientId: string;
+  name: string;
+  age: number;
+  gender: string;
+  bloodType: string;
+  contactNumber: string;
+  address: string;
+  emergencyContact: string;
+  medicalHistory: string;
+  assignedDoctor: string;
+  registrationDate: string;
+}
+
 export interface PatientCatalogue {
   id: string
   patientId: string
@@ -44,23 +59,63 @@ export interface PatientCatalogue {
 // Dialysis Session interface
 export interface DialysisSession {
   id: string;
+  sessionId: string;
   patientId: string;
   date: string;
   startTime: string;
   endTime: string;
-  preWeight: number;
-  postWeight: number;
-  ufGoal: number;
-  bloodPressurePre: string;
-  bloodPressurePost: string;
-  heartRatePre: number;
-  heartRatePost: number;
-  temperaturePre: number;
-  temperaturePost: number;
-  symptoms: string[];
+  duration: number;
+  status: string;
+  preDialysis: {
+    weight: number;
+    bloodPressure: {
+      systolic: number;
+      diastolic: number;
+    };
+    heartRate: number;
+    temperature: number;
+  };
+  postDialysis: {
+    weight: number;
+    bloodPressure: {
+      systolic: number;
+      diastolic: number;
+    };
+    heartRate: number;
+    temperature: number;
+  };
+  dialysisParameters: {
+    ufGoal: number;
+    ufAchieved: number;
+    bloodFlow: number;
+    dialysateFlow: number;
+  };
+  adequacyParameters: {
+    ktv: number;
+    urr: number;
+  };
+  vascularAccess: {
+    type: string;
+    site: string;
+  };
   complications: string[];
+  qualityIndicators: {
+    sessionCompleted: boolean;
+    prescriptionAchieved: boolean;
+  };
+  nurse: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  doctor: {
+    _id: string;
+    name: string;
+    email: string;
+  };
   notes: string;
-  nurseId: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Monthly Investigation interface

@@ -8,181 +8,129 @@ import { Button } from 'baseui/button';
 import { Tabs, Tab } from 'baseui/tabs-motion';
 import { useNavigate } from 'react-router-dom';
 import { Patient, DialysisSession, MonthlyInvestigation } from '../../types';
+import { toaster } from 'baseui/toast'
 
-// Mock data
-const mockPatients: Record<string, Patient> = {
-  '101': {
-    id: '101',
-    name: 'John Doe',
-    age: 45,
-    gender: 'Male',
-    bloodType: 'A+',
-    contactNumber: '555-123-4567',
-    address: '123 Main St, Anytown, USA',
-    emergencyContact: '555-987-6543',
-    medicalHistory: 'Hypertension, Diabetes',
-    assignedDoctor: 'Dr. Smith',
-    registrationDate: '2024-01-15'
-  },
-  '102': {
-    id: '102',
-    name: 'Sarah Smith',
-    age: 38,
-    gender: 'Female',
-    bloodType: 'O-',
-    contactNumber: '555-234-5678',
-    address: '456 Oak Ave, Somewhere, USA',
-    emergencyContact: '555-876-5432',
-    medicalHistory: 'Chronic Kidney Disease',
-    assignedDoctor: 'Dr. Johnson',
-    registrationDate: '2024-02-20'
-  },
-  '103': {
-    id: '103',
-    name: 'Michael Johnson',
-    age: 52,
-    gender: 'Male',
-    bloodType: 'B+',
-    contactNumber: '555-345-6789',
-    address: '789 Pine Rd, Elsewhere, USA',
-    emergencyContact: '555-765-4321',
-    medicalHistory: 'Hypertension, Coronary Artery Disease',
-    assignedDoctor: 'Dr. Williams',
-    registrationDate: '2024-03-10'
-  }
-};
-
-// Mock dialysis sessions
-const mockDialysisSessions: Record<string, DialysisSession[]> = {
-  '101': [
-    {
-      id: 'ds101',
-      patientId: '101',
-      date: '2025-05-29',
-      startTime: '09:00',
-      endTime: '13:00',
-      preWeight: 82.5,
-      postWeight: 80.1,
-      ufGoal: 2.5,
-      bloodPressurePre: '140/90',
-      bloodPressurePost: '130/85',
-      heartRatePre: 78,
-      heartRatePost: 72,
-      temperaturePre: 36.8,
-      temperaturePost: 36.6,
-      symptoms: ['Fatigue', 'Mild headache'],
-      complications: [],
-      notes: 'Patient tolerated session well.',
-      nurseId: '1'
-    },
-    {
-      id: 'ds102',
-      patientId: '101',
-      date: '2025-05-26',
-      startTime: '09:00',
-      endTime: '13:00',
-      preWeight: 83.2,
-      postWeight: 80.5,
-      ufGoal: 2.7,
-      bloodPressurePre: '145/92',
-      bloodPressurePost: '135/88',
-      heartRatePre: 80,
-      heartRatePost: 74,
-      temperaturePre: 36.7,
-      temperaturePost: 36.5,
-      symptoms: ['Fatigue'],
-      complications: [],
-      notes: 'No complications during session.',
-      nurseId: '1'
-    }
-  ]
-};
-
-// Mock monthly investigations
-const mockMonthlyInvestigations: Record<string, MonthlyInvestigation[]> = {
-  '101': [
-    {
-      id: 'mi101',
-      patientId: '101',
-      date: '2025-05-15',
-      hemoglobin: 11.2,
-      hematocrit: 33.6,
-      whiteBloodCellCount: 6.8,
-      plateletCount: 210,
-      sodium: 138,
-      potassium: 4.5,
-      chloride: 102,
-      bicarbonate: 22,
-      bun: 45,
-      creatinine: 4.2,
-      glucose: 110,
-      calcium: 9.2,
-      phosphorus: 5.1,
-      albumin: 3.8,
-      totalProtein: 6.9,
-      alt: 25,
-      ast: 28,
-      alkalinePhosphatase: 95,
-      notes: 'Potassium levels slightly elevated but within acceptable range.',
-      nurseId: '1'
-    },
-    {
-      id: 'mi102',
-      patientId: '101',
-      date: '2025-04-15',
-      hemoglobin: 10.8,
-      hematocrit: 32.4,
-      whiteBloodCellCount: 7.1,
-      plateletCount: 205,
-      sodium: 139,
-      potassium: 4.8,
-      chloride: 103,
-      bicarbonate: 21,
-      bun: 48,
-      creatinine: 4.5,
-      glucose: 115,
-      calcium: 9.0,
-      phosphorus: 5.3,
-      albumin: 3.7,
-      totalProtein: 6.8,
-      alt: 27,
-      ast: 30,
-      alkalinePhosphatase: 98,
-      notes: 'Hemoglobin trending downward, may need ESA adjustment.',
-      nurseId: '1'
-    }
-  ]
-};
+import axios from 'axios'
 
 const NursePatientProfile: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
-  const [patient, setPatient] = useState<Patient | null>(null);
-  const [activeKey, setActiveKey] = useState<string | number>('0');
-  const [dialysisSessions, setDialysisSessions] = useState<DialysisSession[]>([]);
-  const [monthlyInvestigations, setMonthlyInvestigations] = useState<MonthlyInvestigation[]>([]);
-  const navigate = useNavigate();
+  const token = localStorage.getItem('userToken')
+  const navigate = useNavigate()
+
+  // Take the Patient ID from the URL parameters. This is used to fetch the specific patient's data
+  const { id } = useParams<{ id: string }>()
+
+  const [patient, setPatient] = useState<Patient | null>(null)
+  const [activeKey, setActiveKey] = useState<string | number>('0')
+  const [dialysisSessions, setDialysisSessions] = useState<DialysisSession[]>([])
+  const [monthlyInvestigations, setMonthlyInvestigations] = useState<MonthlyInvestigation[]>([])
+  const [loading, setLoading] = useState(true)
+
+  // Fetch dialysis sessions for the patient
+  const fetchDialysisSessions = async (patientId: string) => {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/dialysis-sessions/${patientId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log('Fetched dialysis sessions:', response.data);
+      setDialysisSessions(response.data.sessions || []);
+    } catch (error: any) {
+      console.error('Error fetching dialysis sessions:', error);
+      toaster.negative('Failed to fetch dialysis sessions', { autoHideDuration: 3000 });
+    }
+  };
+
+  // Fetch monthly investigations for the patient
+  const fetchMonthlyInvestigations = async (patientId: string) => {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/monthly-investigations/${patientId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log('Fetched monthly investigations:', response.data);
+      setMonthlyInvestigations(response.data.investigations || []);
+    } catch (error: any) {
+      console.error('Error fetching monthly investigations:', error);
+      toaster.negative('Failed to fetch monthly investigations', { autoHideDuration: 3000 });
+    }
+  };
+
+  // Fetch patient data by id
+  const fetchPatientById = async (patientId: string) => {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/patients/${patientId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const fetchedPatient = response.data.patient;
+      console.log('Fetched patient:', fetchedPatient);
+
+      // Set main patient info
+      setPatient({
+        id: fetchedPatient._id,
+        name: fetchedPatient.name,
+        age: fetchedPatient.age,
+        gender: fetchedPatient.gender,
+        bloodType: fetchedPatient.bloodType,
+        contactNumber: fetchedPatient.contactNumber,
+        address: fetchedPatient.fullAddress ||
+          `${fetchedPatient.address?.street || ''}, ${fetchedPatient.address?.city || ''}, ${fetchedPatient.address?.state || ''}, ${fetchedPatient.address?.zipCode || ''}, ${fetchedPatient.address?.country || ''}`,
+        emergencyContact: fetchedPatient.emergencyContact?.name && fetchedPatient.emergencyContact?.phone
+          ? `${fetchedPatient.emergencyContact.name} (${fetchedPatient.emergencyContact.relationship}) - ${fetchedPatient.emergencyContact.phone}`
+          : 'N/A',
+        medicalHistory: fetchedPatient.medicalHistory?.renalDiagnosis ||
+          (fetchedPatient.medicalHistory?.medicalProblems?.length > 0
+            ? fetchedPatient.medicalHistory.medicalProblems.join(', ')
+            : 'N/A'),
+        assignedDoctor: fetchedPatient.assignedDoctor?.name || 'N/A',
+        registrationDate: new Date(fetchedPatient.registrationDate).toLocaleDateString(),
+      })
+
+    } catch (error: any) {
+      toaster.negative('Failed to fetch the Patient data', { autoHideDuration: 3000 });
+    }
+  }
 
   useEffect(() => {
     if (id) {
-      // In a real app, these would be API calls
-      setPatient(mockPatients[id] || null);
-      setDialysisSessions(mockDialysisSessions[id] || []);
-      setMonthlyInvestigations(mockMonthlyInvestigations[id] || []);
+      const loadData = async () => {
+        setLoading(true);
+        await fetchPatientById(id);
+        await fetchDialysisSessions(id);
+        await fetchMonthlyInvestigations(id);
+        setLoading(false);
+      };
+      loadData();
     }
-  }, [id]);
+  }, [id])
+
+  if (loading) {
+    return (
+      <Block display="flex" justifyContent="center" alignItems="center" height="200px">
+        <Block>Loading patient data...</Block>
+      </Block>
+    );
+  }
 
   if (!patient) {
-    return <Block>Patient not found</Block>;
+    return <Block>Patient not found</Block>
   }
 
   return (
     <Block>
       <HeadingLarge>Patient Profile</HeadingLarge>
-
       <Grid gridMargins={[16, 32]} gridGutters={[16, 32]} gridMaxWidth={1200}>
+        {/* 1. Basic patient information displayed in a card format */}
         <Cell span={[4, 8, 4]}>
           <Card>
             <StyledBody>
+
               <Block display="flex" flexDirection="column" alignItems="center" marginBottom="16px">
                 <Block
                   width="100px"
@@ -201,7 +149,7 @@ const NursePatientProfile: React.FC = () => {
                   {patient.name}
                 </HeadingMedium>
                 <Block font="font400" marginBottom="8px">
-                  ID: {patient.id}
+                  Patient ID: {patient.id}
                 </Block>
               </Block>
 
@@ -253,6 +201,7 @@ const NursePatientProfile: React.FC = () => {
           </Card>
         </Cell>
 
+        {/* 2. Displaying the tabs for different sections of the patient profile */}
         <Cell span={[4, 8, 8]}>
           <Card>
             <StyledBody>
@@ -261,6 +210,7 @@ const NursePatientProfile: React.FC = () => {
                 onChange={({ activeKey }) => setActiveKey(String(activeKey))}
                 activateOnFocus
               >
+                {/* Tab 1: Overview */}
                 <Tab title="Overview">
                   <Block padding="16px">
                     <HeadingMedium marginTop="0">Patient Overview</HeadingMedium>
@@ -272,17 +222,17 @@ const NursePatientProfile: React.FC = () => {
                       {dialysisSessions.length > 0 ? (
                         <Block>
                           <Block marginBottom="8px">
-                            <strong>Last session:</strong> {dialysisSessions[0].date}
+                            <strong>Last session:</strong> {new Date(dialysisSessions[0].date).toLocaleDateString()}
                           </Block>
                           <Block marginBottom="16px">
                             <ParagraphMedium>
-                              Pre-weight: {dialysisSessions[0].preWeight} kg,
-                              Post-weight: {dialysisSessions[0].postWeight} kg,
-                              UF Goal: {dialysisSessions[0].ufGoal} L
+                              Pre-weight: {dialysisSessions[0].preDialysis.weight} kg,
+                              Post-weight: {dialysisSessions[0].postDialysis?.weight || 'N/A'} kg,
+                              UF Goal: {dialysisSessions[0].dialysisParameters.ufGoal} L
                             </ParagraphMedium>
                           </Block>
                           <Button
-                            onClick={() => navigate(`/nurse/patients/${id}/dialysis-session`)}
+                            onClick={() => navigate(`/nurse/patients/${patient.id}/dialysis-session`)}
                             size="compact"
                           >
                             New Dialysis Session
@@ -292,7 +242,7 @@ const NursePatientProfile: React.FC = () => {
                         <Block>
                           <ParagraphMedium>No recent dialysis sessions</ParagraphMedium>
                           <Button
-                            onClick={() => navigate(`/nurse/patients/${id}/dialysis-session`)}
+                            onClick={() => navigate(`/nurse/patients/${patient.id}/dialysis-session`)}
                             size="compact"
                           >
                             New Dialysis Session
@@ -318,7 +268,7 @@ const NursePatientProfile: React.FC = () => {
                             </ParagraphMedium>
                           </Block>
                           <Button
-                            onClick={() => navigate(`/nurse/patients/${id}/monthly-investigation`)}
+                            onClick={() => navigate(`/nurse/patients/${patient.id}/monthly-investigation`)}
                             size="compact"
                           >
                             New Monthly Investigation
@@ -328,7 +278,7 @@ const NursePatientProfile: React.FC = () => {
                         <Block>
                           <ParagraphMedium>No monthly investigations</ParagraphMedium>
                           <Button
-                            onClick={() => navigate(`/nurse/patients/${id}/monthly-investigation`)}
+                            onClick={() => navigate(`/nurse/patients/${patient.id}/monthly-investigation`)}
                             size="compact"
                           >
                             New Monthly Investigation
@@ -339,13 +289,16 @@ const NursePatientProfile: React.FC = () => {
 
                     <Block>
                       <Button
-                        onClick={() => navigate(`/nurse/trend-analysis/${id}`)}
+                        onClick={() => navigate(`/nurse/trend-analysis/${patient.id}`)}
                       >
                         View Trend Analysis
                       </Button>
                     </Block>
+
                   </Block>
                 </Tab>
+
+                {/* Tab 2: Dialysis Sessions */}
                 <Tab title="Dialysis Sessions">
                   <Block padding="16px">
                     <Block display="flex" justifyContent="space-between" alignItems="center" marginBottom="16px">
@@ -353,7 +306,7 @@ const NursePatientProfile: React.FC = () => {
                         Dialysis Sessions
                       </HeadingMedium>
                       <Button
-                        onClick={() => navigate(`/nurse/patients/${id}/dialysis-session`)}
+                        onClick={() => navigate(`/nurse/patients/${patient.id}/dialysis-session`)}
                       >
                         New Session
                       </Button>
@@ -369,37 +322,71 @@ const NursePatientProfile: React.FC = () => {
                         >
                           <Block display="flex" justifyContent="space-between" marginBottom="8px">
                             <HeadingSmall marginTop="0" marginBottom="0">
-                              Session on {session.date}
+                              Session on {new Date(session.date).toLocaleDateString()}
                             </HeadingSmall>
-                            <Block>{session.startTime} - {session.endTime}</Block>
+                            <Block>
+                              {session.startTime} - {session.endTime || 'In Progress'} 
+                              <Block as="span" marginLeft="8px" font="font300">
+                                ({session.status})
+                              </Block>
+                            </Block>
                           </Block>
 
                           <Block marginBottom="8px">
-                            <strong>Weight:</strong> Pre: {session.preWeight} kg, Post: {session.postWeight} kg (UF Goal: {session.ufGoal} L)
+                            <strong>Weight:</strong> Pre: {session.preDialysis.weight} kg, 
+                            Post: {session.postDialysis?.weight || 'N/A'} kg 
+                            (UF Goal: {session.dialysisParameters.ufGoal} L, 
+                            UF Achieved: {session.dialysisParameters.ufAchieved || 'N/A'} L)
                           </Block>
 
                           <Block marginBottom="8px">
-                            <strong>Vitals:</strong> BP Pre: {session.bloodPressurePre}, BP Post: {session.bloodPressurePost},
-                            HR Pre: {session.heartRatePre}, HR Post: {session.heartRatePost}
+                            <strong>Vitals:</strong> 
+                            BP Pre: {session.preDialysis.bloodPressure.systolic}/{session.preDialysis.bloodPressure.diastolic}, 
+                            BP Post: {session.postDialysis?.bloodPressure ? `${session.postDialysis.bloodPressure.systolic}/${session.postDialysis.bloodPressure.diastolic}` : 'N/A'},
+                            HR Pre: {session.preDialysis.heartRate}, 
+                            HR Post: {session.postDialysis?.heartRate || 'N/A'}
                           </Block>
 
-                          {session.symptoms.length > 0 && (
+                          <Block marginBottom="8px">
+                            <strong>Dialysis Parameters:</strong> 
+                            Blood Flow: {session.dialysisParameters.bloodFlow} mL/min, 
+                            Dialysate Flow: {session.dialysisParameters.dialysateFlow} mL/min
+                          </Block>
+
+                          <Block marginBottom="8px">
+                            <strong>Vascular Access:</strong> 
+                            {session.vascularAccess.type} at {session.vascularAccess.site}
+                          </Block>
+
+                          {session.adequacyParameters && (
                             <Block marginBottom="8px">
-                              <strong>Symptoms:</strong> {session.symptoms.join(', ')}
+                              <strong>Adequacy:</strong> 
+                              Kt/V: {session.adequacyParameters.ktv || 'N/A'}, 
+                              URR: {session.adequacyParameters.urr || 'N/A'}%
                             </Block>
                           )}
 
-                          {session.complications.length > 0 && (
+                          {session.complications && session.complications.length > 0 && (
                             <Block marginBottom="8px">
                               <strong>Complications:</strong> {session.complications.join(', ')}
                             </Block>
                           )}
+
+                          <Block marginBottom="8px">
+                            <strong>Nurse:</strong> {session.nurse.name}
+                          </Block>
 
                           {session.notes && (
                             <Block marginBottom="8px">
                               <strong>Notes:</strong> {session.notes}
                             </Block>
                           )}
+
+                          <Block marginBottom="8px">
+                            <strong>Quality Indicators:</strong> 
+                            Session Completed: {session.qualityIndicators.sessionCompleted ? 'Yes' : 'No'}, 
+                            Prescription Achieved: {session.qualityIndicators.prescriptionAchieved ? 'Yes' : 'No'}
+                          </Block>
                         </Block>
                       ))
                     ) : (
@@ -407,6 +394,8 @@ const NursePatientProfile: React.FC = () => {
                     )}
                   </Block>
                 </Tab>
+
+                {/* Tab 3: Monthly Investigations */}
                 <Tab title="Monthly Investigations">
                   <Block padding="16px">
                     <Block display="flex" justifyContent="space-between" alignItems="center" marginBottom="16px">
@@ -414,7 +403,7 @@ const NursePatientProfile: React.FC = () => {
                         Monthly Investigations
                       </HeadingMedium>
                       <Button
-                        onClick={() => navigate(`/nurse/patients/${id}/monthly-investigation`)}
+                        onClick={() => navigate(`/nurse/patients/${patient.id}/monthly-investigation`)}
                       >
                         New Investigation
                       </Button>
@@ -479,6 +468,7 @@ const NursePatientProfile: React.FC = () => {
                     )}
                   </Block>
                 </Tab>
+
               </Tabs>
             </StyledBody>
           </Card>

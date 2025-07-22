@@ -7,16 +7,8 @@ const router = express.Router();
 // @desc    Get all patients
 // @route   GET /api/patients
 // @access  Private
-router.get('/', protect, async (req, res) => {
+router.get('/', protect, authorize('doctor', 'nurse'), async (req, res) => {
   try {
-    // Only allow doctor and nurse to view patient data
-    if (req.user.role !== 'doctor' && req.user.role !== 'nurse') {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied: Only doctors and nurses can view patients'
-      });
-    }
-
     const query = {};
 
     const patients = await Patient.find(query)
@@ -41,13 +33,12 @@ router.get('/', protect, async (req, res) => {
       error: error.message
     });
   }
-});
-
+})
 
 // @desc    Get patient by ID
 // @route   GET /api/patients/:id
 // @access  Private
-router.get('/:id', protect, checkPatientAssignment, async (req, res) => {
+router.get('/:id', protect, authorize('doctor', 'nurse'), async (req, res) => {
   try {
     const patient = await Patient.findById(req.params.id)
       .populate('assignedDoctor', 'name email phoneNumber specialization')
