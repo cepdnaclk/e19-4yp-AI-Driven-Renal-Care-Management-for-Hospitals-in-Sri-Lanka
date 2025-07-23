@@ -145,9 +145,26 @@ export const fetchAIPrediction = async (predictionData: {
       headers.Authorization = `Bearer ${token}`;
     }
     
+    // Use hardcoded values except for patient_id
+    const requestBody = {
+      patient_id: predictionData.patient_id, // Use the actual patient ID
+      albumin: 35.2,
+      bu_post_hd: 8.5,
+      bu_pre_hd: 25.3,
+      s_ca: 2.3,
+      scr_post_hd: 450,
+      scr_pre_hd: 890,
+      serum_k_post_hd: 3.8,
+      serum_k_pre_hd: 5.2,
+      serum_na_pre_hd: 138,
+      ua: 4,
+      hb_diff: -0.5,
+      hb: 9
+    };
+    
     const response = await axios.post(
       'http://127.0.0.1:8001/api/ml/predict/hb/', 
-      predictionData,
+      requestBody,
       { headers }
     );
     

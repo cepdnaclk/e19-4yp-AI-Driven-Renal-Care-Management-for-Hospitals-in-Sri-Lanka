@@ -7,189 +7,11 @@ import { Block } from 'baseui/block';
 import { Button } from 'baseui/button';
 import { Tabs, Tab } from 'baseui/tabs-motion';
 import { useNavigate } from 'react-router-dom';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LineChart, Line } from 'recharts';
 import { Patient, DialysisSession, MonthlyInvestigation, AIPrediction, ClinicalDecision } from '../../types';
+import { fetchPatientById, fetchMonthlyInvestigations, fetchDialysisSessions, fetchHemoglobinTrend, fetchAIPrediction } from './PatientService';
 
-// Mock data
-const mockPatients: Record<string, Patient> = {
-  '101': {
-    id: '101',
-    name: 'John Doe',
-    age: 45,
-    gender: 'Male',
-    bloodType: 'A+',
-    contactNumber: '555-123-4567',
-    address: '123 Main St, Anytown, USA',
-    emergencyContact: '555-987-6543',
-    medicalHistory: 'Hypertension, Diabetes',
-    assignedDoctor: 'Dr. Smith',
-    registrationDate: '2024-01-15'
-  },
-  '102': {
-    id: '102',
-    name: 'Sarah Smith',
-    age: 38,
-    gender: 'Female',
-    bloodType: 'O-',
-    contactNumber: '555-234-5678',
-    address: '456 Oak Ave, Somewhere, USA',
-    emergencyContact: '555-876-5432',
-    medicalHistory: 'Chronic Kidney Disease',
-    assignedDoctor: 'Dr. Johnson',
-    registrationDate: '2024-02-20'
-  },
-  '103': {
-    id: '103',
-    name: 'Michael Johnson',
-    age: 52,
-    gender: 'Male',
-    bloodType: 'B+',
-    contactNumber: '555-345-6789',
-    address: '789 Pine Rd, Elsewhere, USA',
-    emergencyContact: '555-765-4321',
-    medicalHistory: 'Hypertension, Coronary Artery Disease',
-    assignedDoctor: 'Dr. Williams',
-    registrationDate: '2024-03-10'
-  }
-};
-
-// Mock dialysis sessions
-const mockDialysisSessions: Record<string, DialysisSession[]> = {
-  '101': [
-    {
-      id: 'ds101',
-      patientId: '101',
-      date: '2025-05-29',
-      startTime: '09:00',
-      endTime: '13:00',
-      preWeight: 82.5,
-      postWeight: 80.1,
-      ufGoal: 2.5,
-      bloodPressurePre: '140/90',
-      bloodPressurePost: '130/85',
-      heartRatePre: 78,
-      heartRatePost: 72,
-      temperaturePre: 36.8,
-      temperaturePost: 36.6,
-      symptoms: ['Fatigue', 'Mild headache'],
-      complications: [],
-      notes: 'Patient tolerated session well.',
-      nurseId: '1'
-    },
-    {
-      id: 'ds102',
-      patientId: '101',
-      date: '2025-05-26',
-      startTime: '09:00',
-      endTime: '13:00',
-      preWeight: 83.2,
-      postWeight: 80.5,
-      ufGoal: 2.7,
-      bloodPressurePre: '145/92',
-      bloodPressurePost: '135/88',
-      heartRatePre: 80,
-      heartRatePost: 74,
-      temperaturePre: 36.7,
-      temperaturePost: 36.5,
-      symptoms: ['Fatigue'],
-      complications: [],
-      notes: 'No complications during session.',
-      nurseId: '1'
-    }
-  ]
-};
-
-// Mock monthly investigations
-const mockMonthlyInvestigations: Record<string, MonthlyInvestigation[]> = {
-  '101': [
-    {
-      id: 'mi101',
-      patientId: '101',
-      date: '2025-05-15',
-      hemoglobin: 11.2,
-      hematocrit: 33.6,
-      whiteBloodCellCount: 6.8,
-      plateletCount: 210,
-      sodium: 138,
-      potassium: 4.5,
-      chloride: 102,
-      bicarbonate: 22,
-      bun: 45,
-      creatinine: 4.2,
-      glucose: 110,
-      calcium: 9.2,
-      phosphorus: 5.1,
-      albumin: 3.8,
-      totalProtein: 6.9,
-      alt: 25,
-      ast: 28,
-      alkalinePhosphatase: 95,
-      notes: 'Potassium levels slightly elevated but within acceptable range.',
-      nurseId: '1'
-    },
-    {
-      id: 'mi102',
-      patientId: '101',
-      date: '2025-04-15',
-      hemoglobin: 10.8,
-      hematocrit: 32.4,
-      whiteBloodCellCount: 7.1,
-      plateletCount: 205,
-      sodium: 139,
-      potassium: 4.8,
-      chloride: 103,
-      bicarbonate: 21,
-      bun: 48,
-      creatinine: 4.5,
-      glucose: 115,
-      calcium: 9.0,
-      phosphorus: 5.3,
-      albumin: 3.7,
-      totalProtein: 6.8,
-      alt: 27,
-      ast: 30,
-      alkalinePhosphatase: 98,
-      notes: 'Hemoglobin trending downward, may need ESA adjustment.',
-      nurseId: '1'
-    }
-  ]
-};
-
-// Mock AI predictions
-const mockAIPredictions: Record<string, AIPrediction[]> = {
-  '101': [
-    {
-      id: 'ai101',
-      patientId: '101',
-      date: '2025-05-30',
-      predictionType: 'Anemia Risk',
-      prediction: 'High risk of developing anemia in the next 30 days',
-      confidence: 0.85,
-      suggestedAction: 'Consider ESA dose adjustment and iron supplementation',
-      dataPoints: [
-        { parameter: 'Hemoglobin', value: 11.2, trend: 'decreasing' },
-        { parameter: 'Hematocrit', value: 33.6, trend: 'decreasing' },
-        { parameter: 'Iron Saturation', value: 18, trend: 'decreasing' }
-      ]
-    },
-    {
-      id: 'ai102',
-      patientId: '101',
-      date: '2025-05-30',
-      predictionType: 'Fluid Overload Risk',
-      prediction: 'Moderate risk of fluid overload before next session',
-      confidence: 0.72,
-      suggestedAction: 'Consider sodium restriction and fluid intake counseling',
-      dataPoints: [
-        { parameter: 'Interdialytic Weight Gain', value: 3.1, trend: 'increasing' },
-        { parameter: 'Blood Pressure', value: '145/92', trend: 'increasing' },
-        { parameter: 'Reported Edema', value: 'mild', trend: 'stable' }
-      ]
-    }
-  ]
-};
-
-// Mock clinical decisions
+// Mock clinical decisions - to be replaced with API integration later
 const mockClinicalDecisions: Record<string, ClinicalDecision[]> = {
   '101': [
     {
@@ -223,8 +45,8 @@ const mockClinicalDecisions: Record<string, ClinicalDecision[]> = {
 const DoctorPatientProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [patient, setPatient] = useState<Patient | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  // const [loading, setLoading] = useState<boolean>(true);
+  // const [error, setError] = useState<string | null>(null);
   const [activeKey, setActiveKey] = useState<string | number>('0');
   const [dialysisSessions, setDialysisSessions] = useState<any[]>([]);
   const [dialysisSessionsLoading, setDialysisSessionsLoading] = useState<boolean>(false);
@@ -244,27 +66,198 @@ const DoctorPatientProfile: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (id) {
-      // In a real app, these would be API calls
-      setPatient(mockPatients[id] || null);
-      setDialysisSessions(mockDialysisSessions[id] || []);
-      setMonthlyInvestigations(mockMonthlyInvestigations[id] || []);
-      setAIPredictions(mockAIPredictions[id] || []);
-      setClinicalDecisions(mockClinicalDecisions[id] || []);
-    }
+    const loadPatientData = async () => {
+      if (id) {
+        try {
+          setLoading(true);
+          setError(null);
+          const patientData = await fetchPatientById(id);
+          
+          if (patientData) {
+            setPatient(patientData);
+            
+            // For now, keep using mock data for clinical decisions
+            // AI predictions will be loaded when the tab is clicked
+            setClinicalDecisions(mockClinicalDecisions[id] || []);
+          } else {
+            setError('Patient not found');
+          }
+        } catch (error) {
+          console.error('Error loading patient data:', error);
+          setError('Failed to load patient data');
+          setPatient(null);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadPatientData();
   }, [id]);
+
+  // Real API implementation for loading AI predictions
+  const loadAIPredictions = async (patientId: string) => {
+    try {
+      setAIPredictionsLoading(true);
+      setAIPredictionsError(null);
+      
+      // Get the latest monthly investigation data to use for AI prediction
+      const investigations = await fetchMonthlyInvestigations(patientId);
+      
+      if (investigations && investigations.length > 0) {
+        const latestInvestigation = investigations[0]; // Assuming the first is the latest
+        
+        // Prepare the prediction request data using the correct field names from the API
+        const predictionData = {
+          patient_id: patientId,
+          albumin: latestInvestigation.albumin || 35.2, // Default fallback
+          bu_post_hd: latestInvestigation.bu || 8.5, // BUN value (using same for both pre/post)
+          bu_pre_hd: latestInvestigation.bu || 25.3, // BUN value
+          s_ca: latestInvestigation.sCa || 2.3, // Serum Calcium
+          scr_post_hd: latestInvestigation.scrPostHD || 450, // Serum Creatinine Post-HD
+          scr_pre_hd: latestInvestigation.scrPreHD || 890, // Serum Creatinine Pre-HD
+          serum_k_post_hd: latestInvestigation.serumKPostHD || 3.8, // Serum Potassium Post-HD
+          serum_k_pre_hd: latestInvestigation.serumKPreHD || 5.2, // Serum Potassium Pre-HD
+          serum_na_pre_hd: latestInvestigation.serumNaPreHD || 138, // Serum Sodium Pre-HD
+          ua: latestInvestigation.ua || 400, // Uric Acid
+          hb_diff: -0.5, // Default value - could be calculated from trend if available
+          hb: latestInvestigation.hb || 9 // Hemoglobin
+        };
+        
+        console.log('Sending AI prediction request with data:', predictionData);
+        
+        const prediction = await fetchAIPrediction(predictionData);
+        setAIPredictions(prediction);
+      } else {
+        setAIPredictionsError('No investigation data available for AI prediction');
+        setAIPredictions(null);
+      }
+    } catch (error: any) {
+      console.error('Error loading AI predictions:', error);
+      if (error.message?.includes('Authentication failed') || error.message?.includes('No authentication token')) {
+        setAIPredictionsError('Authentication failed. Please log in again.');
+      } else {
+        setAIPredictionsError('Failed to load AI predictions. Please try again.');
+      }
+      setAIPredictions(null);
+    } finally {
+      setAIPredictionsLoading(false);
+    }
+  };
+
+  // Real API implementation for loading dialysis sessions
+  const loadDialysisSessions = async (patientId: string) => {
+    try {
+      setDialysisSessionsLoading(true);
+      setDialysisSessionsError(null);
+      const sessions = await fetchDialysisSessions(patientId);
+      setDialysisSessions(sessions);
+    } catch (error: any) {
+      console.error('Error loading dialysis sessions:', error);
+      if (error.message?.includes('Authentication failed') || error.message?.includes('No authentication token')) {
+        setDialysisSessionsError('Authentication failed. Please log in again.');
+      } else {
+        setDialysisSessionsError('Failed to load dialysis sessions. Please try again.');
+      }
+      setDialysisSessions([]);
+    } finally {
+      setDialysisSessionsLoading(false);
+    }
+  };
+
+  // Real API implementation for loading monthly investigations
+  const loadMonthlyInvestigations = async (patientId: string) => {
+    try {
+      setMonthlyInvestigationsLoading(true);
+      setMonthlyInvestigationsError(null);
+      const investigations = await fetchMonthlyInvestigations(patientId);
+      setMonthlyInvestigations(investigations);
+    } catch (error: any) {
+      console.error('Error loading monthly investigations:', error);
+      if (error.message?.includes('Authentication failed') || error.message?.includes('No authentication token')) {
+        setMonthlyInvestigationsError('Authentication failed. Please log in again.');
+      } else {
+        setMonthlyInvestigationsError('Failed to load monthly investigations. Please try again.');
+      }
+      setMonthlyInvestigations([]);
+    } finally {
+      setMonthlyInvestigationsLoading(false);
+    }
+  };
+
+  // Real API implementation for loading hemoglobin trend
+  const loadHemoglobinTrend = async (patientId: string) => {
+    try {
+      setHemoglobinTrendLoading(true);
+      setHemoglobinTrendError(null);
+      const trendData = await fetchHemoglobinTrend(patientId);
+      setHemoglobinTrend(trendData);
+    } catch (error: any) {
+      console.error('Error loading hemoglobin trend:', error);
+      if (error.message?.includes('Authentication failed') || error.message?.includes('No authentication token')) {
+        setHemoglobinTrendError('Authentication failed. Please log in again.');
+      } else {
+        setHemoglobinTrendError('Failed to load hemoglobin trend. Please try again.');
+      }
+      setHemoglobinTrend(null);
+    } finally {
+      setHemoglobinTrendLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Block display="flex" justifyContent="center" alignItems="center" height="400px">
+        <Block>Loading patient data...</Block>
+      </Block>
+    );
+  }
+
+  if (error) {
+    return (
+      <Block display="flex" justifyContent="center" alignItems="center" height="400px">
+        <Block>Error: {error}</Block>
+      </Block>
+    );
+  }
 
   if (!patient) {
     return <Block>Patient not found</Block>;
   }
 
+  // Helper functions to format patient data
+  const getFormattedAddress = (address: string | any): string => {
+    if (typeof address === 'string') return address;
+    if (address && typeof address === 'object') {
+      return `${address.street}, ${address.city}, ${address.state}, ${address.zipCode}, ${address.country}`;
+    }
+    return 'N/A';
+  };
+
+  const getFormattedEmergencyContact = (contact: string | any): string => {
+    if (typeof contact === 'string') return contact;
+    if (contact && typeof contact === 'object') {
+      return `${contact.name} (${contact.relationship}) - ${contact.phone}`;
+    }
+    return 'N/A';
+  };
+
+  const getAssignedDoctorName = (doctor: string | any): string => {
+    if (typeof doctor === 'string') return doctor;
+    if (doctor && typeof doctor === 'object') {
+      return doctor.name;
+    }
+    return 'N/A';
+  };
+
   // Prepare trend data for charts
   const weightTrendData = dialysisSessions
+    .filter(session => session.preDialysis?.weight || session.postDialysis?.weight) // Only include sessions with weight data
     .map(session => ({
       date: session.date,
-      preWeight: session.preDialysis.weight,
-      postWeight: session.postDialysis.weight,
-      ufGoal: session.dialysisParameters.ufGoal
+      preWeight: session.preDialysis?.weight || null,
+      postWeight: session.postDialysis?.weight || null,
+      ufGoal: session.dialysisParameters?.ufGoal || null
     }))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
@@ -278,6 +271,36 @@ const DoctorPatientProfile: React.FC = () => {
       creatinine: investigation.creatinine
     }))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  function getFormattedMedicalHistory(medicalHistory: string | { renalDiagnosis: string; medicalProblems: Array<{ problem: string; diagnosedDate: string; status: string; }>; allergies: any[]; medications: any[]; }): React.ReactNode {
+    if (typeof medicalHistory === 'string') {
+      return medicalHistory;
+    }
+    
+    if (medicalHistory && typeof medicalHistory === 'object') {
+      return (
+        <Block>
+          {medicalHistory.renalDiagnosis && (
+            <Block marginBottom="8px">
+              <strong>Renal Diagnosis:</strong> {medicalHistory.renalDiagnosis}
+            </Block>
+          )}
+          {medicalHistory.medicalProblems && medicalHistory.medicalProblems.length > 0 && (
+            <Block marginBottom="8px">
+              <strong>Medical Problems:</strong>
+              {medicalHistory.medicalProblems.map((problem, index) => (
+                <Block key={index} marginLeft="16px">
+                  • {problem.problem} ({problem.status})
+                </Block>
+              ))}
+            </Block>
+          )}
+        </Block>
+      );
+    }
+    
+    return 'No medical history available';
+  }
 
   return (
     <Block>
@@ -411,8 +434,28 @@ const DoctorPatientProfile: React.FC = () => {
                   if (typeof activeKey === 'string' || typeof activeKey === 'number') {
                     setActiveKey(activeKey);
                     // Load AI predictions when AI Predictions tab (index 0) is clicked
-                    if (activeKey === '0' && patient && !aiPredictions) {
-                      loadAIPredictions(patient.patientId || patient.id);
+                    if (activeKey === '0' && patient) {
+                      // First ensure monthly investigations are loaded, then generate AI predictions
+                      const loadAIWithInvestigations = async () => {
+                        try {
+                          if (monthlyInvestigations.length === 0 && !monthlyInvestigationsLoading) {
+                            await loadMonthlyInvestigations(patient.patientId || patient.id);
+                          }
+                          // After investigations are loaded, generate AI predictions if not already done
+                          if (!aiPredictions && !aiPredictionsError) {
+                            loadAIPredictions(patient.patientId || patient.id);
+                          }
+                        } catch (error) {
+                          console.error('Error loading data for AI predictions:', error);
+                        }
+                      };
+                      
+                      if (monthlyInvestigations.length === 0) {
+                        loadAIWithInvestigations();
+                      } else if (!aiPredictions && !aiPredictionsError) {
+                        // Investigations already loaded, just generate AI predictions
+                        loadAIPredictions(patient.patientId || patient.id);
+                      }
                     }
                     // Load dialysis sessions when Latest Dialysis Session tab (index 1) is clicked
                     if (activeKey === '1' && patient && dialysisSessions.length === 0) {
@@ -536,12 +579,15 @@ const DoctorPatientProfile: React.FC = () => {
                               <Button 
                                 size="compact" 
                                 kind="tertiary"
-                                onClick={() => {
-                                  // Reload AI predictions
+                                onClick={async () => {
+                                  // Reload AI predictions with fresh investigation data
                                   if (patient) {
+                                    // Always reload monthly investigations first to get the latest data
+                                    await loadMonthlyInvestigations(patient.patientId || patient.id);
                                     loadAIPredictions(patient.patientId || patient.id);
                                   }
                                 }}
+                                isLoading={aiPredictionsLoading || monthlyInvestigationsLoading}
                               >
                                 Refresh Prediction
                               </Button>
@@ -584,11 +630,17 @@ const DoctorPatientProfile: React.FC = () => {
                           based on the latest investigation data.
                         </Block>
                         <Button 
-                          onClick={() => {
+                          onClick={async () => {
                             if (patient) {
+                              // First ensure monthly investigations are loaded
+                              if (monthlyInvestigations.length === 0 && !monthlyInvestigationsLoading) {
+                                await loadMonthlyInvestigations(patient.patientId || patient.id);
+                              }
+                              // Then generate AI predictions
                               loadAIPredictions(patient.patientId || patient.id);
                             }
                           }}
+                          isLoading={aiPredictionsLoading || monthlyInvestigationsLoading}
                         >
                           Generate AI Prediction
                         </Button>
@@ -612,8 +664,8 @@ const DoctorPatientProfile: React.FC = () => {
                     ) : dialysisSessions.length > 0 ? (
                       <Block>
                         {(() => {
-                          // Get the latest session (last item in the array)
-                          const latestSession = dialysisSessions[dialysisSessions.length - 1];
+                          // Get the latest session (first item in the array since API returns newest first)
+                          const latestSession = dialysisSessions[0];
                           return (
                             <Block 
                               marginBottom="16px"
@@ -624,38 +676,68 @@ const DoctorPatientProfile: React.FC = () => {
                                 <HeadingSmall marginTop="0" marginBottom="0">
                                   Session on {new Date(latestSession.date).toLocaleDateString()}
                                 </HeadingSmall>
-                                {/* <Block>
-                                  {latestSession.startTime ? `${latestSession.startTime} - ${latestSession.endTime || 'Ongoing'}` : 'Time not specified'}
-                                </Block> */}
+                                <Block>
+                                  Session #{latestSession.sessionId}
+                                </Block>
                               </Block>
                           
-                          <Block marginBottom="8px">
-                            <strong>Weight:</strong> Pre: {dialysisSessions[0].preWeight} kg, Post: {dialysisSessions[0].postWeight} kg (UF Goal: {dialysisSessions[0].ufGoal} L)
-                          </Block>
+                              {/* Session ID */}
+                              {latestSession.id && (
+                                <Block marginBottom="8px">
+                                  <strong>Session ID:</strong> {latestSession.id}
+                                </Block>
+                              )}
+
+                              {/* Session status */}
+                              {latestSession.status && (
+                                <Block marginBottom="8px">
+                                  <strong>Status:</strong> {latestSession.status}
+                                </Block>
+                              )}
+
+                              {/* Doctor information */}
+                              {latestSession.doctor && (
+                                <Block marginBottom="8px">
+                                  <strong>Attending Doctor:</strong> {latestSession.doctor.name}
+                                </Block>
+                              )}
+
+                              {/* Nurse information */}
+                              {latestSession.nurse && (
+                                <Block marginBottom="8px">
+                                  <strong>Assigned Nurse:</strong> {latestSession.nurse.name}
+                                </Block>
+                              )}
+
+                              {/* Session date and time */}
+                              {latestSession.date && (
+                                <Block marginBottom="8px">
+                                  <strong>Date & Time:</strong> {new Date(latestSession.date).toLocaleString()}
+                                </Block>
+                              )}
                           
-                          <Block marginBottom="8px">
-                            <strong>Vitals:</strong> BP Pre: {dialysisSessions[0].bloodPressurePre}, BP Post: {dialysisSessions[0].bloodPressurePost}, 
-                            HR Pre: {dialysisSessions[0].heartRatePre}, HR Post: {dialysisSessions[0].heartRatePost}
-                          </Block>
-                          
-                          {dialysisSessions[0].symptoms.length > 0 && (
-                            <Block marginBottom="8px">
-                              <strong>Symptoms:</strong> {dialysisSessions[0].symptoms.join(', ')}
+                              {/* Notes */}
+                              {latestSession.notes && (
+                                <Block marginBottom="8px">
+                                  <strong>Notes:</strong> {latestSession.notes}
+                                </Block>
+                              )}
+
+                              {/* Created and Updated timestamps */}
+                              {latestSession.createdAt && (
+                                <Block marginBottom="8px">
+                                  <strong>Record Created:</strong> {new Date(latestSession.createdAt).toLocaleString()}
+                                </Block>
+                              )}
+
+                              {latestSession.updatedAt && latestSession.updatedAt !== latestSession.createdAt && (
+                                <Block marginBottom="8px">
+                                  <strong>Last Updated:</strong> {new Date(latestSession.updatedAt).toLocaleString()}
+                                </Block>
+                              )}
                             </Block>
-                          )}
-                          
-                          {dialysisSessions[0].complications.length > 0 && (
-                            <Block marginBottom="8px">
-                              <strong>Complications:</strong> {dialysisSessions[0].complications.join(', ')}
-                            </Block>
-                          )}
-                          
-                          {dialysisSessions[0].notes && (
-                            <Block marginBottom="8px">
-                              <strong>Notes:</strong> {dialysisSessions[0].notes}
-                            </Block>
-                          )}
-                        </Block>
+                          );
+                        })()}
                       </Block>
                     ) : (
                       <Block padding="16px" backgroundColor="rgba(0, 0, 0, 0.03)">

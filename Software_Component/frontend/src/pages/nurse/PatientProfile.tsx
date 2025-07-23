@@ -58,43 +58,123 @@ const mockDialysisSessions: Record<string, DialysisSession[]> = {
   '101': [
     {
       id: 'ds101',
+      sessionId: '1',
       patientId: '101',
       date: '2025-05-29',
       startTime: '09:00',
       endTime: '13:00',
-      preWeight: 82.5,
-      postWeight: 80.1,
-      ufGoal: 2.5,
-      bloodPressurePre: '140/90',
-      bloodPressurePost: '130/85',
-      heartRatePre: 78,
-      heartRatePost: 72,
-      temperaturePre: 36.8,
-      temperaturePost: 36.6,
-      symptoms: ['Fatigue', 'Mild headache'],
+      duration: 240,
+      status: 'COMPLETED',
+      preDialysis: {
+        weight: 82.5,
+        bloodPressure: {
+          systolic: 140,
+          diastolic: 90
+        },
+        heartRate: 78,
+        temperature: 36.8
+      },
+      postDialysis: {
+        weight: 80.1,
+        bloodPressure: {
+          systolic: 130,
+          diastolic: 85
+        },
+        heartRate: 72,
+        temperature: 36.6
+      },
+      dialysisParameters: {
+        ufGoal: 2.5,
+        ufAchieved: 2.4,
+        bloodFlow: 300,
+        dialysateFlow: 500
+      },
+      adequacyParameters: {
+        ktv: 1.3,
+        urr: 68
+      },
+      vascularAccess: {
+        type: 'AVF',
+        site: 'Left forearm'
+      },
       complications: [],
+      qualityIndicators: {
+        sessionCompleted: true,
+        prescriptionAchieved: true
+      },
+      nurse: {
+        _id: '1',
+        name: 'Nurse Smith',
+        email: 'nurse@example.com'
+      },
+      doctor: {
+        _id: '2',
+        name: 'Dr. Johnson',
+        email: 'doctor@example.com'
+      },
       notes: 'Patient tolerated session well.',
-      nurseId: '1'
+      createdAt: '2025-05-29T09:00:00Z',
+      updatedAt: '2025-05-29T13:00:00Z'
     },
     {
       id: 'ds102',
+      sessionId: '2',
       patientId: '101',
       date: '2025-05-26',
       startTime: '09:00',
       endTime: '13:00',
-      preWeight: 83.2,
-      postWeight: 80.5,
-      ufGoal: 2.7,
-      bloodPressurePre: '145/92',
-      bloodPressurePost: '135/88',
-      heartRatePre: 80,
-      heartRatePost: 74,
-      temperaturePre: 36.7,
-      temperaturePost: 36.5,
-      symptoms: ['Fatigue'],
+      duration: 240,
+      status: 'COMPLETED',
+      preDialysis: {
+        weight: 83.2,
+        bloodPressure: {
+          systolic: 145,
+          diastolic: 92
+        },
+        heartRate: 80,
+        temperature: 36.7
+      },
+      postDialysis: {
+        weight: 80.5,
+        bloodPressure: {
+          systolic: 135,
+          diastolic: 88
+        },
+        heartRate: 74,
+        temperature: 36.5
+      },
+      dialysisParameters: {
+        ufGoal: 2.7,
+        ufAchieved: 2.7,
+        bloodFlow: 300,
+        dialysateFlow: 500
+      },
+      adequacyParameters: {
+        ktv: 1.2,
+        urr: 65
+      },
+      vascularAccess: {
+        type: 'AVF',
+        site: 'Left forearm'
+      },
       complications: [],
+      qualityIndicators: {
+        sessionCompleted: true,
+        prescriptionAchieved: true
+      },
+      nurse: {
+        _id: '1',
+        name: 'Nurse Smith',
+        email: 'nurse@example.com'
+      },
+      doctor: {
+        _id: '2',
+        name: 'Dr. Johnson',
+        email: 'doctor@example.com'
+      },
       notes: 'No complications during session.',
-      nurseId: '1'
+      createdAt: '2025-05-26T09:00:00Z',
+      updatedAt: '2025-05-26T13:00:00Z'
     }
   ]
 };
@@ -281,7 +361,7 @@ const NursePatientProfile: React.FC = () => {
                   {patient.name}
                 </HeadingMedium>
                 <Block font="font400" marginBottom="8px">
-                  ID: {patient.id}
+                  ID: {patient.patientId || patient.id}
                 </Block>
               </Block>
 
