@@ -1,348 +1,176 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { HeadingLarge, HeadingMedium, HeadingSmall, ParagraphMedium } from 'baseui/typography';
+import { HeadingLarge, HeadingMedium, HeadingSmall } from 'baseui/typography';
 import { Card, StyledBody } from 'baseui/card';
 import { Grid, Cell } from 'baseui/layout-grid';
 import { Block } from 'baseui/block';
 import { Button } from 'baseui/button';
 import { Tabs, Tab } from 'baseui/tabs-motion';
 import { useNavigate } from 'react-router-dom';
-import { Patient, DialysisSession, MonthlyInvestigation } from '../../types';
-import { fetchPatientById } from '../doctor/PatientService';
-
-// Mock data
-const mockPatients: Record<string, Patient> = {
-  '101': {
-    id: '101',
-    name: 'John Doe',
-    age: 45,
-    gender: 'Male',
-    bloodType: 'A+',
-    contactNumber: '555-123-4567',
-    address: '123 Main St, Anytown, USA',
-    emergencyContact: '555-987-6543',
-    medicalHistory: 'Hypertension, Diabetes',
-    assignedDoctor: 'Dr. Smith',
-    registrationDate: '2024-01-15'
-  },
-  '102': {
-    id: '102',
-    name: 'Sarah Smith',
-    age: 38,
-    gender: 'Female',
-    bloodType: 'O-',
-    contactNumber: '555-234-5678',
-    address: '456 Oak Ave, Somewhere, USA',
-    emergencyContact: '555-876-5432',
-    medicalHistory: 'Chronic Kidney Disease',
-    assignedDoctor: 'Dr. Johnson',
-    registrationDate: '2024-02-20'
-  },
-  '103': {
-    id: '103',
-    name: 'Michael Johnson',
-    age: 52,
-    gender: 'Male',
-    bloodType: 'B+',
-    contactNumber: '555-345-6789',
-    address: '789 Pine Rd, Elsewhere, USA',
-    emergencyContact: '555-765-4321',
-    medicalHistory: 'Hypertension, Coronary Artery Disease',
-    assignedDoctor: 'Dr. Williams',
-    registrationDate: '2024-03-10'
-  }
-};
-
-// Mock dialysis sessions
-const mockDialysisSessions: Record<string, DialysisSession[]> = {
-  '101': [
-    {
-      id: 'ds101',
-      sessionId: '1',
-      patientId: '101',
-      date: '2025-05-29',
-      startTime: '09:00',
-      endTime: '13:00',
-      duration: 240,
-      status: 'COMPLETED',
-      preDialysis: {
-        weight: 82.5,
-        bloodPressure: {
-          systolic: 140,
-          diastolic: 90
-        },
-        heartRate: 78,
-        temperature: 36.8
-      },
-      postDialysis: {
-        weight: 80.1,
-        bloodPressure: {
-          systolic: 130,
-          diastolic: 85
-        },
-        heartRate: 72,
-        temperature: 36.6
-      },
-      dialysisParameters: {
-        ufGoal: 2.5,
-        ufAchieved: 2.4,
-        bloodFlow: 300,
-        dialysateFlow: 500
-      },
-      adequacyParameters: {
-        ktv: 1.3,
-        urr: 68
-      },
-      vascularAccess: {
-        type: 'AVF',
-        site: 'Left forearm'
-      },
-      complications: [],
-      qualityIndicators: {
-        sessionCompleted: true,
-        prescriptionAchieved: true
-      },
-      nurse: {
-        _id: '1',
-        name: 'Nurse Smith',
-        email: 'nurse@example.com'
-      },
-      doctor: {
-        _id: '2',
-        name: 'Dr. Johnson',
-        email: 'doctor@example.com'
-      },
-      notes: 'Patient tolerated session well.',
-      createdAt: '2025-05-29T09:00:00Z',
-      updatedAt: '2025-05-29T13:00:00Z'
-    },
-    {
-      id: 'ds102',
-      sessionId: '2',
-      patientId: '101',
-      date: '2025-05-26',
-      startTime: '09:00',
-      endTime: '13:00',
-      duration: 240,
-      status: 'COMPLETED',
-      preDialysis: {
-        weight: 83.2,
-        bloodPressure: {
-          systolic: 145,
-          diastolic: 92
-        },
-        heartRate: 80,
-        temperature: 36.7
-      },
-      postDialysis: {
-        weight: 80.5,
-        bloodPressure: {
-          systolic: 135,
-          diastolic: 88
-        },
-        heartRate: 74,
-        temperature: 36.5
-      },
-      dialysisParameters: {
-        ufGoal: 2.7,
-        ufAchieved: 2.7,
-        bloodFlow: 300,
-        dialysateFlow: 500
-      },
-      adequacyParameters: {
-        ktv: 1.2,
-        urr: 65
-      },
-      vascularAccess: {
-        type: 'AVF',
-        site: 'Left forearm'
-      },
-      complications: [],
-      qualityIndicators: {
-        sessionCompleted: true,
-        prescriptionAchieved: true
-      },
-      nurse: {
-        _id: '1',
-        name: 'Nurse Smith',
-        email: 'nurse@example.com'
-      },
-      doctor: {
-        _id: '2',
-        name: 'Dr. Johnson',
-        email: 'doctor@example.com'
-      },
-      notes: 'No complications during session.',
-      createdAt: '2025-05-26T09:00:00Z',
-      updatedAt: '2025-05-26T13:00:00Z'
-    }
-  ]
-};
-
-// Mock monthly investigations
-const mockMonthlyInvestigations: Record<string, MonthlyInvestigation[]> = {
-  '101': [
-    {
-      id: 'mi101',
-      patientId: '101',
-      date: '2025-05-15',
-      hemoglobin: 11.2,
-      hematocrit: 33.6,
-      whiteBloodCellCount: 6.8,
-      plateletCount: 210,
-      sodium: 138,
-      potassium: 4.5,
-      chloride: 102,
-      bicarbonate: 22,
-      bun: 45,
-      creatinine: 4.2,
-      glucose: 110,
-      calcium: 9.2,
-      phosphorus: 5.1,
-      albumin: 3.8,
-      totalProtein: 6.9,
-      alt: 25,
-      ast: 28,
-      alkalinePhosphatase: 95,
-      notes: 'Potassium levels slightly elevated but within acceptable range.',
-      nurseId: '1'
-    },
-    {
-      id: 'mi102',
-      patientId: '101',
-      date: '2025-04-15',
-      hemoglobin: 10.8,
-      hematocrit: 32.4,
-      whiteBloodCellCount: 7.1,
-      plateletCount: 205,
-      sodium: 139,
-      potassium: 4.8,
-      chloride: 103,
-      bicarbonate: 21,
-      bun: 48,
-      creatinine: 4.5,
-      glucose: 115,
-      calcium: 9.0,
-      phosphorus: 5.3,
-      albumin: 3.7,
-      totalProtein: 6.8,
-      alt: 27,
-      ast: 30,
-      alkalinePhosphatase: 98,
-      notes: 'Hemoglobin trending downward, may need ESA adjustment.',
-      nurseId: '1'
-    }
-  ]
-};
+import { Patient } from '../../types';
+import { fetchPatientById, fetchMonthlyInvestigations, fetchDialysisSessions } from '../doctor/PatientService';
 
 const NursePatientProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [patient, setPatient] = useState<Patient | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
   const [activeKey, setActiveKey] = useState<string | number>('0');
-  const [dialysisSessions, setDialysisSessions] = useState<DialysisSession[]>([]);
-  const [monthlyInvestigations, setMonthlyInvestigations] = useState<MonthlyInvestigation[]>([]);
   const navigate = useNavigate();
 
-  // Helper functions to format patient data
-  const getFormattedAddress = (address: string | any): string => {
-    if (typeof address === 'string') return address;
-    if (address && typeof address === 'object') {
-      return `${address.street}, ${address.city}, ${address.state}, ${address.zipCode}, ${address.country}`;
-    }
-    return 'N/A';
-  };
+  // Monthly Investigations state
+  const [monthlyInvestigations, setMonthlyInvestigations] = useState<any[]>([]);
+  const [monthlyInvestigationsLoading, setMonthlyInvestigationsLoading] = useState<boolean>(false);
+  const [monthlyInvestigationsError, setMonthlyInvestigationsError] = useState<string | null>(null);
 
-  const getFormattedEmergencyContact = (contact: string | any): string => {
-    if (typeof contact === 'string') return contact;
-    if (contact && typeof contact === 'object') {
-      return `${contact.name} (${contact.relationship}) - ${contact.phone}`;
-    }
-    return 'N/A';
-  };
-
-  const getFormattedMedicalHistory = (history: string | any): string => {
-    if (typeof history === 'string') return history;
-    if (history && typeof history === 'object') {
-      let formatted = `${history.renalDiagnosis}`;
-      if (history.medicalProblems && history.medicalProblems.length > 0) {
-        const problems = history.medicalProblems.map((p: any) => p.problem).join(', ');
-        formatted += `\nOther conditions: ${problems}`;
-      }
-      return formatted;
-    }
-    return 'N/A';
-  };
-
-  const getAssignedDoctorName = (doctor: string | any): string => {
-    if (typeof doctor === 'string') return doctor;
-    if (doctor && typeof doctor === 'object') {
-      return doctor.name;
-    }
-    return 'N/A';
-  };
+  // Dialysis Sessions state  
+  const [dialysisSessions, setDialysisSessions] = useState<any[]>([]);
+  const [dialysisSessionsLoading, setDialysisSessionsLoading] = useState<boolean>(false);
+  const [dialysisSessionsError, setDialysisSessionsError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadPatientData = async () => {
-      if (id) {
-        try {
-          setLoading(true);
-          setError(null);
-          const patientData = await fetchPatientById(id);
-          
-          if (patientData) {
-            setPatient(patientData);
-            
-            // For now, keep using mock data for dialysis sessions, investigations, etc.
-            // These would be replaced with actual API calls later
-            setDialysisSessions(mockDialysisSessions[id] || []);
-            setMonthlyInvestigations(mockMonthlyInvestigations[id] || []);
-          } else {
-            setError('Patient not found');
-          }
-        } catch (error) {
-          console.error('Error loading patient data:', error);
-          setError('Failed to load patient data');
-          setPatient(null);
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadPatientData();
+    if (id) {
+      loadPatientData();
+    }
   }, [id]);
 
-  if (loading) {
-    return (
-      <Block display="flex" justifyContent="center" alignItems="center" height="400px">
-        <Block>Loading patient data...</Block>
-      </Block>
-    );
+  const loadPatientData = async () => {
+    if (!id) return;
+    
+    try {
+      const patientData = await fetchPatientById("RHD_THP_003");
+      setPatient(patientData);
+    } catch (error) {
+      console.error('Error loading patient data:', error);
+    }
+  };
+
+  // Load monthly investigations
+  const loadMonthlyInvestigations = async (patientId: string) => {
+    try {
+      setMonthlyInvestigationsLoading(true);
+      setMonthlyInvestigationsError(null);
+      const investigations = await fetchMonthlyInvestigations(patientId);
+      setMonthlyInvestigations(investigations);
+    } catch (error: any) {
+      console.error('Error loading monthly investigations:', error);
+      if (error.message?.includes('Authentication failed') || error.message?.includes('No authentication token')) {
+        setMonthlyInvestigationsError('Authentication failed. Please log in again.');
+      } else {
+        setMonthlyInvestigationsError('Failed to load monthly investigations. Please try again.');
+      }
+      setMonthlyInvestigations([]);
+    } finally {
+      setMonthlyInvestigationsLoading(false);
+    }
+  };
+
+  // Load dialysis sessions
+  const loadDialysisSessions = async (patientId: string) => {
+    try {
+      setDialysisSessionsLoading(true);
+      setDialysisSessionsError(null);
+      const sessions = await fetchDialysisSessions(patientId);
+      setDialysisSessions(sessions);
+    } catch (error: any) {
+      console.error('Error loading dialysis sessions:', error);
+      if (error.message?.includes('Authentication failed') || error.message?.includes('No authentication token')) {
+        setDialysisSessionsError('Authentication failed. Please log in again.');
+      } else {
+        setDialysisSessionsError('Failed to load dialysis sessions. Please try again.');
+      }
+      setDialysisSessions([]);
+    } finally {
+      setDialysisSessionsLoading(false);
+    }
+  };
+
+  function getFormattedMedicalHistory(medicalHistory: string | { renalDiagnosis: string; medicalProblems: Array<{ problem: string; diagnosedDate: string; status: string; }>; allergies: any[]; medications: any[]; }): React.ReactNode {
+    if (typeof medicalHistory === 'string') {
+      return medicalHistory;
+    }
+    
+    if (medicalHistory && typeof medicalHistory === 'object') {
+      return (
+        <Block>
+          {medicalHistory.renalDiagnosis && (
+            <Block marginBottom="8px">
+              <strong>Renal Diagnosis:</strong> {medicalHistory.renalDiagnosis}
+            </Block>
+          )}
+          
+          {medicalHistory.medicalProblems && medicalHistory.medicalProblems.length > 0 && (
+            <Block marginBottom="8px">
+              <strong>Medical Problems:</strong>
+              {medicalHistory.medicalProblems.map((problem, index) => (
+                <Block key={index} marginLeft="16px" marginTop="4px">
+                  • {problem.problem} (Diagnosed: {problem.diagnosedDate}, Status: {problem.status})
+                </Block>
+              ))}
+            </Block>
+          )}
+          
+          {medicalHistory.allergies && medicalHistory.allergies.length > 0 && (
+            <Block marginBottom="8px">
+              <strong>Allergies:</strong> {medicalHistory.allergies.join(', ')}
+            </Block>
+          )}
+          
+          {medicalHistory.medications && medicalHistory.medications.length > 0 && (
+            <Block marginBottom="8px">
+              <strong>Current Medications:</strong>
+              {medicalHistory.medications.map((medication: any, index: number) => (
+                <Block key={index} marginLeft="16px" marginTop="4px">
+                  • {medication.name} - {medication.dosage} ({medication.frequency})
+                </Block>
+              ))}
+            </Block>
+          )}
+        </Block>
+      );
+    }
+    
+    return 'No medical history available';
   }
 
-  if (error) {
-    return (
-      <Block display="flex" justifyContent="center" alignItems="center" height="400px">
-        <Block>Error: {error}</Block>
-      </Block>
-    );
+  function getFormattedAddress(address: string | { street: string; city: string; state: string; zipCode: string; country: string; }): string {
+    if (typeof address === 'string') {
+      return address;
+    }
+    
+    if (address && typeof address === 'object') {
+      return `${address.street}, ${address.city}, ${address.state} ${address.zipCode}, ${address.country}`;
+    }
+    
+    return 'No address available';
+  }
+
+  function getFormattedEmergencyContact(emergencyContact: string | { name: string; relationship: string; phone: string; }): string {
+    if (typeof emergencyContact === 'string') {
+      return emergencyContact;
+    }
+    
+    if (emergencyContact && typeof emergencyContact === 'object') {
+      return `${emergencyContact.name} (${emergencyContact.relationship}) - ${emergencyContact.phone}`;
+    }
+    
+    return 'No emergency contact available';
   }
 
   if (!patient) {
-    return <Block>Patient not found</Block>
+    return (
+      <Block>
+        <HeadingLarge>Loading Patient Profile...</HeadingLarge>
+      </Block>
+    );
   }
 
   return (
     <Block>
       <HeadingLarge>Patient Profile</HeadingLarge>
+      
       <Grid gridMargins={[16, 32]} gridGutters={[16, 32]} gridMaxWidth={1200}>
-        {/* 1. Basic patient information displayed in a card format */}
         <Cell span={[4, 8, 4]}>
           <Card>
             <StyledBody>
-
               <Block display="flex" flexDirection="column" alignItems="center" marginBottom="16px">
                 <Block
                   width="100px"
@@ -351,6 +179,13 @@ const NursePatientProfile: React.FC = () => {
                   display="flex"
                   alignItems="center"
                   justifyContent="center"
+                  overrides={{
+                    Block: {
+                      style: {
+                        borderRadius: '50%'
+                      }
+                    }
+                  }}
                   marginBottom="16px"
                 >
                   <HeadingLarge marginTop="0" marginBottom="0">
@@ -388,7 +223,11 @@ const NursePatientProfile: React.FC = () => {
                 </Block>
                 <Block display="flex" justifyContent="space-between" marginBottom="8px">
                   <Block font="font400">Assigned Doctor:</Block>
-                  <Block font="font500">{getAssignedDoctorName(patient.assignedDoctor)}</Block>
+                  <Block font="font500">
+                    {typeof patient.assignedDoctor === 'string' ? 
+                      patient.assignedDoctor : 
+                      patient.assignedDoctor?.name || 'Not assigned'}
+                  </Block>
                 </Block>
                 <Block display="flex" justifyContent="space-between" marginBottom="8px">
                   <Block font="font400">Registration Date:</Block>
@@ -409,278 +248,280 @@ const NursePatientProfile: React.FC = () => {
                 </HeadingSmall>
                 <Block font="font400" whiteSpace="pre-line">{getFormattedMedicalHistory(patient.medicalHistory)}</Block>
               </Block>
+
+              {patient.dialysisInfo && (
+                <Block marginTop="16px">
+                  <HeadingSmall marginTop="0" marginBottom="8px">
+                    Dialysis Information
+                  </HeadingSmall>
+                  <Block font="font400" marginBottom="4px">
+                    Type: {patient.dialysisInfo.dialysisType}
+                  </Block>
+                  <Block font="font400" marginBottom="4px">
+                    Frequency: {patient.dialysisInfo.frequency.replace('_', ' ')}
+                  </Block>
+                  <Block font="font400" marginBottom="4px">
+                    Access: {patient.dialysisInfo.accessType} ({patient.dialysisInfo.accessSite})
+                  </Block>
+                  <Block font="font400" marginBottom="4px">
+                    Dry Weight: {patient.dialysisInfo.dryWeight} kg
+                  </Block>
+                  <Block font="font400">
+                    Target UFR: {patient.dialysisInfo.targetUfr} ml/hr
+                  </Block>
+                </Block>
+              )}
+
+              <Block marginTop="24px">
+                <Button 
+                  onClick={() => navigate('/nurse/patients')}
+                  overrides={{
+                    BaseButton: {
+                      style: {
+                        width: '100%'
+                      }
+                    }
+                  }}
+                >
+                  Back to Patients
+                </Button>
+              </Block>
             </StyledBody>
           </Card>
         </Cell>
 
-        {/* 2. Displaying the tabs for different sections of the patient profile */}
         <Cell span={[4, 8, 8]}>
           <Card>
             <StyledBody>
               <Tabs
                 activeKey={activeKey}
-                onChange={({ activeKey }) => setActiveKey(String(activeKey))}
+                onChange={({ activeKey }) => {
+                  if (typeof activeKey === 'string' || typeof activeKey === 'number') {
+                    setActiveKey(activeKey);
+                    // Load dialysis sessions when Latest Dialysis Session tab (index 0) is clicked
+                    if (activeKey === '0' && patient && dialysisSessions.length === 0) {
+                      loadDialysisSessions(patient.patientId || patient.id);
+                    }
+                    // Load monthly investigations when Monthly Investigation tab (index 1) is clicked
+                    if (activeKey === '1' && patient && monthlyInvestigations.length === 0) {
+                      loadMonthlyInvestigations(patient.patientId || patient.id);
+                    }
+                  }
+                }}
                 activateOnFocus
               >
-                {/* Tab 1: Overview */}
-                <Tab title="Overview">
+                <Tab title="Latest Dialysis Session">
                   <Block padding="16px">
-                    <HeadingMedium marginTop="0">Patient Overview</HeadingMedium>
+                    <HeadingMedium marginTop="0">Latest Dialysis Session</HeadingMedium>
+                    
+                    {dialysisSessionsLoading ? (
+                      <Block display="flex" justifyContent="center" alignItems="center" height="200px">
+                        <Block>Loading dialysis sessions...</Block>
+                      </Block>
+                    ) : dialysisSessionsError ? (
+                      <Block display="flex" justifyContent="center" alignItems="center" height="200px">
+                        <Block color="negative">Error: {dialysisSessionsError}</Block>
+                      </Block>
+                    ) : dialysisSessions.length > 0 ? (
+                      <Block>
+                        {(() => {
+                          // Get the latest session (first item in the array since API returns newest first)
+                          const latestSession = dialysisSessions[0];
+                          return (
+                            <Block 
+                              marginBottom="16px"
+                              padding="16px"
+                              backgroundColor="rgba(0, 0, 0, 0.03)"
+                            >
+                              <Block display="flex" justifyContent="space-between" marginBottom="8px">
+                                <HeadingSmall marginTop="0" marginBottom="0">
+                                  Session on {new Date(latestSession.date).toLocaleDateString()}
+                                </HeadingSmall>
+                                <Block>
+                                  Session #{latestSession.sessionId}
+                                </Block>
+                              </Block>
+                          
+                              {latestSession.id && (
+                                <Block marginBottom="8px">
+                                  <strong>Session ID:</strong> {latestSession.id}
+                                </Block>
+                              )}
 
-                    <Block marginBottom="24px">
-                      <HeadingSmall marginTop="16px" marginBottom="8px">
-                        Recent Dialysis Sessions
-                      </HeadingSmall>
-                      {dialysisSessions.length > 0 ? (
-                        <Block>
-                          <Block marginBottom="8px">
-                            <strong>Last session:</strong> {new Date(dialysisSessions[0].date).toLocaleDateString()}
-                          </Block>
-                          <Block marginBottom="16px">
-                            <ParagraphMedium>
-                              Pre-weight: {dialysisSessions[0].preDialysis.weight} kg,
-                              Post-weight: {dialysisSessions[0].postDialysis?.weight || 'N/A'} kg,
-                              UF Goal: {dialysisSessions[0].dialysisParameters.ufGoal} L
-                            </ParagraphMedium>
-                          </Block>
-                          <Button
-                            onClick={() => navigate(`/nurse/patients/${patient.id}/dialysis-session`)}
-                            size="compact"
-                          >
-                            New Dialysis Session
-                          </Button>
-                        </Block>
-                      ) : (
-                        <Block>
-                          <ParagraphMedium>No recent dialysis sessions</ParagraphMedium>
-                          <Button
-                            onClick={() => navigate(`/nurse/patients/${patient.id}/dialysis-session`)}
-                            size="compact"
-                          >
-                            New Dialysis Session
-                          </Button>
-                        </Block>
-                      )}
-                    </Block>
+                              {latestSession.status && (
+                                <Block marginBottom="8px">
+                                  <strong>Status:</strong> {latestSession.status}
+                                </Block>
+                              )}
 
-                    <Block marginBottom="24px">
-                      <HeadingSmall marginTop="16px" marginBottom="8px">
-                        Monthly Investigations
-                      </HeadingSmall>
-                      {monthlyInvestigations.length > 0 ? (
-                        <Block>
-                          <Block marginBottom="8px">
-                            <strong>Last investigation:</strong> {monthlyInvestigations[0].date}
-                          </Block>
-                          <Block marginBottom="16px">
-                            <ParagraphMedium>
-                              Hemoglobin: {monthlyInvestigations[0].hemoglobin} g/dL,
-                              Creatinine: {monthlyInvestigations[0].creatinine} mg/dL,
-                              Potassium: {monthlyInvestigations[0].potassium} mEq/L
-                            </ParagraphMedium>
-                          </Block>
-                          <Button
-                            onClick={() => navigate(`/nurse/patients/${patient.id}/monthly-investigation`)}
-                            size="compact"
-                          >
-                            New Monthly Investigation
-                          </Button>
-                        </Block>
-                      ) : (
-                        <Block>
-                          <ParagraphMedium>No monthly investigations</ParagraphMedium>
-                          <Button
-                            onClick={() => navigate(`/nurse/patients/${patient.id}/monthly-investigation`)}
-                            size="compact"
-                          >
-                            New Monthly Investigation
-                          </Button>
-                        </Block>
-                      )}
-                    </Block>
+                              {latestSession.doctor && (
+                                <Block marginBottom="8px">
+                                  <strong>Attending Doctor:</strong> {latestSession.doctor.name}
+                                </Block>
+                              )}
 
-                    <Block>
-                      <Button
-                        onClick={() => navigate(`/nurse/trend-analysis/${patient.id}`)}
-                      >
-                        View Trend Analysis
-                      </Button>
-                    </Block>
+                              {latestSession.nurse && (
+                                <Block marginBottom="8px">
+                                  <strong>Assigned Nurse:</strong> {latestSession.nurse.name}
+                                </Block>
+                              )}
 
+                              {latestSession.date && (
+                                <Block marginBottom="8px">
+                                  <strong>Date & Time:</strong> {new Date(latestSession.date).toLocaleString()}
+                                </Block>
+                              )}
+                          
+                              {latestSession.notes && (
+                                <Block marginBottom="8px">
+                                  <strong>Notes:</strong> {latestSession.notes}
+                                </Block>
+                              )}
+
+                              {latestSession.createdAt && (
+                                <Block marginBottom="8px">
+                                  <strong>Record Created:</strong> {new Date(latestSession.createdAt).toLocaleString()}
+                                </Block>
+                              )}
+
+                              {latestSession.updatedAt && latestSession.updatedAt !== latestSession.createdAt && (
+                                <Block marginBottom="8px">
+                                  <strong>Last Updated:</strong> {new Date(latestSession.updatedAt).toLocaleString()}
+                                </Block>
+                              )}
+                            </Block>
+                          );
+                        })()}
+                      </Block>
+                    ) : (
+                      <Block padding="16px" backgroundColor="rgba(0, 0, 0, 0.03)">
+                        <Block display="flex" justifyContent="center" color="contentTertiary">
+                          No dialysis sessions recorded for this patient.
+                        </Block>
+                      </Block>
+                    )}
                   </Block>
                 </Tab>
-
-                {/* Tab 2: Dialysis Sessions */}
-                <Tab title="Dialysis Sessions">
+                
+                <Tab title="Monthly Investigation">
                   <Block padding="16px">
-                    <Block display="flex" justifyContent="space-between" alignItems="center" marginBottom="16px">
-                      <HeadingMedium marginTop="0" marginBottom="0">
-                        Dialysis Sessions
-                      </HeadingMedium>
-                      <Button
-                        onClick={() => navigate(`/nurse/patients/${patient.id}/dialysis-session`)}
-                      >
-                        New Session
-                      </Button>
-                    </Block>
-
-                    {dialysisSessions.length > 0 ? (
-                      dialysisSessions.map(session => (
-                        <Block
-                          key={session.id}
-                          marginBottom="16px"
-                          padding="16px"
-                          backgroundColor="rgba(0, 0, 0, 0.03)"
-                        >
-                          <Block display="flex" justifyContent="space-between" marginBottom="8px">
-                            <HeadingSmall marginTop="0" marginBottom="0">
-                              Session on {new Date(session.date).toLocaleDateString()}
-                            </HeadingSmall>
-                            <Block>
-                              {session.startTime} - {session.endTime || 'In Progress'} 
-                              <Block as="span" marginLeft="8px" font="font300">
-                                ({session.status})
+                    <HeadingMedium marginTop="0">Latest Monthly Investigation</HeadingMedium>
+                    
+                    {monthlyInvestigationsLoading ? (
+                      <Block display="flex" justifyContent="center" alignItems="center" height="200px">
+                        <Block>Loading monthly investigations...</Block>
+                      </Block>
+                    ) : monthlyInvestigationsError ? (
+                      <Block display="flex" justifyContent="center" alignItems="center" height="200px">
+                        <Block color="negative">Error: {monthlyInvestigationsError}</Block>
+                      </Block>
+                    ) : monthlyInvestigations.length > 0 ? (
+                      <Block>
+                        {(() => {
+                          // Get the latest investigation (first item in the array since API returns newest first)
+                          const latestInvestigation = monthlyInvestigations[0];
+                          return (
+                            <Block 
+                              marginBottom="16px"
+                              padding="16px"
+                              backgroundColor="rgba(0, 0, 0, 0.03)"
+                            >
+                              <Block display="flex" justifyContent="space-between" marginBottom="8px">
+                                <HeadingSmall marginTop="0" marginBottom="0">
+                                  Investigation on {new Date(latestInvestigation.date).toLocaleDateString()}
+                                </HeadingSmall>
+                                <Block>ID: {latestInvestigation.investigationId}</Block>
+                              </Block>
+                              
+                              <Block marginBottom="8px">
+                                <strong>Renal Function:</strong> 
+                                Creatinine Pre-HD: {latestInvestigation.scrPreHD?.toFixed(2)} mg/dL, 
+                                Creatinine Post-HD: {latestInvestigation.scrPostHD?.toFixed(2)} mg/dL, 
+                                BUN: {latestInvestigation.bu?.toFixed(2)} mg/dL
+                              </Block>
+                              
+                              <Block marginBottom="8px">
+                                <strong>CBC:</strong> 
+                                Hemoglobin: {latestInvestigation.hb?.toFixed(2)} g/dL
+                              </Block>
+                              
+                              <Block marginBottom="8px">
+                                <strong>Electrolytes:</strong> 
+                                Sodium Pre-HD: {latestInvestigation.serumNaPreHD?.toFixed(2)} mEq/L, 
+                                Sodium Post-HD: {latestInvestigation.serumNaPostHD?.toFixed(2)} mEq/L, 
+                                Potassium Pre-HD: {latestInvestigation.serumKPreHD?.toFixed(2)} mEq/L, 
+                                Potassium Post-HD: {latestInvestigation.serumKPostHD?.toFixed(2)} mEq/L
+                              </Block>
+                              
+                              <Block marginBottom="8px">
+                                <strong>Bone & Mineral:</strong> 
+                                Calcium: {latestInvestigation.sCa?.toFixed(2)} mg/dL, 
+                                Phosphorus: {latestInvestigation.sPhosphate?.toFixed(2)} mg/dL, 
+                                PTH: {latestInvestigation.pth?.toFixed(2)} pg/mL, 
+                                Vitamin D: {latestInvestigation.vitD?.toFixed(2)} ng/mL
+                              </Block>
+                              
+                              <Block marginBottom="8px">
+                                <strong>Protein & Nutrition:</strong> 
+                                Albumin: {latestInvestigation.albumin?.toFixed(2)} g/dL, 
+                                Uric Acid: {latestInvestigation.ua?.toFixed(2)} mg/dL
+                              </Block>
+                              
+                              <Block marginBottom="8px">
+                                <strong>Iron Studies:</strong> 
+                                Serum Iron: {latestInvestigation.serumIron?.toFixed(2)} μg/dL, 
+                                Serum Ferritin: {latestInvestigation.serumFerritin?.toFixed(2)} ng/mL
+                              </Block>
+                              
+                              <Block marginBottom="8px">
+                                <strong>Other:</strong> 
+                                HbA1C: {latestInvestigation.hbA1C?.toFixed(2)}%, 
+                                Bicarbonate: {latestInvestigation.hco?.toFixed(2)} mEq/L, 
+                                Alkaline Phosphatase: {latestInvestigation.al?.toFixed(2)} U/L
+                              </Block>
+                              
+                              <Block marginBottom="8px">
+                                <strong>Laboratory Info:</strong>
+                                <Block marginLeft="16px" marginTop="4px">
+                                  Requested by: {latestInvestigation.laboratoryInfo?.requestedBy?.name || 'N/A'}
+                                </Block>
+                                <Block marginLeft="16px">
+                                  Performed by: {latestInvestigation.laboratoryInfo?.performedBy?.name || 'N/A'}
+                                </Block>
+                                <Block marginLeft="16px">
+                                  Reported by: {latestInvestigation.laboratoryInfo?.reportedBy?.name || 'N/A'}
+                                </Block>
+                                <Block marginLeft="16px">
+                                  Testing Method: {latestInvestigation.laboratoryInfo?.testingMethod || 'N/A'}
+                                </Block>
+                              </Block>
+                              
+                              <Block marginBottom="8px">
+                                <strong>Status:</strong> {latestInvestigation.status}
+                              </Block>
+                              
+                              {latestInvestigation.notes && (
+                                <Block marginBottom="8px">
+                                  <strong>Notes:</strong> {latestInvestigation.notes}
+                                </Block>
+                                )}
+                              
+                              <Block marginTop="16px" font="font300">
+                                Total investigations available: {monthlyInvestigations.length}
                               </Block>
                             </Block>
-                          </Block>
-
-                          <Block marginBottom="8px">
-                            <strong>Weight:</strong> Pre: {session.preDialysis.weight} kg, 
-                            Post: {session.postDialysis?.weight || 'N/A'} kg 
-                            (UF Goal: {session.dialysisParameters.ufGoal} L, 
-                            UF Achieved: {session.dialysisParameters.ufAchieved || 'N/A'} L)
-                          </Block>
-
-                          <Block marginBottom="8px">
-                            <strong>Vitals:</strong> 
-                            BP Pre: {session.preDialysis.bloodPressure.systolic}/{session.preDialysis.bloodPressure.diastolic}, 
-                            BP Post: {session.postDialysis?.bloodPressure ? `${session.postDialysis.bloodPressure.systolic}/${session.postDialysis.bloodPressure.diastolic}` : 'N/A'},
-                            HR Pre: {session.preDialysis.heartRate}, 
-                            HR Post: {session.postDialysis?.heartRate || 'N/A'}
-                          </Block>
-
-                          <Block marginBottom="8px">
-                            <strong>Dialysis Parameters:</strong> 
-                            Blood Flow: {session.dialysisParameters.bloodFlow} mL/min, 
-                            Dialysate Flow: {session.dialysisParameters.dialysateFlow} mL/min
-                          </Block>
-
-                          <Block marginBottom="8px">
-                            <strong>Vascular Access:</strong> 
-                            {session.vascularAccess.type} at {session.vascularAccess.site}
-                          </Block>
-
-                          {session.adequacyParameters && (
-                            <Block marginBottom="8px">
-                              <strong>Adequacy:</strong> 
-                              Kt/V: {session.adequacyParameters.ktv || 'N/A'}, 
-                              URR: {session.adequacyParameters.urr || 'N/A'}%
-                            </Block>
-                          )}
-
-                          {session.complications && session.complications.length > 0 && (
-                            <Block marginBottom="8px">
-                              <strong>Complications:</strong> {session.complications.join(', ')}
-                            </Block>
-                          )}
-
-                          <Block marginBottom="8px">
-                            <strong>Nurse:</strong> {session.nurse.name}
-                          </Block>
-
-                          {session.notes && (
-                            <Block marginBottom="8px">
-                              <strong>Notes:</strong> {session.notes}
-                            </Block>
-                          )}
-
-                          <Block marginBottom="8px">
-                            <strong>Quality Indicators:</strong> 
-                            Session Completed: {session.qualityIndicators.sessionCompleted ? 'Yes' : 'No'}, 
-                            Prescription Achieved: {session.qualityIndicators.prescriptionAchieved ? 'Yes' : 'No'}
-                          </Block>
-                        </Block>
-                      ))
+                          );
+                        })()}
+                      </Block>
                     ) : (
-                      <Block>No dialysis sessions recorded</Block>
+                      <Block padding="16px" backgroundColor="rgba(0, 0, 0, 0.03)">
+                        <Block display="flex" justifyContent="center" color="contentTertiary">
+                          No monthly investigations recorded for this patient.
+                        </Block>
+                      </Block>
                     )}
                   </Block>
                 </Tab>
-
-                {/* Tab 3: Monthly Investigations */}
-                <Tab title="Monthly Investigations">
-                  <Block padding="16px">
-                    <Block display="flex" justifyContent="space-between" alignItems="center" marginBottom="16px">
-                      <HeadingMedium marginTop="0" marginBottom="0">
-                        Monthly Investigations
-                      </HeadingMedium>
-                      <Button
-                        onClick={() => navigate(`/nurse/patients/${patient.id}/monthly-investigation`)}
-                      >
-                        New Investigation
-                      </Button>
-                    </Block>
-
-                    {monthlyInvestigations.length > 0 ? (
-                      monthlyInvestigations.map(investigation => (
-                        <Block
-                          key={investigation.id}
-                          marginBottom="16px"
-                          padding="16px"
-                          backgroundColor="rgba(0, 0, 0, 0.03)"
-                        >
-                          <Block display="flex" justifyContent="space-between" marginBottom="8px">
-                            <HeadingSmall marginTop="0" marginBottom="0">
-                              Investigation on {investigation.date}
-                            </HeadingSmall>
-                          </Block>
-
-                          <Block marginBottom="8px">
-                            <strong>CBC:</strong> Hemoglobin: {investigation.hemoglobin} g/dL,
-                            Hematocrit: {investigation.hematocrit}%,
-                            WBC: {investigation.whiteBloodCellCount} K/μL,
-                            Platelets: {investigation.plateletCount} K/μL
-                          </Block>
-
-                          <Block marginBottom="8px">
-                            <strong>Electrolytes:</strong> Sodium: {investigation.sodium} mEq/L,
-                            Potassium: {investigation.potassium} mEq/L,
-                            Chloride: {investigation.chloride} mEq/L,
-                            Bicarbonate: {investigation.bicarbonate} mEq/L
-                          </Block>
-
-                          <Block marginBottom="8px">
-                            <strong>Renal Function:</strong> BUN: {investigation.bun} mg/dL,
-                            Creatinine: {investigation.creatinine} mg/dL,
-                            Glucose: {investigation.glucose} mg/dL
-                          </Block>
-
-                          <Block marginBottom="8px">
-                            <strong>Other:</strong> Calcium: {investigation.calcium} mg/dL,
-                            Phosphorus: {investigation.phosphorus} mg/dL,
-                            Albumin: {investigation.albumin} g/dL,
-                            Total Protein: {investigation.totalProtein} g/dL
-                          </Block>
-
-                          <Block marginBottom="8px">
-                            <strong>Liver Function:</strong> ALT: {investigation.alt} U/L,
-                            AST: {investigation.ast} U/L,
-                            Alkaline Phosphatase: {investigation.alkalinePhosphatase} U/L
-                          </Block>
-
-                          {investigation.notes && (
-                            <Block marginBottom="8px">
-                              <strong>Notes:</strong> {investigation.notes}
-                            </Block>
-                          )}
-                        </Block>
-                      ))
-                    ) : (
-                      <Block>No monthly investigations recorded</Block>
-                    )}
-                  </Block>
-                </Tab>
-
               </Tabs>
             </StyledBody>
           </Card>
