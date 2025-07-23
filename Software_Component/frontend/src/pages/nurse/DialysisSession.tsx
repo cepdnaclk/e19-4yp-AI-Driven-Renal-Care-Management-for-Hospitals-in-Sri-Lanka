@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { HeadingLarge, HeadingMedium } from 'baseui/typography';
 import { Card, StyledBody } from 'baseui/card';
 import { Grid, Cell } from 'baseui/layout-grid';
@@ -9,46 +9,108 @@ import { FormControl } from 'baseui/form-control';
 import { Input } from 'baseui/input';
 import { Textarea } from 'baseui/textarea';
 import { Checkbox } from 'baseui/checkbox';
+import { Select } from 'baseui/select';
 import { toaster } from 'baseui/toast';
-import { DialysisSession } from '../../types';
+import axios from 'axios';
+
+interface DialysisSessionForm {
+  date: string;
+  startTime: string;
+  endTime: string;
+  preDialysis: {
+    weight: number;
+    bloodPressure: {
+      systolic: number;
+      diastolic: number;
+    };
+    heartRate: number;
+    temperature: number;
+  };
+  postDialysis: {
+    weight: number;
+    bloodPressure: {
+      systolic: number;
+      diastolic: number;
+    };
+    heartRate: number;
+    temperature: number;
+  };
+  dialysisParameters: {
+    ufGoal: number;
+    ufAchieved: number;
+    bloodFlow: number;
+    dialysateFlow: number;
+  };
+  adequacyParameters: {
+    ktv: number;
+    urr: number;
+  };
+  vascularAccess: {
+    type: string;
+    site: string;
+  };
+  complications: string[];
+  notes: string;
+}
 
 const NurseDialysisSession: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [session, setSession] = useState<Partial<DialysisSession>>({
-    patientId: id || '',
+  const navigate = useNavigate();
+  const token = localStorage.getItem('userToken');
+  
+  const [session, setSession] = useState<DialysisSessionForm>({
     date: new Date().toISOString().split('T')[0],
     startTime: '',
     endTime: '',
-    preWeight: 0,
-    postWeight: 0,
-    ufGoal: 0,
-    bloodPressurePre: '',
-    bloodPressurePost: '',
-    heartRatePre: 0,
-    heartRatePost: 0,
-    temperaturePre: 0,
-    temperaturePost: 0,
-    symptoms: [],
+    preDialysis: {
+      weight: 0,
+      bloodPressure: {
+        systolic: 0,
+        diastolic: 0
+      },
+      heartRate: 0,
+      temperature: 0
+    },
+    postDialysis: {
+      weight: 0,
+      bloodPressure: {
+        systolic: 0,
+        diastolic: 0
+      },
+      heartRate: 0,
+      temperature: 0
+    },
+    dialysisParameters: {
+      ufGoal: 0,
+      ufAchieved: 0,
+      bloodFlow: 0,
+      dialysateFlow: 0
+    },
+    adequacyParameters: {
+      ktv: 0,
+      urr: 0
+    },
+    vascularAccess: {
+      type: '',
+      site: ''
+    },
     complications: [],
-    notes: '',
-    nurseId: '1' // In a real app, this would come from the logged-in user
+    notes: ''
   });
 
-  const [availableSymptoms] = useState([
-    'Fatigue',
-    'Headache',
-    'Nausea',
-    'Vomiting',
-    'Muscle cramps',
-    'Dizziness',
-    'Chest pain',
-    'Shortness of breath',
-    'Itching'
-  ]);
+  const [selectedComplications, setSelectedComplications] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const [availableComplications] = useState([
+  const accessTypes = [
+    { label: 'Arteriovenous Fistula (AVF)', value: 'AVF' },
+    { label: 'Arteriovenous Graft (AVG)', value: 'AVG' },
+    { label: 'Central Catheter', value: 'CENTRAL_CATHETER' },
+    { label: 'Peritoneal Catheter', value: 'PERITONEAL_CATHETER' }
+  ];
+
+  const availableComplications = [
     'Hypotension',
-    'Hypertension',
+    'Hypertension', 
     'Arrhythmia',
     'Clotting',
     'Bleeding',
@@ -56,33 +118,60 @@ const NurseDialysisSession: React.FC = () => {
     'Hemolysis',
     'Dialyzer reaction',
     'Access issues'
-  ]);
-
-  const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
-  const [selectedComplications, setSelectedComplications] = useState<string[]>([]);
+  ];
 
   useEffect(() => {
-    // Update session when symptoms or complications change
     setSession(prev => ({
       ...prev,
-      symptoms: selectedSymptoms,
       complications: selectedComplications
     }));
-  }, [selectedSymptoms, selectedComplications]);
+  }, [selectedComplications]);
 
-  const handleInputChange = (field: keyof DialysisSession, value: any) => {
-    setSession(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleSymptomToggle = (symptom: string) => {
-    setSelectedSymptoms(prev => 
-      prev.includes(symptom)
-        ? prev.filter(s => s !== symptom)
-        : [...prev, symptom]
-    );
+  const handleInputChange = (field: string, value: any) => {
+    const fieldParts = field.split('.');
+    
+    if (fieldParts.length === 1) {
+      setSession(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    } else if (fieldParts.length === 2) {
+      setSession(prev => {
+        const key = fieldParts[0] as keyof DialysisSessionForm;
+        const nestedObj = prev[key];
+        if (typeof nestedObj === 'object' && nestedObj !== null) {
+          return {
+            ...prev,
+            [key]: {
+              ...nestedObj,
+              [fieldParts[1]]: value
+            }
+          };
+        }
+        return prev;
+      });
+    } else if (fieldParts.length === 3) {
+      setSession(prev => {
+        const key = fieldParts[0] as keyof DialysisSessionForm;
+        const nestedObj = prev[key];
+        if (typeof nestedObj === 'object' && nestedObj !== null) {
+          const deepNestedObj = (nestedObj as any)[fieldParts[1]];
+          if (typeof deepNestedObj === 'object' && deepNestedObj !== null) {
+            return {
+              ...prev,
+              [key]: {
+                ...nestedObj,
+                [fieldParts[1]]: {
+                  ...deepNestedObj,
+                  [fieldParts[2]]: value
+                }
+              }
+            };
+          }
+        }
+        return prev;
+      });
+    }
   };
 
   const handleComplicationToggle = (complication: string) => {
@@ -93,21 +182,42 @@ const NurseDialysisSession: React.FC = () => {
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate form
-    if (!session.date || !session.startTime || !session.preWeight) {
-      toaster.negative('Please fill in all required fields', {});
+    // Validate required fields
+    if (!session.date || !session.startTime || !session.preDialysis.weight || 
+        !session.preDialysis.bloodPressure.systolic || !session.preDialysis.bloodPressure.diastolic ||
+        !session.preDialysis.heartRate || !session.preDialysis.temperature ||
+        !session.dialysisParameters.ufGoal || !session.vascularAccess.type || !session.vascularAccess.site) {
+      toaster.negative('Please fill in all required fields', { autoHideDuration: 3000 });
       return;
     }
 
-    // In a real app, this would make an API call to save the session
-    console.log('Saving dialysis session:', session);
-    toaster.positive('Dialysis session saved successfully', {});
-    
-    // Reset form or redirect
-    // For demo, we'll just show a success message
+    setLoading(true);
+    try {
+      const response = await axios.post(`http://localhost:5000/api/dialysis-sessions/${id}`, session, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Session created:', response.data);
+      toaster.positive('Dialysis session saved successfully', { autoHideDuration: 3000 });
+      
+      // Redirect back to patient profile
+      navigate(`/nurse/patients/${id}`);
+      
+    } catch (error: any) {
+      console.error('Error saving session:', error);
+      toaster.negative(
+        error.response?.data?.message || 'Failed to save dialysis session', 
+        { autoHideDuration: 3000 }
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -150,34 +260,19 @@ const NurseDialysisSession: React.FC = () => {
                     </FormControl>
                   </Block>
                 </Block>
+              </StyledBody>
+            </Card>
+          </Cell>
+
+          <Cell span={[4, 8, 6]}>
+            <Card>
+              <StyledBody>
+                <HeadingMedium>Pre-Dialysis Measurements</HeadingMedium>
                 
-                <Block display="flex" justifyContent="space-between">
-                  <Block width="48%">
-                    <FormControl label="Pre-Weight (kg) *">
-                      <Input
-                        value={session.preWeight || ''}
-                        onChange={e => handleInputChange('preWeight', parseFloat(e.currentTarget.value) || 0)}
-                        type="number"
-                        step={0.1}
-                      />
-                    </FormControl>
-                  </Block>
-                  <Block width="48%">
-                    <FormControl label="Post-Weight (kg)">
-                      <Input
-                        value={session.postWeight || ''}
-                        onChange={e => handleInputChange('postWeight', parseFloat(e.currentTarget.value) || 0)}
-                        type="number"
-                        step={0.1}
-                      />
-                    </FormControl>
-                  </Block>
-                </Block>
-                
-                <FormControl label="UF Goal (L)">
+                <FormControl label="Weight (kg) *">
                   <Input
-                    value={session.ufGoal || ''}
-                    onChange={e => handleInputChange('ufGoal', parseFloat(e.currentTarget.value) || 0)}
+                    value={session.preDialysis.weight || ''}
+                    onChange={e => handleInputChange('preDialysis.weight', parseFloat(e.currentTarget.value) || 0)}
                     type="number"
                     step={0.1}
                   />
@@ -185,111 +280,218 @@ const NurseDialysisSession: React.FC = () => {
                 
                 <Block display="flex" justifyContent="space-between">
                   <Block width="48%">
-                    <FormControl label="Blood Pressure Pre (e.g., 120/80) *">
+                    <FormControl label="Systolic BP *">
                       <Input
-                        value={session.bloodPressurePre}
-                        onChange={e => handleInputChange('bloodPressurePre', e.currentTarget.value)}
-                        placeholder="e.g., 120/80"
+                        value={session.preDialysis.bloodPressure.systolic || ''}
+                        onChange={e => handleInputChange('preDialysis.bloodPressure.systolic', parseInt(e.currentTarget.value) || 0)}
+                        type="number"
+                        placeholder="e.g., 120"
                       />
                     </FormControl>
                   </Block>
                   <Block width="48%">
-                    <FormControl label="Blood Pressure Post">
+                    <FormControl label="Diastolic BP *">
                       <Input
-                        value={session.bloodPressurePost}
-                        onChange={e => handleInputChange('bloodPressurePost', e.currentTarget.value)}
-                        placeholder="e.g., 120/80"
+                        value={session.preDialysis.bloodPressure.diastolic || ''}
+                        onChange={e => handleInputChange('preDialysis.bloodPressure.diastolic', parseInt(e.currentTarget.value) || 0)}
+                        type="number"
+                        placeholder="e.g., 80"
                       />
                     </FormControl>
                   </Block>
                 </Block>
                 
+                <FormControl label="Heart Rate (bpm) *">
+                  <Input
+                    value={session.preDialysis.heartRate || ''}
+                    onChange={e => handleInputChange('preDialysis.heartRate', parseInt(e.currentTarget.value) || 0)}
+                    type="number"
+                  />
+                </FormControl>
+                
+                <FormControl label="Temperature (°C) *">
+                  <Input
+                    value={session.preDialysis.temperature || ''}
+                    onChange={e => handleInputChange('preDialysis.temperature', parseFloat(e.currentTarget.value) || 0)}
+                    type="number"
+                    step={0.1}
+                  />
+                </FormControl>
+              </StyledBody>
+            </Card>
+          </Cell>
+
+          <Cell span={[4, 8, 6]}>
+            <Card>
+              <StyledBody>
+                <HeadingMedium>Post-Dialysis Measurements</HeadingMedium>
+                
+                <FormControl label="Weight (kg)">
+                  <Input
+                    value={session.postDialysis.weight || ''}
+                    onChange={e => handleInputChange('postDialysis.weight', parseFloat(e.currentTarget.value) || 0)}
+                    type="number"
+                    step={0.1}
+                  />
+                </FormControl>
+                
                 <Block display="flex" justifyContent="space-between">
                   <Block width="48%">
-                    <FormControl label="Heart Rate Pre (bpm) *">
+                    <FormControl label="Systolic BP">
                       <Input
-                        value={session.heartRatePre || ''}
-                        onChange={e => handleInputChange('heartRatePre', parseInt(e.currentTarget.value) || 0)}
+                        value={session.postDialysis.bloodPressure.systolic || ''}
+                        onChange={e => handleInputChange('postDialysis.bloodPressure.systolic', parseInt(e.currentTarget.value) || 0)}
                         type="number"
+                        placeholder="e.g., 120"
                       />
                     </FormControl>
                   </Block>
                   <Block width="48%">
-                    <FormControl label="Heart Rate Post (bpm)">
+                    <FormControl label="Diastolic BP">
                       <Input
-                        value={session.heartRatePost || ''}
-                        onChange={e => handleInputChange('heartRatePost', parseInt(e.currentTarget.value) || 0)}
+                        value={session.postDialysis.bloodPressure.diastolic || ''}
+                        onChange={e => handleInputChange('postDialysis.bloodPressure.diastolic', parseInt(e.currentTarget.value) || 0)}
                         type="number"
+                        placeholder="e.g., 80"
                       />
                     </FormControl>
                   </Block>
                 </Block>
                 
-                <Block display="flex" justifyContent="space-between">
-                  <Block width="48%">
-                    <FormControl label="Temperature Pre (°C) *">
-                      <Input
-                        value={session.temperaturePre || ''}
-                        onChange={e => handleInputChange('temperaturePre', parseFloat(e.currentTarget.value) || 0)}
-                        type="number"
-                        step={0.1}
-                      />
-                    </FormControl>
-                  </Block>
-                  <Block width="48%">
-                    <FormControl label="Temperature Post (°C)">
-                      <Input
-                        value={session.temperaturePost || ''}
-                        onChange={e => handleInputChange('temperaturePost', parseFloat(e.currentTarget.value) || 0)}
-                        type="number"
-                        step={0.1}
-                      />
-                    </FormControl>
-                  </Block>
+                <FormControl label="Heart Rate (bpm)">
+                  <Input
+                    value={session.postDialysis.heartRate || ''}
+                    onChange={e => handleInputChange('postDialysis.heartRate', parseInt(e.currentTarget.value) || 0)}
+                    type="number"
+                  />
+                </FormControl>
+                
+                <FormControl label="Temperature (°C)">
+                  <Input
+                    value={session.postDialysis.temperature || ''}
+                    onChange={e => handleInputChange('postDialysis.temperature', parseFloat(e.currentTarget.value) || 0)}
+                    type="number"
+                    step={0.1}
+                  />
+                </FormControl>
+              </StyledBody>
+            </Card>
+          </Cell>
+
+          <Cell span={[4, 8, 6]}>
+            <Card>
+              <StyledBody>
+                <HeadingMedium>Dialysis Parameters</HeadingMedium>
+                
+                <FormControl label="UF Goal (L) *">
+                  <Input
+                    value={session.dialysisParameters.ufGoal || ''}
+                    onChange={e => handleInputChange('dialysisParameters.ufGoal', parseFloat(e.currentTarget.value) || 0)}
+                    type="number"
+                    step={0.1}
+                  />
+                </FormControl>
+                
+                <FormControl label="UF Achieved (L)">
+                  <Input
+                    value={session.dialysisParameters.ufAchieved || ''}
+                    onChange={e => handleInputChange('dialysisParameters.ufAchieved', parseFloat(e.currentTarget.value) || 0)}
+                    type="number"
+                    step={0.1}
+                  />
+                </FormControl>
+                
+                <FormControl label="Blood Flow (mL/min)">
+                  <Input
+                    value={session.dialysisParameters.bloodFlow || ''}
+                    onChange={e => handleInputChange('dialysisParameters.bloodFlow', parseInt(e.currentTarget.value) || 0)}
+                    type="number"
+                  />
+                </FormControl>
+                
+                <FormControl label="Dialysate Flow (mL/min)">
+                  <Input
+                    value={session.dialysisParameters.dialysateFlow || ''}
+                    onChange={e => handleInputChange('dialysisParameters.dialysateFlow', parseInt(e.currentTarget.value) || 0)}
+                    type="number"
+                  />
+                </FormControl>
+              </StyledBody>
+            </Card>
+          </Cell>
+
+          <Cell span={[4, 8, 6]}>
+            <Card>
+              <StyledBody>
+                <HeadingMedium>Vascular Access</HeadingMedium>
+                
+                <FormControl label="Access Type *">
+                  <Select
+                    options={accessTypes}
+                    value={accessTypes.filter(option => option.value === session.vascularAccess.type)}
+                    onChange={params => handleInputChange('vascularAccess.type', params.value[0]?.value || '')}
+                    placeholder="Select access type"
+                  />
+                </FormControl>
+                
+                <FormControl label="Access Site *">
+                  <Input
+                    value={session.vascularAccess.site}
+                    onChange={e => handleInputChange('vascularAccess.site', e.currentTarget.value)}
+                    placeholder="e.g., Right Forearm, Left Internal Jugular"
+                  />
+                </FormControl>
+              </StyledBody>
+            </Card>
+          </Cell>
+
+          <Cell span={[4, 8, 6]}>
+            <Card>
+              <StyledBody>
+                <HeadingMedium>Adequacy Parameters</HeadingMedium>
+                
+                <FormControl label="Kt/V">
+                  <Input
+                    value={session.adequacyParameters.ktv || ''}
+                    onChange={e => handleInputChange('adequacyParameters.ktv', parseFloat(e.currentTarget.value) || 0)}
+                    type="number"
+                    step={0.01}
+                  />
+                </FormControl>
+                
+                <FormControl label="URR (%)">
+                  <Input
+                    value={session.adequacyParameters.urr || ''}
+                    onChange={e => handleInputChange('adequacyParameters.urr', parseFloat(e.currentTarget.value) || 0)}
+                    type="number"
+                    step={0.1}
+                  />
+                </FormControl>
+              </StyledBody>
+            </Card>
+          </Cell>
+
+          <Cell span={[4, 8, 12]}>
+            <Card>
+              <StyledBody>
+                <HeadingMedium>Complications</HeadingMedium>
+                
+                <Block display="grid" gridTemplateColumns="repeat(auto-fit, minmax(200px, 1fr))" gridGap="8px">
+                  {availableComplications.map(complication => (
+                    <Checkbox
+                      key={complication}
+                      checked={selectedComplications.includes(complication)}
+                      onChange={() => handleComplicationToggle(complication)}
+                    >
+                      {complication}
+                    </Checkbox>
+                  ))}
                 </Block>
               </StyledBody>
             </Card>
           </Cell>
-          
-          <Cell span={[4, 8, 6]}>
-            <Block marginBottom="16px">
-              <Card>
-                <StyledBody>
-                  <HeadingMedium>Symptoms & Complications</HeadingMedium>
-                  
-                  <FormControl label="Symptoms">
-                    <Block>
-                      {availableSymptoms.map(symptom => (
-                        <Checkbox
-                          key={symptom}
-                          checked={selectedSymptoms.includes(symptom)}
-                          onChange={() => handleSymptomToggle(symptom)}
-                          labelPlacement="right"
-                        >
-                          {symptom}
-                        </Checkbox>
-                      ))}
-                    </Block>
-                  </FormControl>
-                  
-                  <FormControl label="Complications">
-                    <Block>
-                      {availableComplications.map(complication => (
-                        <Checkbox
-                          key={complication}
-                          checked={selectedComplications.includes(complication)}
-                          onChange={() => handleComplicationToggle(complication)}
-                          labelPlacement="right"
-                        >
-                          {complication}
-                        </Checkbox>
-                      ))}
-                    </Block>
-                  </FormControl>
-                </StyledBody>
-              </Card>
-            </Block>
-            
+
+          <Cell span={[4, 8, 12]}>
             <Card>
               <StyledBody>
                 <FormControl label="Notes">
@@ -297,11 +499,27 @@ const NurseDialysisSession: React.FC = () => {
                     value={session.notes}
                     onChange={e => handleInputChange('notes', e.currentTarget.value)}
                     placeholder="Enter any additional notes about the session"
+                    rows={4}
                   />
                 </FormControl>
                 
                 <Block display="flex" justifyContent="flex-end" marginTop="32px">
-                  <Button type="submit">Save Session</Button>
+                  <Block marginRight="16px">
+                    <Button
+                      kind="secondary"
+                      onClick={() => navigate(`/nurse/patients/${id}`)}
+                      disabled={loading}
+                    >
+                      Cancel
+                    </Button>
+                  </Block>
+                  <Button 
+                    type="submit" 
+                    isLoading={loading}
+                    disabled={loading}
+                  >
+                    Save Session
+                  </Button>
                 </Block>
               </StyledBody>
             </Card>

@@ -251,17 +251,18 @@ const NursePatientProfile: React.FC = () => {
   }
 
   if (!patient) {
-    return <Block>Patient not found</Block>;
+    return <Block>Patient not found</Block>
   }
 
   return (
     <Block>
       <HeadingLarge>Patient Profile</HeadingLarge>
-
       <Grid gridMargins={[16, 32]} gridGutters={[16, 32]} gridMaxWidth={1200}>
+        {/* 1. Basic patient information displayed in a card format */}
         <Cell span={[4, 8, 4]}>
           <Card>
             <StyledBody>
+
               <Block display="flex" flexDirection="column" alignItems="center" marginBottom="16px">
                 <Block
                   width="100px"
@@ -280,7 +281,7 @@ const NursePatientProfile: React.FC = () => {
                   {patient.name}
                 </HeadingMedium>
                 <Block font="font400" marginBottom="8px">
-                  ID: {patient.patientId || patient.id}
+                  ID: {patient.id}
                 </Block>
               </Block>
 
@@ -332,6 +333,7 @@ const NursePatientProfile: React.FC = () => {
           </Card>
         </Cell>
 
+        {/* 2. Displaying the tabs for different sections of the patient profile */}
         <Cell span={[4, 8, 8]}>
           <Card>
             <StyledBody>
@@ -340,6 +342,7 @@ const NursePatientProfile: React.FC = () => {
                 onChange={({ activeKey }) => setActiveKey(String(activeKey))}
                 activateOnFocus
               >
+                {/* Tab 1: Overview */}
                 <Tab title="Overview">
                   <Block padding="16px">
                     <HeadingMedium marginTop="0">Patient Overview</HeadingMedium>
@@ -351,17 +354,17 @@ const NursePatientProfile: React.FC = () => {
                       {dialysisSessions.length > 0 ? (
                         <Block>
                           <Block marginBottom="8px">
-                            <strong>Last session:</strong> {dialysisSessions[0].date}
+                            <strong>Last session:</strong> {new Date(dialysisSessions[0].date).toLocaleDateString()}
                           </Block>
                           <Block marginBottom="16px">
                             <ParagraphMedium>
-                              Pre-weight: {dialysisSessions[0].preWeight} kg,
-                              Post-weight: {dialysisSessions[0].postWeight} kg,
-                              UF Goal: {dialysisSessions[0].ufGoal} L
+                              Pre-weight: {dialysisSessions[0].preDialysis.weight} kg,
+                              Post-weight: {dialysisSessions[0].postDialysis?.weight || 'N/A'} kg,
+                              UF Goal: {dialysisSessions[0].dialysisParameters.ufGoal} L
                             </ParagraphMedium>
                           </Block>
                           <Button
-                            onClick={() => navigate(`/nurse/patients/${id}/dialysis-session`)}
+                            onClick={() => navigate(`/nurse/patients/${patient.id}/dialysis-session`)}
                             size="compact"
                           >
                             New Dialysis Session
@@ -371,7 +374,7 @@ const NursePatientProfile: React.FC = () => {
                         <Block>
                           <ParagraphMedium>No recent dialysis sessions</ParagraphMedium>
                           <Button
-                            onClick={() => navigate(`/nurse/patients/${id}/dialysis-session`)}
+                            onClick={() => navigate(`/nurse/patients/${patient.id}/dialysis-session`)}
                             size="compact"
                           >
                             New Dialysis Session
@@ -397,7 +400,7 @@ const NursePatientProfile: React.FC = () => {
                             </ParagraphMedium>
                           </Block>
                           <Button
-                            onClick={() => navigate(`/nurse/patients/${id}/monthly-investigation`)}
+                            onClick={() => navigate(`/nurse/patients/${patient.id}/monthly-investigation`)}
                             size="compact"
                           >
                             New Monthly Investigation
@@ -407,7 +410,7 @@ const NursePatientProfile: React.FC = () => {
                         <Block>
                           <ParagraphMedium>No monthly investigations</ParagraphMedium>
                           <Button
-                            onClick={() => navigate(`/nurse/patients/${id}/monthly-investigation`)}
+                            onClick={() => navigate(`/nurse/patients/${patient.id}/monthly-investigation`)}
                             size="compact"
                           >
                             New Monthly Investigation
@@ -418,13 +421,16 @@ const NursePatientProfile: React.FC = () => {
 
                     <Block>
                       <Button
-                        onClick={() => navigate(`/nurse/trend-analysis/${id}`)}
+                        onClick={() => navigate(`/nurse/trend-analysis/${patient.id}`)}
                       >
                         View Trend Analysis
                       </Button>
                     </Block>
+
                   </Block>
                 </Tab>
+
+                {/* Tab 2: Dialysis Sessions */}
                 <Tab title="Dialysis Sessions">
                   <Block padding="16px">
                     <Block display="flex" justifyContent="space-between" alignItems="center" marginBottom="16px">
@@ -432,7 +438,7 @@ const NursePatientProfile: React.FC = () => {
                         Dialysis Sessions
                       </HeadingMedium>
                       <Button
-                        onClick={() => navigate(`/nurse/patients/${id}/dialysis-session`)}
+                        onClick={() => navigate(`/nurse/patients/${patient.id}/dialysis-session`)}
                       >
                         New Session
                       </Button>
@@ -448,37 +454,71 @@ const NursePatientProfile: React.FC = () => {
                         >
                           <Block display="flex" justifyContent="space-between" marginBottom="8px">
                             <HeadingSmall marginTop="0" marginBottom="0">
-                              Session on {session.date}
+                              Session on {new Date(session.date).toLocaleDateString()}
                             </HeadingSmall>
-                            <Block>{session.startTime} - {session.endTime}</Block>
+                            <Block>
+                              {session.startTime} - {session.endTime || 'In Progress'} 
+                              <Block as="span" marginLeft="8px" font="font300">
+                                ({session.status})
+                              </Block>
+                            </Block>
                           </Block>
 
                           <Block marginBottom="8px">
-                            <strong>Weight:</strong> Pre: {session.preWeight} kg, Post: {session.postWeight} kg (UF Goal: {session.ufGoal} L)
+                            <strong>Weight:</strong> Pre: {session.preDialysis.weight} kg, 
+                            Post: {session.postDialysis?.weight || 'N/A'} kg 
+                            (UF Goal: {session.dialysisParameters.ufGoal} L, 
+                            UF Achieved: {session.dialysisParameters.ufAchieved || 'N/A'} L)
                           </Block>
 
                           <Block marginBottom="8px">
-                            <strong>Vitals:</strong> BP Pre: {session.bloodPressurePre}, BP Post: {session.bloodPressurePost},
-                            HR Pre: {session.heartRatePre}, HR Post: {session.heartRatePost}
+                            <strong>Vitals:</strong> 
+                            BP Pre: {session.preDialysis.bloodPressure.systolic}/{session.preDialysis.bloodPressure.diastolic}, 
+                            BP Post: {session.postDialysis?.bloodPressure ? `${session.postDialysis.bloodPressure.systolic}/${session.postDialysis.bloodPressure.diastolic}` : 'N/A'},
+                            HR Pre: {session.preDialysis.heartRate}, 
+                            HR Post: {session.postDialysis?.heartRate || 'N/A'}
                           </Block>
 
-                          {session.symptoms.length > 0 && (
+                          <Block marginBottom="8px">
+                            <strong>Dialysis Parameters:</strong> 
+                            Blood Flow: {session.dialysisParameters.bloodFlow} mL/min, 
+                            Dialysate Flow: {session.dialysisParameters.dialysateFlow} mL/min
+                          </Block>
+
+                          <Block marginBottom="8px">
+                            <strong>Vascular Access:</strong> 
+                            {session.vascularAccess.type} at {session.vascularAccess.site}
+                          </Block>
+
+                          {session.adequacyParameters && (
                             <Block marginBottom="8px">
-                              <strong>Symptoms:</strong> {session.symptoms.join(', ')}
+                              <strong>Adequacy:</strong> 
+                              Kt/V: {session.adequacyParameters.ktv || 'N/A'}, 
+                              URR: {session.adequacyParameters.urr || 'N/A'}%
                             </Block>
                           )}
 
-                          {session.complications.length > 0 && (
+                          {session.complications && session.complications.length > 0 && (
                             <Block marginBottom="8px">
                               <strong>Complications:</strong> {session.complications.join(', ')}
                             </Block>
                           )}
+
+                          <Block marginBottom="8px">
+                            <strong>Nurse:</strong> {session.nurse.name}
+                          </Block>
 
                           {session.notes && (
                             <Block marginBottom="8px">
                               <strong>Notes:</strong> {session.notes}
                             </Block>
                           )}
+
+                          <Block marginBottom="8px">
+                            <strong>Quality Indicators:</strong> 
+                            Session Completed: {session.qualityIndicators.sessionCompleted ? 'Yes' : 'No'}, 
+                            Prescription Achieved: {session.qualityIndicators.prescriptionAchieved ? 'Yes' : 'No'}
+                          </Block>
                         </Block>
                       ))
                     ) : (
@@ -486,6 +526,8 @@ const NursePatientProfile: React.FC = () => {
                     )}
                   </Block>
                 </Tab>
+
+                {/* Tab 3: Monthly Investigations */}
                 <Tab title="Monthly Investigations">
                   <Block padding="16px">
                     <Block display="flex" justifyContent="space-between" alignItems="center" marginBottom="16px">
@@ -493,7 +535,7 @@ const NursePatientProfile: React.FC = () => {
                         Monthly Investigations
                       </HeadingMedium>
                       <Button
-                        onClick={() => navigate(`/nurse/patients/${id}/monthly-investigation`)}
+                        onClick={() => navigate(`/nurse/patients/${patient.id}/monthly-investigation`)}
                       >
                         New Investigation
                       </Button>
@@ -558,6 +600,7 @@ const NursePatientProfile: React.FC = () => {
                     )}
                   </Block>
                 </Tab>
+
               </Tabs>
             </StyledBody>
           </Card>
