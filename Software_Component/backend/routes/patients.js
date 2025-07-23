@@ -47,12 +47,14 @@ router.get('/', protect, async (req, res) => {
 // @desc    Get patient by ID
 // @route   GET /api/patients/:id
 // @access  Private
-router.get('/:id', protect, checkPatientAssignment, async (req, res) => {
+router.get('/:id', protect, async (req, res) => {
   try {
-    const patient = await Patient.findById(req.params.id)
+    const patient = await Patient.findOne({ patientId: req.params.id })
       .populate('assignedDoctor', 'name email phoneNumber specialization')
       .populate('assignedNurse', 'name email phoneNumber')
       .populate('notes.addedBy', 'name role');
+    
+
 
     if (!patient) {
       return res.status(404).json({

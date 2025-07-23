@@ -8,6 +8,7 @@ import { Button } from 'baseui/button';
 import { Tabs, Tab } from 'baseui/tabs-motion';
 import { useNavigate } from 'react-router-dom';
 import { Patient, DialysisSession, MonthlyInvestigation } from '../../types';
+import { fetchPatientById } from '../doctor/PatientService';
 
 // Mock data
 const mockPatients: Record<string, Patient> = {
@@ -157,19 +158,97 @@ const mockMonthlyInvestigations: Record<string, MonthlyInvestigation[]> = {
 const NursePatientProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [patient, setPatient] = useState<Patient | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeKey, setActiveKey] = useState<string | number>('0');
   const [dialysisSessions, setDialysisSessions] = useState<DialysisSession[]>([]);
   const [monthlyInvestigations, setMonthlyInvestigations] = useState<MonthlyInvestigation[]>([]);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (id) {
-      // In a real app, these would be API calls
-      setPatient(mockPatients[id] || null);
-      setDialysisSessions(mockDialysisSessions[id] || []);
-      setMonthlyInvestigations(mockMonthlyInvestigations[id] || []);
+  // Helper functions to format patient data
+  const getFormattedAddress = (address: string | any): string => {
+    if (typeof address === 'string') return address;
+    if (address && typeof address === 'object') {
+      return `${address.street}, ${address.city}, ${address.state}, ${address.zipCode}, ${address.country}`;
     }
+    return 'N/A';
+  };
+
+  const getFormattedEmergencyContact = (contact: string | any): string => {
+    if (typeof contact === 'string') return contact;
+    if (contact && typeof contact === 'object') {
+      return `${contact.name} (${contact.relationship}) - ${contact.phone}`;
+    }
+    return 'N/A';
+  };
+
+  const getFormattedMedicalHistory = (history: string | any): string => {
+    if (typeof history === 'string') return history;
+    if (history && typeof history === 'object') {
+      let formatted = `${history.renalDiagnosis}`;
+      if (history.medicalProblems && history.medicalProblems.length > 0) {
+        const problems = history.medicalProblems.map((p: any) => p.problem).join(', ');
+        formatted += `\nOther conditions: ${problems}`;
+      }
+      return formatted;
+    }
+    return 'N/A';
+  };
+
+  const getAssignedDoctorName = (doctor: string | any): string => {
+    if (typeof doctor === 'string') return doctor;
+    if (doctor && typeof doctor === 'object') {
+      return doctor.name;
+    }
+    return 'N/A';
+  };
+
+  useEffect(() => {
+    const loadPatientData = async () => {
+      if (id) {
+        try {
+          setLoading(true);
+          setError(null);
+          const patientData = await fetchPatientById(id);
+          
+          if (patientData) {
+            setPatient(patientData);
+            
+            // For now, keep using mock data for dialysis sessions, investigations, etc.
+            // These would be replaced with actual API calls later
+            setDialysisSessions(mockDialysisSessions[id] || []);
+            setMonthlyInvestigations(mockMonthlyInvestigations[id] || []);
+          } else {
+            setError('Patient not found');
+          }
+        } catch (error) {
+          console.error('Error loading patient data:', error);
+          setError('Failed to load patient data');
+          setPatient(null);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadPatientData();
   }, [id]);
+
+  if (loading) {
+    return (
+      <Block display="flex" justifyContent="center" alignItems="center" height="400px">
+        <Block>Loading patient data...</Block>
+      </Block>
+    );
+  }
+
+  if (error) {
+    return (
+      <Block display="flex" justifyContent="center" alignItems="center" height="400px">
+        <Block>Error: {error}</Block>
+      </Block>
+    );
+  }
 
   if (!patient) {
     return <Block>Patient not found</Block>;
@@ -201,7 +280,7 @@ const NursePatientProfile: React.FC = () => {
                   {patient.name}
                 </HeadingMedium>
                 <Block font="font400" marginBottom="8px">
-                  ID: {patient.id}
+                  ID: {patient.patientId || patient.id}
                 </Block>
               </Block>
 
@@ -224,15 +303,15 @@ const NursePatientProfile: React.FC = () => {
                 </Block>
                 <Block display="flex" justifyContent="space-between" marginBottom="8px">
                   <Block font="font400">Emergency Contact:</Block>
-                  <Block font="font500">{patient.emergencyContact}</Block>
+                  <Block font="font500">{getFormattedEmergencyContact(patient.emergencyContact)}</Block>
                 </Block>
                 <Block display="flex" justifyContent="space-between" marginBottom="8px">
                   <Block font="font400">Assigned Doctor:</Block>
-                  <Block font="font500">{patient.assignedDoctor}</Block>
+                  <Block font="font500">{getAssignedDoctorName(patient.assignedDoctor)}</Block>
                 </Block>
                 <Block display="flex" justifyContent="space-between" marginBottom="8px">
                   <Block font="font400">Registration Date:</Block>
-                  <Block font="font500">{patient.registrationDate}</Block>
+                  <Block font="font500">{new Date(patient.registrationDate).toLocaleDateString()}</Block>
                 </Block>
               </Block>
 
@@ -240,14 +319,14 @@ const NursePatientProfile: React.FC = () => {
                 <HeadingSmall marginTop="0" marginBottom="8px">
                   Address
                 </HeadingSmall>
-                <Block font="font400">{patient.address}</Block>
+                <Block font="font400">{getFormattedAddress(patient.address)}</Block>
               </Block>
 
               <Block marginTop="16px">
                 <HeadingSmall marginTop="0" marginBottom="8px">
                   Medical History
                 </HeadingSmall>
-                <Block font="font400">{patient.medicalHistory}</Block>
+                <Block font="font400" whiteSpace="pre-line">{getFormattedMedicalHistory(patient.medicalHistory)}</Block>
               </Block>
             </StyledBody>
           </Card>

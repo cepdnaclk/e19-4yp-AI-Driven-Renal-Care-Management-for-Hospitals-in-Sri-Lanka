@@ -1,195 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { HeadingLarge, HeadingMedium, HeadingSmall, ParagraphMedium } from 'baseui/typography';
+import { HeadingLarge, HeadingMedium, HeadingSmall } from 'baseui/typography';
 import { Card, StyledBody } from 'baseui/card';
 import { Grid, Cell } from 'baseui/layout-grid';
 import { Block } from 'baseui/block';
 import { Button } from 'baseui/button';
 import { Tabs, Tab } from 'baseui/tabs-motion';
 import { useNavigate } from 'react-router-dom';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Patient, DialysisSession, MonthlyInvestigation, AIPrediction, ClinicalDecision } from '../../types';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Area } from 'recharts';
+import { Patient, DialysisSession, MonthlyInvestigation, ClinicalDecision } from '../../types';
+import { fetchPatientById, fetchMonthlyInvestigations, fetchDialysisSessions, fetchHemoglobinTrend, fetchAIPrediction } from './PatientService';
 
-// Mock data
-const mockPatients: Record<string, Patient> = {
-  '101': {
-    id: '101',
-    name: 'John Doe',
-    age: 45,
-    gender: 'Male',
-    bloodType: 'A+',
-    contactNumber: '555-123-4567',
-    address: '123 Main St, Anytown, USA',
-    emergencyContact: '555-987-6543',
-    medicalHistory: 'Hypertension, Diabetes',
-    assignedDoctor: 'Dr. Smith',
-    registrationDate: '2024-01-15'
-  },
-  '102': {
-    id: '102',
-    name: 'Sarah Smith',
-    age: 38,
-    gender: 'Female',
-    bloodType: 'O-',
-    contactNumber: '555-234-5678',
-    address: '456 Oak Ave, Somewhere, USA',
-    emergencyContact: '555-876-5432',
-    medicalHistory: 'Chronic Kidney Disease',
-    assignedDoctor: 'Dr. Johnson',
-    registrationDate: '2024-02-20'
-  },
-  '103': {
-    id: '103',
-    name: 'Michael Johnson',
-    age: 52,
-    gender: 'Male',
-    bloodType: 'B+',
-    contactNumber: '555-345-6789',
-    address: '789 Pine Rd, Elsewhere, USA',
-    emergencyContact: '555-765-4321',
-    medicalHistory: 'Hypertension, Coronary Artery Disease',
-    assignedDoctor: 'Dr. Williams',
-    registrationDate: '2024-03-10'
-  }
-};
-
-// Mock dialysis sessions
-const mockDialysisSessions: Record<string, DialysisSession[]> = {
-  '101': [
-    {
-      id: 'ds101',
-      patientId: '101',
-      date: '2025-05-29',
-      startTime: '09:00',
-      endTime: '13:00',
-      preWeight: 82.5,
-      postWeight: 80.1,
-      ufGoal: 2.5,
-      bloodPressurePre: '140/90',
-      bloodPressurePost: '130/85',
-      heartRatePre: 78,
-      heartRatePost: 72,
-      temperaturePre: 36.8,
-      temperaturePost: 36.6,
-      symptoms: ['Fatigue', 'Mild headache'],
-      complications: [],
-      notes: 'Patient tolerated session well.',
-      nurseId: '1'
-    },
-    {
-      id: 'ds102',
-      patientId: '101',
-      date: '2025-05-26',
-      startTime: '09:00',
-      endTime: '13:00',
-      preWeight: 83.2,
-      postWeight: 80.5,
-      ufGoal: 2.7,
-      bloodPressurePre: '145/92',
-      bloodPressurePost: '135/88',
-      heartRatePre: 80,
-      heartRatePost: 74,
-      temperaturePre: 36.7,
-      temperaturePost: 36.5,
-      symptoms: ['Fatigue'],
-      complications: [],
-      notes: 'No complications during session.',
-      nurseId: '1'
-    }
-  ]
-};
-
-// Mock monthly investigations
-const mockMonthlyInvestigations: Record<string, MonthlyInvestigation[]> = {
-  '101': [
-    {
-      id: 'mi101',
-      patientId: '101',
-      date: '2025-05-15',
-      hemoglobin: 11.2,
-      hematocrit: 33.6,
-      whiteBloodCellCount: 6.8,
-      plateletCount: 210,
-      sodium: 138,
-      potassium: 4.5,
-      chloride: 102,
-      bicarbonate: 22,
-      bun: 45,
-      creatinine: 4.2,
-      glucose: 110,
-      calcium: 9.2,
-      phosphorus: 5.1,
-      albumin: 3.8,
-      totalProtein: 6.9,
-      alt: 25,
-      ast: 28,
-      alkalinePhosphatase: 95,
-      notes: 'Potassium levels slightly elevated but within acceptable range.',
-      nurseId: '1'
-    },
-    {
-      id: 'mi102',
-      patientId: '101',
-      date: '2025-04-15',
-      hemoglobin: 10.8,
-      hematocrit: 32.4,
-      whiteBloodCellCount: 7.1,
-      plateletCount: 205,
-      sodium: 139,
-      potassium: 4.8,
-      chloride: 103,
-      bicarbonate: 21,
-      bun: 48,
-      creatinine: 4.5,
-      glucose: 115,
-      calcium: 9.0,
-      phosphorus: 5.3,
-      albumin: 3.7,
-      totalProtein: 6.8,
-      alt: 27,
-      ast: 30,
-      alkalinePhosphatase: 98,
-      notes: 'Hemoglobin trending downward, may need ESA adjustment.',
-      nurseId: '1'
-    }
-  ]
-};
-
-// Mock AI predictions
-const mockAIPredictions: Record<string, AIPrediction[]> = {
-  '101': [
-    {
-      id: 'ai101',
-      patientId: '101',
-      date: '2025-05-30',
-      predictionType: 'Anemia Risk',
-      prediction: 'High risk of developing anemia in the next 30 days',
-      confidence: 0.85,
-      suggestedAction: 'Consider ESA dose adjustment and iron supplementation',
-      dataPoints: [
-        { parameter: 'Hemoglobin', value: 11.2, trend: 'decreasing' },
-        { parameter: 'Hematocrit', value: 33.6, trend: 'decreasing' },
-        { parameter: 'Iron Saturation', value: 18, trend: 'decreasing' }
-      ]
-    },
-    {
-      id: 'ai102',
-      patientId: '101',
-      date: '2025-05-30',
-      predictionType: 'Fluid Overload Risk',
-      prediction: 'Moderate risk of fluid overload before next session',
-      confidence: 0.72,
-      suggestedAction: 'Consider sodium restriction and fluid intake counseling',
-      dataPoints: [
-        { parameter: 'Interdialytic Weight Gain', value: 3.1, trend: 'increasing' },
-        { parameter: 'Blood Pressure', value: '145/92', trend: 'increasing' },
-        { parameter: 'Reported Edema', value: 'mild', trend: 'stable' }
-      ]
-    }
-  ]
-};
-
-// Mock clinical decisions
+// Mock clinical decisions - to be replaced with API integration later
 const mockClinicalDecisions: Record<string, ClinicalDecision[]> = {
   '101': [
     {
@@ -223,23 +45,229 @@ const mockClinicalDecisions: Record<string, ClinicalDecision[]> = {
 const DoctorPatientProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [patient, setPatient] = useState<Patient | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeKey, setActiveKey] = useState<string | number>('0');
-  const [dialysisSessions, setDialysisSessions] = useState<DialysisSession[]>([]);
-  const [monthlyInvestigations, setMonthlyInvestigations] = useState<MonthlyInvestigation[]>([]);
-  const [aiPredictions, setAIPredictions] = useState<AIPrediction[]>([]);
+  const [dialysisSessions, setDialysisSessions] = useState<any[]>([]);
+  const [dialysisSessionsLoading, setDialysisSessionsLoading] = useState<boolean>(false);
+  const [dialysisSessionsError, setDialysisSessionsError] = useState<string | null>(null);
+  const [monthlyInvestigations, setMonthlyInvestigations] = useState<any[]>([]);
+  const [monthlyInvestigationsLoading, setMonthlyInvestigationsLoading] = useState<boolean>(false);
+  const [monthlyInvestigationsError, setMonthlyInvestigationsError] = useState<string | null>(null);
+  const [hemoglobinTrend, setHemoglobinTrend] = useState<any>(null);
+  const [hemoglobinTrendLoading, setHemoglobinTrendLoading] = useState<boolean>(false);
+  const [hemoglobinTrendError, setHemoglobinTrendError] = useState<string | null>(null);
+  const [aiPredictions, setAIPredictions] = useState<any>(null);
+  const [aiPredictionsLoading, setAIPredictionsLoading] = useState<boolean>(false);
+  const [aiPredictionsError, setAIPredictionsError] = useState<string | null>(null);
   const [clinicalDecisions, setClinicalDecisions] = useState<ClinicalDecision[]>([]);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (id) {
-      // In a real app, these would be API calls
-      setPatient(mockPatients[id] || null);
-      setDialysisSessions(mockDialysisSessions[id] || []);
-      setMonthlyInvestigations(mockMonthlyInvestigations[id] || []);
-      setAIPredictions(mockAIPredictions[id] || []);
-      setClinicalDecisions(mockClinicalDecisions[id] || []);
+  // Helper functions to format patient data
+  const getFormattedAddress = (address: string | any): string => {
+    if (typeof address === 'string') return address;
+    if (address && typeof address === 'object') {
+      return `${address.street}, ${address.city}, ${address.state}, ${address.zipCode}, ${address.country}`;
     }
+    return 'N/A';
+  };
+
+  const getFormattedEmergencyContact = (contact: string | any): string => {
+    if (typeof contact === 'string') return contact;
+    if (contact && typeof contact === 'object') {
+      return `${contact.name} (${contact.relationship}) - ${contact.phone}`;
+    }
+    return 'N/A';
+  };
+
+  const getFormattedMedicalHistory = (history: string | any): string => {
+    if (typeof history === 'string') return history;
+    if (history && typeof history === 'object') {
+      let formatted = `${history.renalDiagnosis}`;
+      if (history.medicalProblems && history.medicalProblems.length > 0) {
+        const problems = history.medicalProblems.map((p: any) => p.problem).join(', ');
+        formatted += `\nOther conditions: ${problems}`;
+      }
+      return formatted;
+    }
+    return 'N/A';
+  };
+
+  const getAssignedDoctorName = (doctor: string | any): string => {
+    if (typeof doctor === 'string') return doctor;
+    if (doctor && typeof doctor === 'object') {
+      return doctor.name;
+    }
+    return 'N/A';
+  };
+
+  const loadMonthlyInvestigations = async (patientId: string) => {
+    try {
+      setMonthlyInvestigationsLoading(true);
+      setMonthlyInvestigationsError(null);
+      const investigations = await fetchMonthlyInvestigations(patientId);
+      setMonthlyInvestigations(investigations);
+    } catch (error: any) {
+      console.error('Error loading monthly investigations:', error);
+      if (error.message?.includes('Authentication failed') || error.message?.includes('No authentication token')) {
+        setMonthlyInvestigationsError('Authentication failed. Please log in again.');
+      } else {
+        setMonthlyInvestigationsError('Failed to load monthly investigations. Please try again.');
+      }
+      setMonthlyInvestigations([]);
+    } finally {
+      setMonthlyInvestigationsLoading(false);
+    }
+  };
+
+  const loadDialysisSessions = async (patientId: string) => {
+    try {
+      setDialysisSessionsLoading(true);
+      setDialysisSessionsError(null);
+      const sessions = await fetchDialysisSessions(patientId);
+      setDialysisSessions(sessions);
+    } catch (error: any) {
+      console.error('Error loading dialysis sessions:', error);
+      if (error.message?.includes('Authentication failed') || error.message?.includes('No authentication token')) {
+        setDialysisSessionsError('Authentication failed. Please log in again.');
+      } else {
+        setDialysisSessionsError('Failed to load dialysis sessions. Please try again.');
+      }
+      setDialysisSessions([]);
+    } finally {
+      setDialysisSessionsLoading(false);
+    }
+  };
+
+  const loadHemoglobinTrend = async (patientId: string) => {
+    try {
+      setHemoglobinTrendLoading(true);
+      setHemoglobinTrendError(null);
+      const trendData = await fetchHemoglobinTrend(patientId);
+      setHemoglobinTrend(trendData);
+    } catch (error: any) {
+      console.error('Error loading hemoglobin trend:', error);
+      if (error.message?.includes('Authentication failed') || error.message?.includes('No authentication token')) {
+        setHemoglobinTrendError('Authentication failed. Please log in again.');
+      } else {
+        setHemoglobinTrendError('Failed to load hemoglobin trend. Please try again.');
+      }
+      setHemoglobinTrend(null);
+    } finally {
+      setHemoglobinTrendLoading(false);
+    }
+  };
+
+  const loadAIPredictions = async (patientId: string) => {
+    try {
+      setAIPredictionsLoading(true);
+      setAIPredictionsError(null);
+      
+      // Get the latest monthly investigation data to use for AI prediction
+      const investigations = await fetchMonthlyInvestigations(patientId);
+      
+      if (investigations && investigations.length > 0) {
+        const latestInvestigation = investigations[investigations.length - 1];
+        console.log('Latest Investigation Data:', latestInvestigation);
+        // Prepare the prediction request data
+        // const predictionData = {
+        //   patient_id: patientId,
+        //   albumin: latestInvestigation.albumin || 0,
+        //   bu_post_hd: latestInvestigation.bu_post_hd || 0, // Using bu field as it's what the API displays
+        //   bu_pre_hd: latestInvestigation.bu_pre_hd || 0, // Using bu field as it's what the API displays
+        //   s_ca: latestInvestigation.sCa || 0,
+        //   scr_post_hd: latestInvestigation.scrPostHD || 0,
+        //   scr_pre_hd: latestInvestigation.scrPreHD || 0,
+        //   serum_k_post_hd: latestInvestigation.serumKPostHD || 0,
+        //   serum_k_pre_hd: latestInvestigation.serumKPreHD || 0,
+        //   serum_na_pre_hd: latestInvestigation.serumNaPreHD || 0,
+        //   ua: latestInvestigation.ua || 0,
+        //   hb_diff: investigations[investigations.length - 2].hb - investigations[investigations.length - 1].hb,
+        //   hb: latestInvestigation.hb || 0
+        // };
+
+        const predictionData = {
+          patient_id: patientId,
+          albumin:35.2,
+          bu_post_hd: 8.5, // Using bu field as it's what the API displays
+          bu_pre_hd: 25.3, // Using bu field as it's what the API displays
+          s_ca: 2.3,
+          scr_post_hd: 450,
+          scr_pre_hd: 890,
+          serum_k_post_hd: 3.8,
+          serum_k_pre_hd: 5.2,
+          serum_na_pre_hd: 138,
+          ua: 6.8,
+          hb_diff: -0.5,
+          hb: 9
+        };
+
+        console.log('AI Prediction Data:', predictionData);
+        
+        const prediction = await fetchAIPrediction(predictionData);
+        setAIPredictions(prediction);
+      } else {
+        setAIPredictionsError('No investigation data available for AI prediction');
+        setAIPredictions(null);
+      }
+    } catch (error: any) {
+      console.error('Error loading AI predictions:', error);
+      if (error.message?.includes('Authentication failed') || error.message?.includes('No authentication token')) {
+        setAIPredictionsError('Authentication failed. Please log in again.');
+      } else {
+        setAIPredictionsError('Failed to load AI predictions. Please try again.');
+      }
+      setAIPredictions(null);
+    } finally {
+      setAIPredictionsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const loadPatientData = async () => {
+      if (id) {
+        try {
+          setLoading(true);
+          setError(null);
+          const patientData = await fetchPatientById(id);
+          
+          if (patientData) {
+            setPatient(patientData);
+            
+            // For now, keep using mock data for clinical decisions
+            // AI predictions will be loaded when the tab is clicked
+            setClinicalDecisions(mockClinicalDecisions[id] || []);
+          } else {
+            setError('Patient not found');
+          }
+        } catch (error) {
+          console.error('Error loading patient data:', error);
+          setError('Failed to load patient data');
+          setPatient(null);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadPatientData();
   }, [id]);
+
+  if (loading) {
+    return (
+      <Block display="flex" justifyContent="center" alignItems="center" height="400px">
+        <Block>Loading patient data...</Block>
+      </Block>
+    );
+  }
+
+  if (error) {
+    return (
+      <Block display="flex" justifyContent="center" alignItems="center" height="400px">
+        <Block>Error: {error}</Block>
+      </Block>
+    );
+  }
 
   if (!patient) {
     return <Block>Patient not found</Block>;
@@ -299,7 +327,7 @@ const DoctorPatientProfile: React.FC = () => {
                   {patient.name}
                 </HeadingMedium>
                 <Block font="font400" marginBottom="8px">
-                  ID: {patient.id}
+                  ID: {patient.patientId || patient.id}
                 </Block>
               </Block>
 
@@ -322,11 +350,15 @@ const DoctorPatientProfile: React.FC = () => {
                 </Block>
                 <Block display="flex" justifyContent="space-between" marginBottom="8px">
                   <Block font="font400">Emergency Contact:</Block>
-                  <Block font="font500">{patient.emergencyContact}</Block>
+                  <Block font="font500">{getFormattedEmergencyContact(patient.emergencyContact)}</Block>
+                </Block>
+                <Block display="flex" justifyContent="space-between" marginBottom="8px">
+                  <Block font="font400">Assigned Doctor:</Block>
+                  <Block font="font500">{getAssignedDoctorName(patient.assignedDoctor)}</Block>
                 </Block>
                 <Block display="flex" justifyContent="space-between" marginBottom="8px">
                   <Block font="font400">Registration Date:</Block>
-                  <Block font="font500">{patient.registrationDate}</Block>
+                  <Block font="font500">{new Date(patient.registrationDate).toLocaleDateString()}</Block>
                 </Block>
               </Block>
 
@@ -334,19 +366,42 @@ const DoctorPatientProfile: React.FC = () => {
                 <HeadingSmall marginTop="0" marginBottom="8px">
                   Address
                 </HeadingSmall>
-                <Block font="font400">{patient.address}</Block>
+                <Block font="font400">{getFormattedAddress(patient.address)}</Block>
               </Block>
 
               <Block marginTop="16px">
                 <HeadingSmall marginTop="0" marginBottom="8px">
                   Medical History
                 </HeadingSmall>
-                <Block font="font400">{patient.medicalHistory}</Block>
+                <Block font="font400" whiteSpace="pre-line">{getFormattedMedicalHistory(patient.medicalHistory)}</Block>
               </Block>
+
+              {patient.dialysisInfo && (
+                <Block marginTop="16px">
+                  <HeadingSmall marginTop="0" marginBottom="8px">
+                    Dialysis Information
+                  </HeadingSmall>
+                  <Block font="font400" marginBottom="4px">
+                    Type: {patient.dialysisInfo.dialysisType}
+                  </Block>
+                  <Block font="font400" marginBottom="4px">
+                    Frequency: {patient.dialysisInfo.frequency.replace('_', ' ')}
+                  </Block>
+                  <Block font="font400" marginBottom="4px">
+                    Access: {patient.dialysisInfo.accessType} ({patient.dialysisInfo.accessSite})
+                  </Block>
+                  <Block font="font400" marginBottom="4px">
+                    Dry Weight: {patient.dialysisInfo.dryWeight} kg
+                  </Block>
+                  <Block font="font400">
+                    Target UFR: {patient.dialysisInfo.targetUfr} ml/hr
+                  </Block>
+                </Block>
+              )}
 
               <Block marginTop="24px">
                 <Button 
-                  onClick={() => navigate(`/doctor/patients/${id}/clinical-decisions`)}
+                  onClick={() => navigate(`/doctor/patients/${patient.id}/clinical-decisions`)}
                   overrides={{
                     BaseButton: {
                       style: {
@@ -370,63 +425,189 @@ const DoctorPatientProfile: React.FC = () => {
                 onChange={({ activeKey }) => {
                   if (typeof activeKey === 'string' || typeof activeKey === 'number') {
                     setActiveKey(activeKey);
+                    // Load AI predictions when AI Predictions tab (index 0) is clicked
+                    if (activeKey === '0' && patient && !aiPredictions) {
+                      loadAIPredictions(patient.patientId || patient.id);
+                    }
+                    // Load dialysis sessions when Latest Dialysis Session tab (index 1) is clicked
+                    if (activeKey === '1' && patient && dialysisSessions.length === 0) {
+                      loadDialysisSessions(patient.patientId || patient.id);
+                    }
+                    // Load monthly investigations when Monthly Investigation tab (index 2) is clicked
+                    if (activeKey === '2' && patient && monthlyInvestigations.length === 0) {
+                      loadMonthlyInvestigations(patient.patientId || patient.id);
+                    }
+                    // Load hemoglobin trend when Trend Analysis tab (index 3) is clicked
+                    if (activeKey === '3' && patient && !hemoglobinTrend) {
+                      loadHemoglobinTrend(patient.patientId || patient.id);
+                    }
                   }
                 }}
                 activateOnFocus
               >
                 <Tab title="AI Predictions">
                   <Block padding="16px">
-                    <HeadingMedium marginTop="0">AI-Generated Predictions</HeadingMedium>
+                    <HeadingMedium marginTop="0">AI-Generated Hemoglobin Risk Prediction</HeadingMedium>
                     
-                    {aiPredictions.length > 0 ? (
-                      aiPredictions.map(prediction => (
+                    {aiPredictionsLoading ? (
+                      <Block display="flex" justifyContent="center" alignItems="center" height="200px">
+                        <Block>Loading AI predictions...</Block>
+                      </Block>
+                    ) : aiPredictionsError ? (
+                      <Block display="flex" justifyContent="center" alignItems="center" height="200px">
+                        <Block color="negative">Error: {aiPredictionsError}</Block>
+                      </Block>
+                    ) : aiPredictions ? (
+                      <Block>
+                        {/* Risk Status Overview */}
                         <Block 
-                          key={prediction.id}
                           marginBottom="24px"
                           padding="16px"
                           backgroundColor={
-                            prediction.confidence > 0.8
+                            aiPredictions.hb_risk_predicted
                               ? 'rgba(255, 0, 0, 0.1)'
-                              : prediction.confidence > 0.6
-                              ? 'rgba(255, 165, 0, 0.1)'
-                              : 'rgba(0, 0, 0, 0.03)'
+                              : 'rgba(0, 255, 0, 0.1)'
                           }
                         >
-                          <Block display="flex" justifyContent="space-between" alignItems="center">
-                            <HeadingSmall marginTop="0" marginBottom="8px">
-                              {prediction.predictionType}
+                          <Block display="flex" justifyContent="space-between" alignItems="center" marginBottom="8px">
+                            <HeadingSmall marginTop="0" marginBottom="0">
+                              Hemoglobin Risk Assessment
                             </HeadingSmall>
-                            <Block font="font500">
-                              Confidence: {(prediction.confidence * 100).toFixed(0)}%
+                            <Block 
+                              font="font600"
+                              color={aiPredictions.hb_risk_predicted ? 'negative' : 'positive'}
+                            >
+                              {aiPredictions.risk_status}
                             </Block>
-                          </Block>
-                          
-                          <Block font="font500" marginBottom="8px">
-                            {prediction.prediction}
-                          </Block>
-                          
-                          <Block marginBottom="16px">
-                            <strong>Suggested Action:</strong> {prediction.suggestedAction}
                           </Block>
                           
                           <Block marginBottom="8px">
-                            <strong>Based on:</strong>
+                            <strong>Prediction:</strong> {aiPredictions.hb_risk_predicted ? 'Patient at risk' : 'Patient not at risk'}
                           </Block>
                           
-                          {prediction.dataPoints.map((point, index) => (
-                            <Block key={index} marginBottom="4px" marginLeft="16px">
-                              • {point.parameter}: {point.value} ({point.trend})
-                            </Block>
-                          ))}
+                          <Block marginBottom="8px">
+                            <strong>Hemoglobin Trend:</strong> {aiPredictions.hb_trend}
+                          </Block>
                           
-                          <Block marginTop="16px" display="flex">
-                            <Button size="compact">Acknowledge</Button>
-                            <Button size="compact" kind="secondary">Override</Button>
+                          <Block marginBottom="8px">
+                            <strong>Current Hemoglobin:</strong> {aiPredictions.current_hb} g/dL
+                          </Block>
+                          
+                          <Block marginBottom="8px">
+                            <strong>Target Range:</strong> {aiPredictions.target_hb_range.min} - {aiPredictions.target_hb_range.max} g/dL
+                          </Block>
+                          
+                          <Block marginBottom="8px">
+                            <strong>Risk Probability:</strong> {(aiPredictions.risk_probability * 100).toFixed(1)}%
+                          </Block>
+                          
+                          <Block marginBottom="8px">
+                            <strong>Confidence Score:</strong> {(aiPredictions.confidence_score * 100).toFixed(1)}%
+                          </Block>
+                          
+                          <Block marginBottom="8px">
+                            <strong>Prediction Date:</strong> {new Date(aiPredictions.prediction_date).toLocaleString()}
+                          </Block>
+                          
+                          <Block marginBottom="8px">
+                            <strong>Model Version:</strong> {aiPredictions.model_version}
                           </Block>
                         </Block>
-                      ))
+                        
+                        {/* Recommendations */}
+                        {aiPredictions.recommendations && aiPredictions.recommendations.length > 0 && (
+                          <Block 
+                            marginBottom="24px"
+                            padding="16px"
+                            backgroundColor="rgba(255, 165, 0, 0.1)"
+                          >
+                            <HeadingSmall marginTop="0" marginBottom="12px">
+                              Clinical Recommendations
+                            </HeadingSmall>
+                            
+                            {aiPredictions.recommendations.map((recommendation: string, index: number) => (
+                              <Block key={index} marginBottom="8px" marginLeft="8px">
+                                • {recommendation}
+                              </Block>
+                            ))}
+                            
+                            <Block marginTop="16px" display="flex" style={{ gap: '8px' }}>
+                              <Button 
+                                size="compact"
+                                onClick={() => {
+                                  // Handle acknowledge action
+                                  console.log('AI recommendations acknowledged');
+                                }}
+                              >
+                                Acknowledge Recommendations
+                              </Button>
+                              <Button 
+                                size="compact" 
+                                kind="secondary"
+                                onClick={() => navigate(`/doctor/patients/${patient.id}/clinical-decisions`)}
+                              >
+                                Record Clinical Decision
+                              </Button>
+                              <Button 
+                                size="compact" 
+                                kind="tertiary"
+                                onClick={() => {
+                                  // Reload AI predictions
+                                  if (patient) {
+                                    loadAIPredictions(patient.patientId || patient.id);
+                                  }
+                                }}
+                              >
+                                Refresh Prediction
+                              </Button>
+                            </Block>
+                          </Block>
+                        )}
+                        
+                        {/* Technical Details */}
+                        <Block 
+                          padding="16px"
+                          backgroundColor="rgba(0, 0, 0, 0.03)"
+                        >
+                          <HeadingSmall marginTop="0" marginBottom="12px">
+                            Technical Information
+                          </HeadingSmall>
+                          
+                          <Block marginBottom="8px">
+                            <strong>Patient ID:</strong> {aiPredictions.patient_id}
+                          </Block>
+                          
+                          <Block marginBottom="8px">
+                            <strong>Risk Classification:</strong> {
+                              aiPredictions.risk_probability > 0.8 ? 'High Risk' :
+                              aiPredictions.risk_probability > 0.6 ? 'Moderate Risk' :
+                              aiPredictions.risk_probability > 0.4 ? 'Low Risk' : 'Very Low Risk'
+                            }
+                          </Block>
+                          
+                          <Block font="font300" marginTop="16px">
+                            This prediction is based on the latest monthly investigation data and 
+                            machine learning algorithms trained on historical patient data. 
+                            Please use clinical judgment when interpreting these results.
+                          </Block>
+                        </Block>
+                      </Block>
                     ) : (
-                      <Block>No AI predictions available</Block>
+                      <Block>
+                        <Block marginBottom="16px">
+                          No AI predictions available. Click the button below to generate a prediction 
+                          based on the latest investigation data.
+                        </Block>
+                        <Button 
+                          onClick={() => {
+                            if (patient) {
+                              loadAIPredictions(patient.patientId || patient.id);
+                            }
+                          }}
+                        >
+                          Generate AI Prediction
+                        </Button>
+                      </Block>
                     )}
                   </Block>
                 </Tab>
@@ -435,47 +616,76 @@ const DoctorPatientProfile: React.FC = () => {
                   <Block padding="16px">
                     <HeadingMedium marginTop="0">Latest Dialysis Session</HeadingMedium>
                     
-                    {dialysisSessions.length > 0 ? (
+                    {dialysisSessionsLoading ? (
+                      <Block display="flex" justifyContent="center" alignItems="center" height="200px">
+                        <Block>Loading dialysis sessions...</Block>
+                      </Block>
+                    ) : dialysisSessionsError ? (
+                      <Block display="flex" justifyContent="center" alignItems="center" height="200px">
+                        <Block color="negative">Error: {dialysisSessionsError}</Block>
+                      </Block>
+                    ) : dialysisSessions.length > 0 ? (
                       <Block>
-                        <Block 
-                          marginBottom="16px"
-                          padding="16px"
-                          backgroundColor="rgba(0, 0, 0, 0.03)"
-                        >
-                          <Block display="flex" justifyContent="space-between" marginBottom="8px">
-                            <HeadingSmall marginTop="0" marginBottom="0">
-                              Session on {dialysisSessions[0].date}
-                            </HeadingSmall>
-                            <Block>{dialysisSessions[0].startTime} - {dialysisSessions[0].endTime}</Block>
-                          </Block>
+                        {(() => {
+                          // Get the latest session (last item in the array)
+                          const latestSession = dialysisSessions[dialysisSessions.length - 1];
+                          return (
+                            <Block 
+                              marginBottom="16px"
+                              padding="16px"
+                              backgroundColor="rgba(0, 0, 0, 0.03)"
+                            >
+                              <Block display="flex" justifyContent="space-between" marginBottom="8px">
+                                <HeadingSmall marginTop="0" marginBottom="0">
+                                  Session on {new Date(latestSession.date).toLocaleDateString()}
+                                </HeadingSmall>
+                                {/* <Block>
+                                  {latestSession.startTime ? `${latestSession.startTime} - ${latestSession.endTime || 'Ongoing'}` : 'Time not specified'}
+                                </Block> */}
+                              </Block>
                           
-                          <Block marginBottom="8px">
-                            <strong>Weight:</strong> Pre: {dialysisSessions[0].preWeight} kg, Post: {dialysisSessions[0].postWeight} kg (UF Goal: {dialysisSessions[0].ufGoal} L)
-                          </Block>
-                          
-                          <Block marginBottom="8px">
-                            <strong>Vitals:</strong> BP Pre: {dialysisSessions[0].bloodPressurePre}, BP Post: {dialysisSessions[0].bloodPressurePost}, 
-                            HR Pre: {dialysisSessions[0].heartRatePre}, HR Post: {dialysisSessions[0].heartRatePost}
-                          </Block>
-                          
-                          {dialysisSessions[0].symptoms.length > 0 && (
-                            <Block marginBottom="8px">
-                              <strong>Symptoms:</strong> {dialysisSessions[0].symptoms.join(', ')}
+                              
+                              {(latestSession.bloodPressurePre || latestSession.bloodPressurePost || latestSession.heartRatePre || latestSession.heartRatePost) && (
+                                <Block marginBottom="8px">
+                                  <strong>Vitals:</strong>
+                                  {latestSession.bloodPressurePre && ` BP Pre: ${latestSession.bloodPressurePre}`}
+                                  {latestSession.bloodPressurePost && `, BP Post: ${latestSession.bloodPressurePost}`}
+                                  {latestSession.heartRatePre && `, HR Pre: ${latestSession.heartRatePre}`}
+                                  {latestSession.heartRatePost && `, HR Post: ${latestSession.heartRatePost}`}
+                                </Block>
+                              )}
+                              
+                                <Block marginBottom="8px">
+                                  <strong>Assigned Nurse:</strong> {Array.isArray(latestSession.nurse) ? latestSession.nurse : latestSession.nurse?.name || 'N/A'}
+                                </Block>
+                              
+                              {latestSession.complications && latestSession.complications.length > 0 && (
+                                <Block marginBottom="8px">
+                                  <strong>Complications:</strong> {Array.isArray(latestSession.complications) ? latestSession.complications.join(', ') : latestSession.complications}
+                                </Block>
+                              )}
+                              
+                              {latestSession.notes && (
+                                <Block marginBottom="8px">
+                                  <strong>Notes:</strong> {latestSession.notes}
+                                </Block>
+                              )}
+                              
+                              {latestSession.sessionId && (
+                                <Block marginBottom="8px">
+                                  <strong>Session ID:</strong> {latestSession.sessionId}
+                                </Block>
+                              )}
+                              
+                              {latestSession.status && (
+                                <Block marginBottom="8px">
+                                  <strong>Status:</strong> {latestSession.status}
+                                </Block>
+                              )}
+                             
                             </Block>
-                          )}
-                          
-                          {dialysisSessions[0].complications.length > 0 && (
-                            <Block marginBottom="8px">
-                              <strong>Complications:</strong> {dialysisSessions[0].complications.join(', ')}
-                            </Block>
-                          )}
-                          
-                          {dialysisSessions[0].notes && (
-                            <Block marginBottom="8px">
-                              <strong>Notes:</strong> {dialysisSessions[0].notes}
-                            </Block>
-                          )}
-                        </Block>
+                          );
+                        })()}
                       </Block>
                     ) : (
                       <Block>No dialysis sessions recorded</Block>
@@ -487,58 +697,111 @@ const DoctorPatientProfile: React.FC = () => {
                   <Block padding="16px">
                     <HeadingMedium marginTop="0">Latest Monthly Investigation</HeadingMedium>
                     
-                    {monthlyInvestigations.length > 0 ? (
+                    {monthlyInvestigationsLoading ? (
+                      <Block display="flex" justifyContent="center" alignItems="center" height="200px">
+                        <Block>Loading monthly investigations...</Block>
+                      </Block>
+                    ) : monthlyInvestigationsError ? (
+                      <Block display="flex" justifyContent="center" alignItems="center" height="200px">
+                        <Block color="negative">Error: {monthlyInvestigationsError}</Block>
+                      </Block>
+                    ) : monthlyInvestigations.length > 0 ? (
                       <Block>
-                        <Block 
-                          marginBottom="16px"
-                          padding="16px"
-                          backgroundColor="rgba(0, 0, 0, 0.03)"
-                        >
-                          <Block display="flex" justifyContent="space-between" marginBottom="8px">
-                            <HeadingSmall marginTop="0" marginBottom="0">
-                              Investigation on {monthlyInvestigations[0].date}
-                            </HeadingSmall>
-                          </Block>
-                          
-                          <Block marginBottom="8px">
-                            <strong>CBC:</strong> Hemoglobin: {monthlyInvestigations[0].hemoglobin} g/dL, 
-                            Hematocrit: {monthlyInvestigations[0].hematocrit}%, 
-                            WBC: {monthlyInvestigations[0].whiteBloodCellCount} K/μL, 
-                            Platelets: {monthlyInvestigations[0].plateletCount} K/μL
-                          </Block>
-                          
-                          <Block marginBottom="8px">
-                            <strong>Electrolytes:</strong> Sodium: {monthlyInvestigations[0].sodium} mEq/L, 
-                            Potassium: {monthlyInvestigations[0].potassium} mEq/L, 
-                            Chloride: {monthlyInvestigations[0].chloride} mEq/L, 
-                            Bicarbonate: {monthlyInvestigations[0].bicarbonate} mEq/L
-                          </Block>
-                          
-                          <Block marginBottom="8px">
-                            <strong>Renal Function:</strong> BUN: {monthlyInvestigations[0].bun} mg/dL, 
-                            Creatinine: {monthlyInvestigations[0].creatinine} mg/dL, 
-                            Glucose: {monthlyInvestigations[0].glucose} mg/dL
-                          </Block>
-                          
-                          <Block marginBottom="8px">
-                            <strong>Other:</strong> Calcium: {monthlyInvestigations[0].calcium} mg/dL, 
-                            Phosphorus: {monthlyInvestigations[0].phosphorus} mg/dL, 
-                            Albumin: {monthlyInvestigations[0].albumin} g/dL, 
-                            Total Protein: {monthlyInvestigations[0].totalProtein} g/dL
-                          </Block>
-                          
-                          <Block marginBottom="8px">
-                            <strong>Liver Function:</strong> ALT: {monthlyInvestigations[0].alt} U/L, 
-                            AST: {monthlyInvestigations[0].ast} U/L, 
-                            Alkaline Phosphatase: {monthlyInvestigations[0].alkalinePhosphatase} U/L
-                          </Block>
-                          
-                          {monthlyInvestigations[0].notes && (
-                            <Block marginBottom="8px">
-                              <strong>Notes:</strong> {monthlyInvestigations[0].notes}
+                        {(() => {
+                          // Get the latest investigation (first item in the array since API returns newest first)
+                          const latestInvestigation = monthlyInvestigations[0];
+                          return (
+                            <Block 
+                              marginBottom="16px"
+                              padding="16px"
+                              backgroundColor="rgba(0, 0, 0, 0.03)"
+                            >
+                              <Block display="flex" justifyContent="space-between" marginBottom="8px">
+                                <HeadingSmall marginTop="0" marginBottom="0">
+                                  Investigation on {new Date(latestInvestigation.date).toLocaleDateString()}
+                                </HeadingSmall>
+                                <Block>ID: {latestInvestigation.investigationId}</Block>
+                              </Block>
+                              
+                              <Block marginBottom="8px">
+                                <strong>Renal Function:</strong> 
+                                Creatinine Pre-HD: {latestInvestigation.scrPreHD?.toFixed(2)} mg/dL, 
+                                Creatinine Post-HD: {latestInvestigation.scrPostHD?.toFixed(2)} mg/dL, 
+                                BUN: {latestInvestigation.bu?.toFixed(2)} mg/dL
+                              </Block>
+                              
+                              <Block marginBottom="8px">
+                                <strong>CBC:</strong> 
+                                Hemoglobin: {latestInvestigation.hb?.toFixed(2)} g/dL
+                              </Block>
+                              
+                              <Block marginBottom="8px">
+                                <strong>Electrolytes:</strong> 
+                                Sodium Pre-HD: {latestInvestigation.serumNaPreHD?.toFixed(2)} mEq/L, 
+                                Sodium Post-HD: {latestInvestigation.serumNaPostHD?.toFixed(2)} mEq/L, 
+                                Potassium Pre-HD: {latestInvestigation.serumKPreHD?.toFixed(2)} mEq/L, 
+                                Potassium Post-HD: {latestInvestigation.serumKPostHD?.toFixed(2)} mEq/L
+                              </Block>
+                              
+                              <Block marginBottom="8px">
+                                <strong>Bone & Mineral:</strong> 
+                                Calcium: {latestInvestigation.sCa?.toFixed(2)} mg/dL, 
+                                Phosphorus: {latestInvestigation.sPhosphate?.toFixed(2)} mg/dL, 
+                                PTH: {latestInvestigation.pth?.toFixed(2)} pg/mL, 
+                                Vitamin D: {latestInvestigation.vitD?.toFixed(2)} ng/mL
+                              </Block>
+                              
+                              <Block marginBottom="8px">
+                                <strong>Protein & Nutrition:</strong> 
+                                Albumin: {latestInvestigation.albumin?.toFixed(2)} g/dL, 
+                                Uric Acid: {latestInvestigation.ua?.toFixed(2)} mg/dL
+                              </Block>
+                              
+                              <Block marginBottom="8px">
+                                <strong>Iron Studies:</strong> 
+                                Serum Iron: {latestInvestigation.serumIron?.toFixed(2)} μg/dL, 
+                                Serum Ferritin: {latestInvestigation.serumFerritin?.toFixed(2)} ng/mL
+                              </Block>
+                              
+                              <Block marginBottom="8px">
+                                <strong>Other:</strong> 
+                                HbA1C: {latestInvestigation.hbA1C?.toFixed(2)}%, 
+                                Bicarbonate: {latestInvestigation.hco?.toFixed(2)} mEq/L, 
+                                Alkaline Phosphatase: {latestInvestigation.al?.toFixed(2)} U/L
+                              </Block>
+                              
+                              <Block marginBottom="8px">
+                                <strong>Laboratory Info:</strong>
+                                <Block marginLeft="16px" marginTop="4px">
+                                  Requested by: {latestInvestigation.laboratoryInfo?.requestedBy?.name || 'N/A'}
+                                </Block>
+                                <Block marginLeft="16px">
+                                  Performed by: {latestInvestigation.laboratoryInfo?.performedBy?.name || 'N/A'}
+                                </Block>
+                                <Block marginLeft="16px">
+                                  Reported by: {latestInvestigation.laboratoryInfo?.reportedBy?.name || 'N/A'}
+                                </Block>
+                                <Block marginLeft="16px">
+                                  Testing Method: {latestInvestigation.laboratoryInfo?.testingMethod || 'N/A'}
+                                </Block>
+                              </Block>
+                              
+                              <Block marginBottom="8px">
+                                <strong>Status:</strong> {latestInvestigation.status}
+                              </Block>
+                              
+                              {latestInvestigation.notes && (
+                                <Block marginBottom="8px">
+                                  <strong>Notes:</strong> {latestInvestigation.notes}
+                                </Block>
+                              )}
+                              
+                              <Block marginTop="16px" font="font300">
+                                Total investigations available: {monthlyInvestigations.length}
+                              </Block>
                             </Block>
-                          )}
-                        </Block>
+                          );
+                        })()}
                       </Block>
                     ) : (
                       <Block>No monthly investigations recorded</Block>
@@ -548,83 +811,164 @@ const DoctorPatientProfile: React.FC = () => {
                 
                 <Tab title="Trend Analysis">
                   <Block padding="16px">
-                    <HeadingMedium marginTop="0">Trend Analysis</HeadingMedium>
+                    <HeadingMedium marginTop="0">Hemoglobin Trend Analysis</HeadingMedium>
                     
-                    <Block marginBottom="24px">
-                      <HeadingSmall marginTop="0" marginBottom="16px">
-                        Weight Trends
-                      </HeadingSmall>
-                      <ResponsiveContainer width="100%" height={250}>
-                        <AreaChart
-                          data={weightTrendData}
-                          margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="date" />
-                          <YAxis />
-                          <Tooltip />
-                          <Legend />
-                          <Area 
-                            type="monotone" 
-                            dataKey="preWeight" 
-                            name="Pre-Dialysis Weight" 
-                            stroke="#8884d8" 
-                            fill="#8884d8" 
-                            fillOpacity={0.3} 
-                          />
-                          <Area 
-                            type="monotone" 
-                            dataKey="postWeight" 
-                            name="Post-Dialysis Weight" 
-                            stroke="#82ca9d" 
-                            fill="#82ca9d" 
-                            fillOpacity={0.3} 
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </Block>
-                    
-                    <Block>
-                      <HeadingSmall marginTop="0" marginBottom="16px">
-                        Laboratory Parameter Trends
-                      </HeadingSmall>
-                      <ResponsiveContainer width="100%" height={250}>
-                        <AreaChart
-                          data={labTrendData}
-                          margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="date" />
-                          <YAxis />
-                          <Tooltip />
-                          <Legend />
-                          <Area 
-                            type="monotone" 
-                            dataKey="hemoglobin" 
-                            name="Hemoglobin" 
-                            stroke="#8884d8" 
-                            fill="#8884d8" 
-                            fillOpacity={0.3} 
-                          />
-                          <Area 
-                            type="monotone" 
-                            dataKey="potassium" 
-                            name="Potassium" 
-                            stroke="#82ca9d" 
-                            fill="#82ca9d" 
-                            fillOpacity={0.3} 
-                          />
-                          <Area 
-                            type="monotone" 
-                            dataKey="phosphorus" 
-                            name="Phosphorus" 
-                            stroke="#ffc658" 
-                            fill="#ffc658" 
-                            fillOpacity={0.3} 
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </Block>
+                    {hemoglobinTrendLoading ? (
+                      <Block display="flex" justifyContent="center" alignItems="center" height="200px">
+                        <Block>Loading hemoglobin trend data...</Block>
+                      </Block>
+                    ) : hemoglobinTrendError ? (
+                      <Block display="flex" justifyContent="center" alignItems="center" height="200px">
+                        <Block color="negative">Error: {hemoglobinTrendError}</Block>
+                      </Block>
+                    ) : hemoglobinTrend && hemoglobinTrend.trendData ? (
+                      <Block>
+                        {/* Statistics Summary */}
+                        {hemoglobinTrend.statistics && (
+                          <Block marginBottom="24px" padding="16px" backgroundColor="rgba(0, 0, 0, 0.03)">
+                            <HeadingSmall marginTop="0" marginBottom="12px">
+                              Hemoglobin Statistics
+                            </HeadingSmall>
+                            <Block display="flex" flexDirection="column" style={{ gap: '8px' }}>
+                              <Block>
+                                <strong>Average:</strong> {hemoglobinTrend.statistics.average?.toFixed(2)} g/dL
+                              </Block>
+                              <Block>
+                                <strong>Min:</strong> {hemoglobinTrend.statistics.min?.toFixed(2)} g/dL
+                              </Block>
+                              <Block>
+                                <strong>Max:</strong> {hemoglobinTrend.statistics.max?.toFixed(2)} g/dL
+                              </Block>
+                              <Block>
+                                <strong>Trend:</strong> {hemoglobinTrend.statistics.trend}
+                              </Block>
+                              <Block>
+                                <strong>Normal Range:</strong> {hemoglobinTrend.statistics.normalRange?.min}-{hemoglobinTrend.statistics.normalRange?.max} g/dL
+                              </Block>
+                            </Block>
+                          </Block>
+                        )}
+                        
+                        {/* Hemoglobin Trend Chart */}
+                        <Block marginBottom="24px">
+                          <HeadingSmall marginTop="0" marginBottom="16px">
+                            Hemoglobin Levels Over Time
+                          </HeadingSmall>
+                          <ResponsiveContainer width="100%" height={400}>
+                            <LineChart
+                              data={hemoglobinTrend.trendData.map((item: any) => ({
+                                ...item,
+                                month: new Date(item.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+                                normalMin: hemoglobinTrend.statistics?.normalRange?.min || 12,
+                                normalMax: hemoglobinTrend.statistics?.normalRange?.max || 16
+                              }))}
+                              margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                            >
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis dataKey="month" />
+                              <YAxis 
+                                domain={['dataMin - 1', 'dataMax + 1']} 
+                                label={{ value: 'Hemoglobin (g/dL)', angle: -90, position: 'insideLeft' }}
+                              />
+                              <Tooltip 
+                                formatter={(value: any, name: string) => {
+                                  if (name === 'hb') return [`${value?.toFixed(2)} g/dL`, 'Hemoglobin'];
+                                  if (name === 'normalMin') return [`${value} g/dL`, 'Normal Range Min'];
+                                  if (name === 'normalMax') return [`${value} g/dL`, 'Normal Range Max'];
+                                  return [value, name];
+                                }}
+                                labelFormatter={(label) => `Month: ${label}`}
+                              />
+                              <Legend />
+                              
+                              {/* Normal range area */}
+                              <Area 
+                                type="monotone" 
+                                dataKey="normalMax" 
+                                stackId="normal"
+                                stroke="rgba(0, 255, 0, 0.3)" 
+                                fill="rgba(0, 255, 0, 0.1)" 
+                                name="Normal Range"
+                              />
+                              <Area 
+                                type="monotone" 
+                                dataKey="normalMin" 
+                                stackId="normal"
+                                stroke="rgba(0, 255, 0, 0.3)" 
+                                fill="rgba(255, 255, 255, 1)" 
+                              />
+                              
+                              {/* Hemoglobin line */}
+                              <Line 
+                                type="monotone" 
+                                dataKey="hb" 
+                                stroke="#8884d8" 
+                                strokeWidth={3}
+                                dot={{ r: 6, strokeWidth: 2 }}
+                                name="Hemoglobin Level"
+                              />
+                              
+                              {/* Reference lines for normal range */}
+                              <Line 
+                                type="monotone" 
+                                dataKey="normalMin" 
+                                stroke="rgba(0, 255, 0, 0.6)" 
+                                strokeDasharray="5 5"
+                                dot={false}
+                                name="Normal Min (12 g/dL)"
+                              />
+                              <Line 
+                                type="monotone" 
+                                dataKey="normalMax" 
+                                stroke="rgba(0, 255, 0, 0.6)" 
+                                strokeDasharray="5 5"
+                                dot={false}
+                                name="Normal Max (16 g/dL)"
+                              />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </Block>
+                        
+                        {/* Data Table */}
+                        <Block>
+                          <HeadingSmall marginTop="0" marginBottom="16px">
+                            Detailed Data Points
+                          </HeadingSmall>
+                          <Block>
+                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                              <thead>
+                                <tr style={{ backgroundColor: 'rgba(0, 0, 0, 0.05)' }}>
+                                  <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #ddd' }}>Date</th>
+                                  <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #ddd' }}>Hemoglobin (g/dL)</th>
+                                  <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #ddd' }}>Status</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {hemoglobinTrend.trendData.map((item: any, index: number) => (
+                                  <tr key={index}>
+                                    <td style={{ padding: '12px', border: '1px solid #ddd' }}>
+                                      {new Date(item.date).toLocaleDateString()}
+                                    </td>
+                                    <td style={{ padding: '12px', border: '1px solid #ddd' }}>
+                                      {item.hb?.toFixed(2)}
+                                    </td>
+                                    <td style={{ 
+                                      padding: '12px', 
+                                      border: '1px solid #ddd',
+                                      color: item.status === 'low' ? '#d93025' : item.status === 'normal' ? '#0f9d58' : '#ff9800'
+                                    }}>
+                                      {item.status}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </Block>
+                        </Block>
+                      </Block>
+                    ) : (
+                      <Block>No hemoglobin trend data available</Block>
+                    )}
                   </Block>
                 </Tab>
                 
@@ -635,7 +979,7 @@ const DoctorPatientProfile: React.FC = () => {
                         Clinical Decisions
                       </HeadingMedium>
                       <Button 
-                        onClick={() => navigate(`/doctor/patients/${id}/clinical-decisions`)}
+                        onClick={() => navigate(`/doctor/patients/${patient.id}/clinical-decisions`)}
                       >
                         New Decision
                       </Button>

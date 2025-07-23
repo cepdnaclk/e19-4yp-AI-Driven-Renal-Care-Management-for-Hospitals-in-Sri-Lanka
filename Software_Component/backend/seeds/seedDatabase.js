@@ -13,7 +13,7 @@ require('dotenv').config();
 // Connect to MongoDB
 const connectDB = async () => {
   try {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/renal-care';
+    const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/renal-care-db';
     await mongoose.connect(mongoUri, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
@@ -294,7 +294,8 @@ const seedDatabase = async () => {
           // Laboratory Parameters based on your requirements
           scrPreHD: 8 + Math.random() * 4, // SCR pre HD
           scrPostHD: 4 + Math.random() * 2, // SCR post HD  
-          bu: 60 + Math.random() * 40, // BU (Blood Urea)
+          bu_pre_hd: 60 + Math.random() * 40, // BU pre HD (Blood Urea pre-dialysis)
+          bu_post_hd: 30 + Math.random() * 20, // BU post HD (Blood Urea post-dialysis)
           hb: 9 + patientIndex + Math.random() * 3 - 1.5, // Hemoglobin
           serumNaPreHD: 138 + Math.random() * 6 - 3, // Serum Na Pre-HD
           serumNaPostHD: 140 + Math.random() * 4 - 2, // Serum Na Post-HD

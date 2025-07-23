@@ -11,12 +11,9 @@ import { Select } from 'baseui/select';
 import { Table } from 'baseui/table-semantic';
 import { toaster } from 'baseui/toast';
 import { User, Role } from '../../types';
-
-import axios from 'axios';
+import apiClient from '../../services/apiConfig';
 
 const AdminUserManagement: React.FC = () => {
-  const token = localStorage.getItem('userToken')
-
   const [users, setUsers] = useState<any[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -76,11 +73,7 @@ const AdminUserManagement: React.FC = () => {
   // 1. Function to fetch all users
   const fetchAllUsers = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/users', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        }
-      })
+      const response = await apiClient.get('/users')
       setUsers(response.data.users);
     }
     catch (error: any) {
@@ -97,17 +90,12 @@ const AdminUserManagement: React.FC = () => {
 
     // Send data to the Database
     try {
-      const sendData = await axios.post('http://localhost:5000/api/users',
+      const sendData = await apiClient.post('/users',
         {
           name: newUser.name,
           email: newUser.email,
           password: newUser.password,
           role: newUser.role[0].id
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         }
       )
 
@@ -148,17 +136,12 @@ const AdminUserManagement: React.FC = () => {
     }
 
     try {
-      // Send PUT request with Axios
-      const updateData = await axios.put(`http://localhost:5000/api/users/${currentUser.id}`,
+      // Send PUT request with apiClient
+      const updateData = await apiClient.put(`/users/${currentUser.id}`,
         {
           name: currentUser.name,
           email: currentUser.email,
           role: currentUser.role[0].id
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         }
       )
 
@@ -186,11 +169,7 @@ const AdminUserManagement: React.FC = () => {
     console.log('Deleting user:', currentUser.id);
 
     try {
-      const deleteData = await axios.delete(`http://localhost:5000/api/users/${currentUser.id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      const deleteData = await apiClient.delete(`/users/${currentUser.id}`)
 
       toaster.positive('User Deleted successfully', { autoHideDuration: 3000 })
 

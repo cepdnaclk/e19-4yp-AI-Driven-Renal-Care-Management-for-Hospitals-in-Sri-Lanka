@@ -281,11 +281,11 @@ class HbPredictor:
             recommendations = self._generate_recommendations(input_data, at_risk, current_hb)
             
             return {
-                'patient_id': input_data['patient_id'],
+                'patient_id': str(input_data['patient_id']),
                 'hb_risk_predicted': at_risk,
                 'risk_status': risk_status,
                 'hb_trend': trend,
-                'current_hb': current_hb,
+                'current_hb': float(current_hb),
                 'target_hb_range': {'min': 10.0, 'max': 12.0},
                 'risk_probability': round(float(risk_probability), 3),
                 'recommendations': recommendations,

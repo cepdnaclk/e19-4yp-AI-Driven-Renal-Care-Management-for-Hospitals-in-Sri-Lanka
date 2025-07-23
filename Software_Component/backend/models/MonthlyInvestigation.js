@@ -29,7 +29,13 @@ const monthlyInvestigationSchema = new mongoose.Schema({
     max: 20,
     required: false
   },
-  bu: {
+  bu_pre_hd: {
+    type: Number,
+    min: 0,
+    max: 200,
+    required: false
+  },
+  bu_post_hd: {
     type: Number,
     min: 0,
     max: 200,

@@ -27,17 +27,17 @@ router.get('/:patientId', protect, authorize('doctor', 'nurse'), async (req, res
     let query = { patient: patient._id };
 
     // Role-based filtering
-    if (req.user.role === 'doctor') {
-      // Check if doctor is assigned to this patient
-      if (patient.assignedDoctor.toString() !== req.user.id) {
-        return res.status(403).json({
-          success: false,
-          message: 'Not authorized to access this patient\'s sessions'
-        });
-      }
-    } else if (req.user.role === 'nurse') {
-      query.nurse = req.user.id;
-    }
+    // if (req.user.role === 'doctor') {
+    //   // Check if doctor is assigned to this patient
+    //   if (patient.assignedDoctor.toString() !== req.user.id) {
+    //     return res.status(403).json({
+    //       success: false,
+    //       message: 'Not authorized to access this patient\'s sessions'
+    //     });
+    //   }
+    // } else if (req.user.role === 'nurse') {
+    //   query.nurse = req.user.id;
+    // }
 
     // Date filtering
     if (req.query.startDate || req.query.endDate) {

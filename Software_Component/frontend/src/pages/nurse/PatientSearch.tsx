@@ -99,7 +99,6 @@ const NursePatientSearch: React.FC = () => {
               <Table
                 columns={['ID', 'Name', 'Age', 'Gender', 'Blood Type', 'Contact Number', 'Assigned Doctor', 'Actions']}
                 data={filteredPatients.map(patient => {
-                  // console.log('Patient:', patient)
                   return [
                     patient.patientId,
                     patient.name,

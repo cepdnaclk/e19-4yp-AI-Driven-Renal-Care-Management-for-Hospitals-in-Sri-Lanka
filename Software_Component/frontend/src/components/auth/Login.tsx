@@ -36,6 +36,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       })
 
       const { token, user } = loginResponse.data
+      console.log('Login successful:', token)
 
       localStorage.setItem('userToken', token)
 
