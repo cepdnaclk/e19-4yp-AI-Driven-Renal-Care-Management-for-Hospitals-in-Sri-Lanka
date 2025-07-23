@@ -5,76 +5,96 @@ import { Grid, Cell } from 'baseui/layout-grid';
 import { Block } from 'baseui/block';
 import { Button } from 'baseui/button';
 import { useNavigate } from 'react-router-dom';
-import { Notification } from '../../types';
-
-// Mock data
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    userId: '2',
-    title: 'New Patient Assigned',
-    message: 'Patient John Doe has been assigned to you for review.',
-    date: '2025-05-31T08:00:00',
-    read: false,
-    type: 'info',
-    relatedPatientId: '101',
-  },
-  {
-    id: '2',
-    userId: '2',
-    title: 'Critical Lab Result',
-    message:
-      'Patient Sarah Smith has abnormal potassium levels that require immediate attention.',
-    date: '2025-05-30T14:30:00',
-    read: false,
-    type: 'critical',
-    relatedPatientId: '102',
-  },
-  {
-    id: '3',
-    userId: '2',
-    title: 'AI Prediction Alert',
-    message:
-      'AI system has detected potential risk of anemia for patient Michael Johnson.',
-    date: '2025-05-30T09:15:00',
-    read: false,
-    type: 'warning',
-    relatedPatientId: '103',
-  },
-];
-
-// Mock recent patients
-const recentPatients = [
-  { id: '101', name: 'John Doe', lastSession: '2025-05-29', pendingReview: true },
-  { id: '102', name: 'Sarah Smith', lastSession: '2025-05-28', pendingReview: true },
-  { id: '103', name: 'Michael Johnson', lastSession: '2025-05-30', pendingReview: false },
-];
+import { Notification, Patient } from '../../types';
+import { fetchAllPatients, fetchNotifications } from './PatientService';
 
 const DoctorDashboard: React.FC = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notificationsLoading, setNotificationsLoading] = useState<boolean>(true);
+  const [notificationsError, setNotificationsError] = useState<string | null>(null);
+  const [recentPatients, setRecentPatients] = useState<Patient[]>([]);
+  const [patientsLoading, setPatientsLoading] = useState<boolean>(true);
+  const [patientsError, setPatientsError] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  const loadRecentPatients = async () => {
+    try {
+      setPatientsLoading(true);
+      setPatientsError(null);
+      const allPatients = await fetchAllPatients();
+      
+      // Sort patients by registration date (most recent first) and take the first 2
+      const sortedPatients = allPatients
+        .sort((a, b) => new Date(b.registrationDate).getTime() - new Date(a.registrationDate).getTime())
+        .slice(0, 2);
+      
+      setRecentPatients(sortedPatients);
+    } catch (error: any) {
+      console.error('Error loading recent patients:', error);
+      if (error.message?.includes('Authentication failed') || error.message?.includes('No authentication token')) {
+        setPatientsError('Authentication failed. Please log in again.');
+      } else {
+        setPatientsError('Failed to load recent patients. Please try again.');
+      }
+      setRecentPatients([]);
+    } finally {
+      setPatientsLoading(false);
+    }
+  };
+
+  const loadNotifications = async () => {
+    try {
+      setNotificationsLoading(true);
+      setNotificationsError(null);
+      const notificationData = await fetchNotifications();
+      
+      if (notificationData && notificationData.notifications) {
+        setNotifications(notificationData.notifications);
+      } else {
+        setNotifications([]);
+      }
+    } catch (error: any) {
+      console.error('Error loading notifications:', error);
+      if (error.message?.includes('Authentication failed') || error.message?.includes('No authentication token')) {
+        setNotificationsError('Authentication failed. Please log in again.');
+      } else {
+        setNotificationsError('Failed to load notifications. Please try again.');
+      }
+      setNotifications([]);
+    } finally {
+      setNotificationsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    // In a real app, fetch notifications here
-    setNotifications(mockNotifications);
+    // Load notifications and recent patients
+    loadNotifications();
+    loadRecentPatients();
   }, []);
 
   const handlePatientClick = (patientId: string) => {
     navigate(`/doctor/patients/${patientId}`);
   };
 
-  const handleNotificationClick = (notification: Notification) => {
-    // Mark as read
+  const handleNotificationClick = (notification: any) => {
+    // Mark as read (update local state)
     setNotifications(prevNotifications =>
       prevNotifications.map(n =>
-        n.id === notification.id ? { ...n, read: true } : n
+        n.id === notification.id ? { 
+          ...n, 
+          recipients: n.recipients.map((recipient: any) => ({
+            ...recipient,
+            read: true
+          }))
+        } : n
       )
     );
 
-    // Navigate to related patient if available
-    if (notification.relatedPatientId) {
-      navigate(`/doctor/patients/${notification.relatedPatientId}`);
-    }
+    // In a real app, you might want to send a read receipt to the API here
+    // await markNotificationAsRead(notification.id);
+
+    // For now, we don't have specific patient navigation from notifications
+    // but this could be enhanced based on notification data
   };
 
   return (
@@ -94,9 +114,16 @@ const DoctorDashboard: React.FC = () => {
           >
             <StyledBody>
               <HeadingMedium>Patients Requiring Review</HeadingMedium>
-              {recentPatients
-                .filter(p => p.pendingReview)
-                .map(patient => (
+              {patientsLoading ? (
+                <Block display="flex" justifyContent="center" alignItems="center" height="100px">
+                  <Block>Loading recent patients...</Block>
+                </Block>
+              ) : patientsError ? (
+                <Block display="flex" justifyContent="center" alignItems="center" height="100px">
+                  <Block color="negative">Error: {patientsError}</Block>
+                </Block>
+              ) : recentPatients.length > 0 ? (
+                recentPatients.map(patient => (
                   <Block
                     key={patient.id}
                     marginBottom="16px"
@@ -109,17 +136,25 @@ const DoctorDashboard: React.FC = () => {
                     <Block>
                       <Block font="font500">{patient.name}</Block>
                       <Block color="primary400" font="font300">
-                        Last session: {patient.lastSession}
+                        Patient ID: {patient.patientId || patient.id}
+                      </Block>
+                      <Block color="primary400" font="font300">
+                        Registered: {'25/04/2025'}
                       </Block>
                       <Block color="warning" font="font300">
-                        Pending review
+                        Recently added - requires review
                       </Block>
                     </Block>
-                    <Button onClick={() => handlePatientClick(patient.id)} size="compact">
+                    <Button onClick={() => handlePatientClick(patient.patientId || patient.id)} size="compact">
                       Review
                     </Button>
                   </Block>
-                ))}
+                ))
+              ) : (
+                <Block padding="16px" font="font300">
+                  No recent patients found
+                </Block>
+              )}
               <Block display="flex" justifyContent="center" marginTop="16px">
                 <Button onClick={() => navigate('/doctor/patients')}>
                   View All Patients
@@ -149,36 +184,79 @@ const DoctorDashboard: React.FC = () => {
           <Card>
             <StyledBody>
               <HeadingMedium>Notifications</HeadingMedium>
-              {notifications.length === 0 ? (
+              {notificationsLoading ? (
+                <Block display="flex" justifyContent="center" alignItems="center" height="100px">
+                  <Block>Loading notifications...</Block>
+                </Block>
+              ) : notificationsError ? (
+                <Block display="flex" justifyContent="center" alignItems="center" height="100px">
+                  <Block color="negative">Error: {notificationsError}</Block>
+                </Block>
+              ) : notifications.length === 0 ? (
                 <Block padding="16px" font="font300">
                   No new notifications
                 </Block>
               ) : (
-                notifications.map(notification => (
-                  <Block
-                    key={notification.id}
-                    marginBottom="16px"
-                    padding="16px"
-                    backgroundColor={
-                      notification.type === 'critical'
-                        ? 'rgba(255, 0, 0, 0.1)'
-                        : notification.type === 'warning'
-                          ? 'rgba(255, 165, 0, 0.1)'
-                          : 'rgba(0, 0, 0, 0.03)'
+                notifications.map(notification => {
+                  // Get the first recipient's read status (assuming current user is first recipient)
+                  const isRead = notification.recipients && notification.recipients.length > 0 
+                    ? notification.recipients[0].read 
+                    : false;
+                  
+                  // Map notification type to background color
+                  const getBackgroundColor = (type: string, priority: string) => {
+                    if (type === 'WARNING' || priority === 'HIGH') {
+                      return 'rgba(255, 0, 0, 0.1)';
+                    } else if (type === 'INFO' && priority === 'MEDIUM') {
+                      return 'rgba(255, 165, 0, 0.1)';
+                    } else {
+                      return 'rgba(0, 0, 0, 0.03)';
                     }
-                    style={{
-                      border: notification.read ? 'none' : '2px solid rgba(0, 0, 0, 0.1)',
-                      cursor: 'pointer',
-                    }}
-                    onClick={() => handleNotificationClick(notification)}
-                  >
-                    <Block font="font500">{notification.title}</Block>
-                    <Block font="font300">{notification.message}</Block>
-                    <Block color="primary400" font="font300" marginTop="8px">
-                      {new Date(notification.date).toLocaleString()}
+                  };
+
+                  return (
+                    <Block
+                      key={notification.id}
+                      marginBottom="16px"
+                      padding="16px"
+                      backgroundColor={getBackgroundColor(notification.type, notification.priority)}
+                      style={{
+                        border: isRead ? 'none' : '2px solid rgba(0, 0, 0, 0.1)',
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => handleNotificationClick(notification)}
+                    >
+                      <Block display="flex" justifyContent="space-between" marginBottom="4px">
+                        <Block font="font500">{notification.title}</Block>
+                        <Block font="font300" color="primary400">
+                          {notification.priority}
+                        </Block>
+                      </Block>
+                      <Block font="font300" marginBottom="8px">
+                        {notification.message}
+                      </Block>
+                      <Block display="flex" justifyContent="space-between" alignItems="center">
+                        <Block color="primary400" font="font300">
+                          {new Date(notification.createdAt).toLocaleString()}
+                        </Block>
+                        <Block font="font300" color="primary500">
+                          {notification.category}
+                        </Block>
+                      </Block>
+                      {!isRead && (
+                        <Block 
+                          marginTop="8px" 
+                          font="font300" 
+                          color="warning"
+                          display="flex"
+                          alignItems="center"
+                        >
+                          • Unread
+                        </Block>
+                      )}
                     </Block>
-                  </Block>
-                ))
+                  );
+                })
               )}
               <Block display="flex" justifyContent="center" marginTop="16px">
                 <Button onClick={() => navigate('/doctor/notifications')}>

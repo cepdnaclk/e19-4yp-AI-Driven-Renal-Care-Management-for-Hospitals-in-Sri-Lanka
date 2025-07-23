@@ -30,9 +30,12 @@ const { protect, authorize } = require('../middleware/auth');
  *         scrPostHD:
  *           type: number
  *           description: SCR post HD
- *         bu:
+ *         bu_pre_hd:
  *           type: number
- *           description: BU (Blood Urea)
+ *           description: BU pre HD (Blood Urea pre-dialysis)
+ *         bu_post_hd:
+ *           type: number
+ *           description: BU post HD (Blood Urea post-dialysis)
  *         hb:
  *           type: number
  *           description: Hemoglobin
@@ -147,7 +150,8 @@ router.get('/:patientId', protect, authorize('doctor', 'nurse'), async (req, res
       date: inv.date,
       scrPreHD: inv.scrPreHD,
       scrPostHD: inv.scrPostHD,
-      bu: inv.bu,
+      bu_pre_hd: inv.bu_pre_hd,
+      bu_post_hd: inv.bu_post_hd,
       hb: inv.hb,
       serumNaPreHD: inv.serumNaPreHD,
       serumNaPostHD: inv.serumNaPostHD,
@@ -226,7 +230,8 @@ router.post('/:patientId', protect, authorize('doctor', 'nurse'), async (req, re
       date: populatedInvestigation.date,
       scrPreHD: populatedInvestigation.scrPreHD,
       scrPostHD: populatedInvestigation.scrPostHD,
-      bu: populatedInvestigation.bu,
+      bu_pre_hd: populatedInvestigation.bu_pre_hd,
+      bu_post_hd: populatedInvestigation.bu_post_hd,
       hb: populatedInvestigation.hb,
       serumNaPreHD: populatedInvestigation.serumNaPreHD,
       serumNaPostHD: populatedInvestigation.serumNaPostHD,
@@ -290,7 +295,8 @@ router.get('/:patientId/:id', protect, authorize('doctor', 'nurse'), async (req,
       date: investigation.date,
       scrPreHD: investigation.scrPreHD,
       scrPostHD: investigation.scrPostHD,
-      bu: investigation.bu,
+      bu_pre_hd: investigation.bu_pre_hd,
+      bu_post_hd: investigation.bu_post_hd,
       hb: investigation.hb,
       serumNaPreHD: investigation.serumNaPreHD,
       serumNaPostHD: investigation.serumNaPostHD,
@@ -358,7 +364,8 @@ router.put('/:patientId/:id', protect, authorize('doctor', 'nurse'), async (req,
       date: investigation.date,
       scrPreHD: investigation.scrPreHD,
       scrPostHD: investigation.scrPostHD,
-      bu: investigation.bu,
+      bu_pre_hd: investigation.bu_pre_hd,
+      bu_post_hd: investigation.bu_post_hd,
       hb: investigation.hb,
       serumNaPreHD: investigation.serumNaPreHD,
       serumNaPostHD: investigation.serumNaPostHD,

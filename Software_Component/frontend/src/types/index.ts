@@ -16,16 +16,54 @@ export interface User {
 // Patient interface
 export interface Patient {
   id: string;
+  patientId?: string;
   name: string;
   age: number;
   gender: string;
   bloodType: string;
   contactNumber: string;
-  address: string;
-  emergencyContact: string;
-  medicalHistory: string;
-  assignedDoctor: string;
+  address: string | {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
+  fullAddress?: string;
+  emergencyContact: string | {
+    name: string;
+    relationship: string;
+    phone: string;
+  };
+  medicalHistory: string | {
+    renalDiagnosis: string;
+    medicalProblems: Array<{
+      problem: string;
+      diagnosedDate: string;
+      status: string;
+    }>;
+    allergies: any[];
+    medications: any[];
+  };
+  assignedDoctor: string | {
+    _id: string;
+    name: string;
+    email: string;
+    specialization: string;
+    id: string;
+  };
   registrationDate: string;
+  dateOfBirth?: string;
+  status?: string;
+  dialysisInfo?: {
+    dialysisType: string;
+    startDate: string;
+    frequency: string;
+    accessType: string;
+    accessSite: string;
+    dryWeight: number;
+    targetUfr: number;
+  };
 }
 
 export interface PatientNew {
@@ -45,14 +83,19 @@ export interface PatientNew {
 
 export interface PatientCatalogue {
   id: string
+  _id?: string
   patientId: string
   name: string
   age?: number
   gender: string
   bloodType: string
   contactNumber: string
+  dateOfBirth?: string
+  fullAddress?: string
   assignedDoctor?: {
+    _id?: string
     name: string
+    id?: string
   }
 }
 
