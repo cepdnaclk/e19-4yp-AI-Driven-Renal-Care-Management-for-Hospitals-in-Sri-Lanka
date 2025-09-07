@@ -1,0 +1,177 @@
+:root {
+    /* Fonts */
+    --font-text: serif;
+    --font-heading1: Tahoma, Geneva, Verdana, sans-serif;
+    --font-heading2: Open Sans;
+    --size-text: 1rem;
+    --size-heading1: 2rem;
+    --size-heading2: 1.5rem;
+
+    /* Background Colours */
+    --color-primary: #2f80b9;
+    --color-primary-light: rgb(146, 194, 228);
+    --color-primary-bg: #ffffff;
+    --color-secondary-bg: #f8fafc;
+    --color-text: #000000;
+    --color-error: #d32f2f;
+    --color-success: #66bb6a;
+    --color-table-row-hover: #cce0ff;
+
+    --border-radius: 30px;
+}
+
+.dark-theme {
+    --color-primary-bg: #000000;
+    --color-secondary-bg: #2f4357;
+    --color-text: #ffffff;
+}
+
+/* ````````````` General Styles ````````````` */
+.general-container {
+    background-color: var(--color-secondary-bg);
+    padding: 4px 40px;
+    border-radius: var(--border-radius);
+}
+
+.general-h1 {
+    font-size: var(--size-heading1);
+    margin-bottom: 24px;
+    color: var(--color-primary);
+    font-family: var(--font-heading1);
+    user-select: none;
+}
+
+/* Search Bar */
+.search-input-wrapper {
+    width: 100%;
+    position: relative;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-40%);
+    color: var(--color-primary);
+}
+
+.search-input-wrapper input[type="text"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--color-primary);
+    border-radius: var(--border-radius);
+    font-size: var(--size-text);
+    font-family: var(--font-heading2);
+    padding-left: 40px !important;
+    box-sizing: border-box;
+    box-shadow: 0 2px 8px rgba(25, 118, 210, 0.07);
+    background: linear-gradient(90deg, var(--color-primary-bg) 50%, var(--color-primary-light) 100%);
+}
+
+
+.search-input-wrapper input[type="text"]:focus {
+    outline: none;
+    background: var(--color-primary-light);
+}
+
+/* Buttons */
+.btn {
+    color: var(--color-primary-bg);
+    font-size: var(--size-text);
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    user-select: none;
+}
+
+.btn-blue {
+    background: var(--color-primary);
+}
+
+.theme-change-btn {
+    background: red;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+}
+
+/* Display table  */
+.display-table {
+    background-color: var(--color-primary-bg);
+    font-family: var(--font-text);
+    font-size: var(--size-text);
+    color: var(--color-text);
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.display-table thead {
+    background: #a0a5e0;
+}
+
+.display-table th {
+    padding: 10px;
+    color: var(--colour-text);
+    text-align: left;
+    text-transform: uppercase;
+    user-select: none;
+}
+
+.display-table td {
+    padding: 10px;
+    white-space: nowrap;
+}
+
+.display-table tbody {
+    background: var(--color-secondary-bg);
+}
+
+.display-table tbody tr:hover {
+    background: var(--color-table-row-hover) !important;
+    transition: background 0.2s;
+}
+
+/* ````````````` Doctor Styles ````````````` */
+
+/* 1. PatientSearch.tsx */
+.patient-display {
+    background: var(--color-primary-bg);
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    margin-bottom: 32px;
+    padding: 30px;
+}
+
+.patient-search-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 30px;
+}
+
+.patient-search-loading,
+.patient-search-error {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 192px;
+}
+
+.patient-search-loading span {
+    color: #888;
+}
+
+.patient-search-error span {
+    color: #d32f2f;
+    font-weight: 600;
+}
+
+.no-patients {
+    padding: 16px;
+    text-align: center;
+    color: #bbb;
+    font-size: var(--size-heading2);
+    background: var(--color-secondary-bg) !important;
+}
