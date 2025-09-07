@@ -1,112 +1,146 @@
 import React, { useState, useEffect } from 'react';
-import { HeadingLarge } from 'baseui/typography';
-import { Card, StyledBody } from 'baseui/card';
-import { Grid, Cell } from 'baseui/layout-grid';
-import { Block } from 'baseui/block';
-import { Button } from 'baseui/button';
-import { Input } from 'baseui/input';
-import { FormControl } from 'baseui/form-control';
-import { Table } from 'baseui/table-semantic';
 import { useNavigate } from 'react-router-dom';
+
 import { Patient } from '../../types';
 import { fetchAllPatients } from './PatientService';
 
+import '../../main.css';
+import { SearchIcon } from '../../utils/utilities';
+
 const DoctorPatientSearch: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState('')
+  const [patients, setPatients] = useState<Patient[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(null)
+  const navigate = useNavigate()
 
   const getAssignedDoctorName = (doctor: string | any): string => {
-    if (typeof doctor === 'string') return doctor;
+    if (typeof doctor === 'string') return doctor
     if (doctor && typeof doctor === 'object') {
-      return doctor.name || 'N/A';
+      return doctor.name || 'N/A'
     }
-    return 'N/A';
-  };
+    return 'N/A'
+  }
+
+  // Initial data load
+  const loadPatients = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const patientsData = await fetchAllPatients()
+      setPatients(patientsData)
+    }
+    catch (error: any) {
+      if (error.message?.includes('Authentication failed') || error.message?.includes('No authentication token')) {
+        setError('Authentication failed. Please log in again.')
+      }
+      else {
+        setError('Failed to load patients. Please try again.')
+      }
+      setPatients([])
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const loadPatients = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const patientsData = await fetchAllPatients();
-        setPatients(patientsData);
-      } catch (error: any) {
-        console.error('Error loading patients:', error);
-        if (error.message?.includes('Authentication failed') || error.message?.includes('No authentication token')) {
-          setError('Authentication failed. Please log in again.');
-          // Optionally redirect to login
-          // navigate('/login');
-        } else {
-          setError('Failed to load patients. Please try again.');
-        }
-        setPatients([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+    loadPatients()
+  }, [])
 
-    loadPatients();
-  }, []);
-
+  // View relevant patient details
   const handleViewPatient = (patientId: string) => {
-    navigate(`/doctor/patients/${patientId}`);
-  };
+    navigate(`/doctor/patients/${patientId}`)
+  }
+
+  // Filter patients based on search term
+  const filteredPatients = patients.filter((patient) => {
+    const term = searchTerm.toLowerCase()
+    return ((
+      patient.patientId || patient.id)?.toLowerCase().includes(term) ||
+      patient.name?.toLowerCase().includes(term) ||
+      // (patient.gender || '').toLowerCase().includes(term) ||  
+      // (patient.bloodType || '').toLowerCase().includes(term) ||
+      getAssignedDoctorName(patient.assignedDoctor).toLowerCase().includes(term)
+    )
+  })
 
   return (
-    <Block>
-      <HeadingLarge>Patient Search</HeadingLarge>
+    <div className="general-container">
+      <h1 className="general-h1">Patient List</h1>
 
-      <Grid gridMargins={[16, 32]} gridGutters={[16, 32]} gridMaxWidth={1200}>
-        <Cell span={12}>
-          <Card overrides={{ Root: { style: { marginBottom: '20px' } } }}>
-            <StyledBody>
-              <Block display="flex" justifyContent="space-between" alignItems="flex-end" marginBottom="16px">
-                <FormControl label="Search Patients">
-                  <Input
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.currentTarget.value)}
-                    placeholder="Search by Patient ID, Name, Doctor, Blood Type, or Gender"
-                    clearable
-                    clearOnEscape
-                    disabled={loading}
-                  />
-                </FormControl>
-              </Block>
+      <div className="patient-display">
+        {/* Search Bar */}
+        <div className="patient-search-form">
+          <div className="search-input-wrapper">
+            <SearchIcon className="search-icon" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.currentTarget.value)}
+              placeholder="Search by Patient ID / Patient Name / Doctor Name"
+              disabled={loading}
+            />
+          </div>
+        </div>
 
-              {loading ? (
-                <Block display="flex" justifyContent="center" alignItems="center" height="200px">
-                  <Block>Loading patients...</Block>
-                </Block>
-              ) : error ? (
-                <Block display="flex" justifyContent="center" alignItems="center" height="200px">
-                  <Block color="negative">Error: {error}</Block>
-                </Block>
-              ) : (
-                <Table
-                  columns={['Patient ID', 'Name', 'Age', 'Gender', 'Blood Type', 'Assigned Doctor', 'Actions']}
-                  data={patients.map((patient) => [
-                    patient.patientId || patient.id,
-                    patient.name,
-                    patient.age || 'N/A',
-                    patient.gender,
-                    patient.bloodType,
-                    getAssignedDoctorName(patient.assignedDoctor),
-                    <Button key={patient.id} size="compact" onClick={() => handleViewPatient(patient.patientId ?? patient.id)}>
-                      View
-                    </Button>,
-                  ])}
-                  emptyMessage="No patients found"
-                />
-              )}
-            </StyledBody>
-          </Card>
-        </Cell>
-      </Grid>
-    </Block>
-  );
-};
+        {/* Patient Table */}
+        {loading ? (
+          <div className="patient-search-loading">
+            <span>Loading patients...</span>
+          </div>
+        ) : error ? (
+          <div className="patient-search-error">
+            <span>Error: {error}</span>
+          </div>
+        ) : (
+          <div>
+            <table className="display-table">
+              <thead>
+                <tr>
+                  <th>Patient ID</th>
+                  <th>Name</th>
+                  <th>Age</th>
+                  <th>Gender</th>
+                  <th>Blood Type</th>
+                  <th>Assigned Doctor</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredPatients.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="no-patients">No Patients found!</td>
+                  </tr>
+                ) : (
+                  filteredPatients.map((patient) => (
+                    <tr key={patient.id}>
+                      <td>{patient.patientId || patient.id}</td>
+                      <td>{patient.name}</td>
+                      <td>{patient.age || 'N/A'}</td>
+                      <td>{patient.gender || 'N/A'}</td>
+                      <td>{patient.bloodType || 'N/A'}</td>
+                      <td>{getAssignedDoctorName(patient.assignedDoctor)}</td>
+                      <td>
+                        <div className="center-btn">
+                          <button
+                            className="btn btn-blue"
+                            onClick={() => handleViewPatient(patient.patientId ?? patient.id)}
+                          >
+                            View
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
-export default DoctorPatientSearch;
+    </div>
+  )
+}
+
+export default DoctorPatientSearch

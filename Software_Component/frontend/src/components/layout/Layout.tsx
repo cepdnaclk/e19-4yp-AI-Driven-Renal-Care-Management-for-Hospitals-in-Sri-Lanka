@@ -19,13 +19,34 @@ import { User, Role } from '../../types/index';
 import icon from '../../images/icon.png';
 import data from '../../data.json';
 
+import '../../main.css';
+
 interface LayoutProps {
   user: User | null;
   onLogout: () => void;
 }
 
+// Theme toggle helpers
+const isDarkTheme = () => document.body.classList.contains('dark-theme');
+const getThemeIcon = () => (isDarkTheme() ? '🌙' : '☀️');
+const toggleTheme = () => {
+  document.body.classList.toggle('dark-theme');
+  // Force update to re-render icon
+  setTimeout(() => {
+    const event = new Event('themechange');
+    window.dispatchEvent(event);
+  }, 0);
+};
+
 const Layout: React.FC<LayoutProps> = ({ user, onLogout }) => {
   const navigate = useNavigate();
+  const [, setThemeState] = React.useState(0); // dummy state to force re-render
+
+  React.useEffect(() => {
+    const handler = () => setThemeState((s) => s + 1);
+    window.addEventListener('themechange', handler);
+    return () => window.removeEventListener('themechange', handler);
+  }, []);
 
   if (!user) {
     return null;
@@ -73,6 +94,14 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout }) => {
 
         {/* Render user profile and logout */}
         <StyledNavigationList $align={ALIGN.right}>
+          
+          {/* Theme toggle button */}
+          <StyledNavigationItem>
+            <Button onClick={toggleTheme} className='theme-change-btn'>
+              {getThemeIcon()}
+            </Button>
+
+          </StyledNavigationItem>
           <StyledNavigationItem>
             <StatefulPopover
               content={({ close }) => (
