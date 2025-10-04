@@ -90,6 +90,11 @@
     background: var(--color-primary);
 }
 
+
+.margin_bottom_20 {
+    margin-bottom: 20px;
+}
+
 .theme-change-btn {
     background: red;
     border-radius: 50%;
@@ -133,22 +138,21 @@
     transition: background 0.2s;
 }
 
-/* ````````````` Doctor Styles ````````````` */
+/* Search Bar */
+.search-box {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 30px;
+}
 
-/* 1. PatientSearch.tsx */
+/* PatientSearch.tsx */
 .patient-display {
     background: var(--color-primary-bg);
     border-radius: var(--border-radius);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
     margin-bottom: 32px;
     padding: 30px;
-}
-
-.patient-search-form {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    margin-bottom: 30px;
 }
 
 .patient-search-loading,

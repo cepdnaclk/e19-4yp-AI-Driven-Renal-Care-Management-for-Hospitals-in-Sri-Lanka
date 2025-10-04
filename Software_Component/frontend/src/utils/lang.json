@@ -1,0 +1,17 @@
+{
+    "patient_search": {
+        "title": "Patient Search",
+        "add_new_patient": "Add New Patient",
+        "no_patients_found": "No patients found.",
+        "searchbar_placeholder": "Search by Patient ID / Name / Doctor Name"
+    },
+    "toasts": {
+        "patient_search": {
+            "no_view_permission": "You don't have permission to view this patient.",
+            "no_add_permission": "You don't have permission to add a new patient."
+        }
+    },
+    "error": "Error:",
+    "loading": "Loading...",
+    "restricted": "Restricted Access"
+}

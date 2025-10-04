@@ -12,7 +12,7 @@ import Layout from './components/layout/Layout';
 
 // Role-based Pages
 import NurseDashboard from './pages/nurse/Dashboard';
-import NursePatientSearch from './pages/nurse/PatientSearch';
+import NursePatientSearch from './pages/nurse/NursePatientSearch';
 import NursePatientProfile from './pages/nurse/PatientProfile';
 import NurseDialysisSession from './pages/nurse/DialysisSession';
 import NurseMonthlyInvestigation from './pages/nurse/MonthlyInvestigation';
@@ -22,7 +22,7 @@ import NurseTrendAnalysis from './pages/nurse/TrendAnalysis';
 import AddPatient from './pages/nurse/AddNewPatient';
 
 import DoctorDashboard from './pages/doctor/Dashboard';
-import DoctorPatientSearch from './pages/doctor/PatientSearch';
+import DoctorPatientSearch from './pages/doctor/DoctorPatientSearch';
 import DoctorPatientProfile from './pages/doctor/PatientProfile';
 import DoctorClinicalDecisions from './pages/doctor/ClinicalDecisions';
 
