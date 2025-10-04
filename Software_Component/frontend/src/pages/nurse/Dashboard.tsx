@@ -6,7 +6,7 @@ import { Block } from 'baseui/block';
 import { Button } from 'baseui/button';
 import { useNavigate } from 'react-router-dom';
 import { Notification, Patient } from '../../types';
-import { fetchAllPatients, fetchNotifications } from '../doctor/PatientService';
+import { fetchAllPatients, fetchNotifications } from '../patients/PatientService';
 
 const NurseDashboard: React.FC = () => {
   const [notifications, setNotifications] = useState<any[]>([]);

@@ -9,7 +9,7 @@ import { Tabs, Tab } from 'baseui/tabs-motion';
 import { useNavigate } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LineChart, Line } from 'recharts';
 import { Patient, DialysisSession, MonthlyInvestigation, AIPrediction, ClinicalDecision } from '../../types';
-import { fetchPatientById, fetchMonthlyInvestigations, fetchDialysisSessions, fetchHemoglobinTrend, fetchAIPrediction } from './PatientService';
+import { fetchPatientById, fetchMonthlyInvestigations, fetchDialysisSessions, fetchHemoglobinTrend, fetchAIPrediction } from '../patients/PatientService';
 
 // Mock clinical decisions - to be replaced with API integration later
 const mockClinicalDecisions: Record<string, ClinicalDecision[]> = {

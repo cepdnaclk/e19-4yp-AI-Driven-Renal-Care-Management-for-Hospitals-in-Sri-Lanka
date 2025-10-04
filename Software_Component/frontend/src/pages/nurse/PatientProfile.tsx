@@ -8,7 +8,7 @@ import { Button } from 'baseui/button';
 import { Tabs, Tab } from 'baseui/tabs-motion';
 import { useNavigate } from 'react-router-dom';
 import { Patient } from '../../types';
-import { fetchPatientById, fetchMonthlyInvestigations, fetchDialysisSessions } from '../doctor/PatientService';
+import { fetchPatientById, fetchMonthlyInvestigations, fetchDialysisSessions } from '../patients/PatientService';
 
 const NursePatientProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
