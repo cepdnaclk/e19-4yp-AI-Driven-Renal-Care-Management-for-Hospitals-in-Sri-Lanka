@@ -133,9 +133,7 @@
     transition: background 0.2s;
 }
 
-/* ````````````` Doctor Styles ````````````` */
-
-/* 1. PatientSearch.tsx */
+/* PatientSearch.tsx */
 .patient-display {
     background: var(--color-primary-bg);
     border-radius: var(--border-radius);
