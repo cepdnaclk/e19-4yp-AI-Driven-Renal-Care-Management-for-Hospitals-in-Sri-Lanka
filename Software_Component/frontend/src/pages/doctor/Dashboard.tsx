@@ -94,123 +94,187 @@ const DoctorDashboard: React.FC = () => {
   };
 
   return (
-    <div className="general-container" style={{ maxWidth: 1200, margin: '0 auto' }}>
-      <h1 className="general-h1">Doctor Dashboard</h1>
-      <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '32px' }}>
-        <div>
-          <div className="patient-display">
-            <h2 style={{ fontFamily: 'var(--font-heading2)', fontSize: 'var(--size-heading2)', color: 'var(--color-primary)', marginBottom: 16 }}>Patients Requiring Review</h2>
-            {patientsLoading ? (
-              <div className="patient-search-loading"><span>Loading recent patients...</span></div>
-            ) : patientsError ? (
-              <div className="patient-search-error"><span>Error: {patientsError}</span></div>
-            ) : recentPatients.length > 0 ? (
-              recentPatients.map(patient => (
-                <div key={patient.id} style={{ marginBottom: 16, padding: 16, background: 'rgba(255, 165, 0, 0.1)', borderRadius: 'var(--border-radius)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div style={{ fontWeight: 500 }}>{patient.name}</div>
-                    <div style={{ color: 'var(--color-primary)', fontSize: '1rem' }}>
-                      Patient ID: {patient.patientId || patient.id}
-                    </div>
-                    <div style={{ color: 'var(--color-primary)', fontSize: '1rem' }}>
-                      Registered: {'25/04/2025'}
-                    </div>
-                    <div style={{ color: 'orange', fontSize: '1rem' }}>
-                      Recently added - requires review
-                    </div>
+    <div id="container">
+      <div id="header">
+        <h1>Doctor Dashboard</h1>
+      </div>
+
+      <div className="dashboard-content" style={{ maxWidth: 1400, margin: '0 auto', padding: '0 20px' }}>
+        <div className="dashboard-grid-modern">
+          <div className="dashboard-main">
+            {/* Patients Requiring Review */}
+            <div className="dashboard-card">
+              <div className="dashboard-card-header">
+                <h2 className="dashboard-card-title">
+                  <i className="bi bi-person-check-fill"></i> Patients Requiring Review
+                </h2>
+              </div>
+              <div className="dashboard-card-body">
+                {patientsLoading ? (
+                  <div className="patient-search-loading">
+                    <div className="loading-spinner"></div>
+                    <span>Loading recent patients...</span>
                   </div>
-                  <button className="btn btn-blue" style={{ minWidth: 80 }} onClick={() => handlePatientClick(patient.patientId || patient.id)}>
-                    Review
+                ) : patientsError ? (
+                  <div className="patient-search-error">
+                    <span>Error loading patients</span>
+                    <p>{patientsError}</p>
+                  </div>
+                ) : recentPatients.length > 0 ? (
+                  <div className="patients-review-list">
+                    {recentPatients.map(patient => (
+                      <div key={patient.id} className="patient-review-card">
+                        <div className="patient-review-info">
+                          <div className="patient-review-name">{patient.name}</div>
+                          <div className="patient-review-details">
+                            <span className="patient-id">ID: {patient.patientId || patient.id}</span>
+                            <span className="patient-date">Registered: 25/04/2025</span>
+                            <span className="patient-status">Recently added - requires review</span>
+                          </div>
+                        </div>
+                        <button
+                          className="patient-action-btn"
+                          onClick={() => handlePatientClick(patient.patientId || patient.id)}
+                        >
+                          <i className="bi bi-eye-fill"></i> Review
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="no-patients-message">
+                    <p>No recent patients found</p>
+                    <span>Patients will appear here when registered</span>
+                  </div>
+                )}
+                <div className="dashboard-card-actions">
+                  <button className="btn-primary" onClick={() => navigate('/doctor/patients')}>
+                    <i className="bi bi-people-fill"></i> View All Patients
                   </button>
                 </div>
-              ))
-            ) : (
-              <div className="no-patients">No recent patients found</div>
-            )}
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>
-              <button className="btn btn-blue" onClick={() => navigate('/doctor/patients')}>
-                View All Patients
-              </button>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="dashboard-card">
+              <div className="dashboard-card-header">
+                <h2 className="dashboard-card-title">
+                  <i className="bi bi-lightning-charge-fill"></i> Quick Actions
+                </h2>
+              </div>
+              <div className="dashboard-card-body">
+                <div className="quick-actions-grid">
+                  <button className="quick-action-btn" onClick={() => navigate('/doctor/patients')}>
+                    <i className="bi bi-search"></i>
+                    <span>Search Patients</span>
+                  </button>
+                  <button className="quick-action-btn" onClick={() => navigate('/doctor/notifications')}>
+                    <i className="bi bi-bell-fill"></i>
+                    <span>All Notifications</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="general-container" style={{ marginTop: 24 }}>
-            <h2 style={{ fontFamily: 'var(--font-heading2)', fontSize: 'var(--size-heading2)', color: 'var(--color-primary)', marginBottom: 16 }}>Quick Actions</h2>
-            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-              <button className="btn btn-blue" onClick={() => navigate('/doctor/patients')}>Search Patients</button>
-              <button className="btn btn-blue" onClick={() => navigate('/doctor/notifications')}>
-                All Notifications
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <div className="general-container">
-            <h2 style={{ fontFamily: 'var(--font-heading2)', fontSize: 'var(--size-heading2)', color: 'var(--color-primary)', marginBottom: 16 }}>Notifications</h2>
-            {notificationsLoading ? (
-              <div className="patient-search-loading"><span>Loading notifications...</span></div>
-            ) : notificationsError ? (
-              <div className="patient-search-error"><span>Error: {notificationsError}</span></div>
-            ) : notifications.length === 0 ? (
-              <div className="no-patients">No new notifications</div>
-            ) : (
-              notifications.map(notification => {
-                const isRead = notification.recipients && notification.recipients.length > 0 
-                  ? notification.recipients[0].read 
-                  : false;
-                const getBackgroundColor = (type: string, priority: string) => {
-                  if (type === 'WARNING' || priority === 'HIGH') {
-                    return 'rgba(255, 0, 0, 0.1)';
-                  } else if (type === 'INFO' && priority === 'MEDIUM') {
-                    return 'rgba(255, 165, 0, 0.1)';
-                  } else {
-                    return 'rgba(0, 0, 0, 0.03)';
-                  }
-                };
-                return (
-                  <div
-                    key={notification.id}
-                    style={{
-                      marginBottom: 16,
-                      padding: 16,
-                      background: getBackgroundColor(notification.type, notification.priority),
-                      borderRadius: 'var(--border-radius)',
-                      border: isRead ? 'none' : '2px solid rgba(0, 0, 0, 0.1)',
-                      cursor: 'pointer',
-                    }}
-                    onClick={() => handleNotificationClick(notification)}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <div style={{ fontWeight: 500 }}>{notification.title}</div>
-                      <div style={{ fontSize: '1rem', color: 'var(--color-primary)' }}>
-                        {notification.priority}
-                      </div>
-                    </div>
-                    <div style={{ fontSize: '1rem', marginBottom: 8 }}>
-                      {notification.message}
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ color: 'var(--color-primary)', fontSize: '1rem' }}>
-                        {new Date(notification.createdAt).toLocaleString()}
-                      </div>
-                      <div style={{ fontSize: '1rem', color: 'var(--color-primary)' }}>
-                        {notification.category}
-                      </div>
-                    </div>
-                    {!isRead && (
-                      <div style={{ marginTop: 8, fontSize: '1rem', color: 'orange', display: 'flex', alignItems: 'center' }}>
-                        • Unread
-                      </div>
-                    )}
+          <div className="dashboard-sidebar">
+            {/* Notifications */}
+            <div className="dashboard-card">
+              <div className="dashboard-card-header">
+                <h2 className="dashboard-card-title">
+                  <i className="bi bi-bell-fill"></i> Notifications
+                </h2>
+              </div>
+              <div className="dashboard-card-body">
+                {notificationsLoading ? (
+                  <div className="patient-search-loading">
+                    <div className="loading-spinner"></div>
+                    <span>Loading notifications...</span>
                   </div>
-                );
-              })
-            )}
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>
-              <button className="btn btn-blue" onClick={() => navigate('/doctor/notifications')}>
-                View All Notifications
-              </button>
+                ) : notificationsError ? (
+                  <div className="patient-search-error">
+                    <span>Error loading notifications</span>
+                    <p>{notificationsError}</p>
+                  </div>
+                ) : notifications.length === 0 ? (
+                  <div className="no-patients-message">
+                    <p>No new notifications</p>
+                    <span>You'll see updates here</span>
+                  </div>
+                ) : (
+                  <div className="notifications-list">
+                    {notifications.map(notification => {
+                      const isRead = notification.recipients && notification.recipients.length > 0
+                        ? notification.recipients[0].read
+                        : false;
+
+                      const getNotificationStyle = (type: string, priority: string) => {
+                        if (type === 'WARNING' || priority === 'HIGH') {
+                          return {
+                            background: 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)',
+                            border: '2px solid #e57373',
+                            icon: 'bi bi-exclamation-triangle-fill',
+                            iconColor: '#d32f2f'
+                          };
+                        } else if (type === 'INFO' && priority === 'MEDIUM') {
+                          return {
+                            background: 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)',
+                            border: '2px solid #ff9800',
+                            icon: 'bi bi-info-circle-fill',
+                            iconColor: '#f57c00'
+                          };
+                        } else {
+                          return {
+                            background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                            border: '2px solid #dee2e6',
+                            icon: 'bi bi-info-circle',
+                            iconColor: '#6c757d'
+                          };
+                        }
+                      };
+
+                      const style = getNotificationStyle(notification.type, notification.priority);
+
+                      return (
+                        <div
+                          key={notification.id}
+                          className={`notification-card ${!isRead ? 'unread' : ''}`}
+                          style={{
+                            background: style.background,
+                            border: isRead ? 'none' : style.border,
+                          }}
+                          onClick={() => handleNotificationClick(notification)}
+                        >
+                          <div className="notification-header">
+                            <div className="notification-title">
+                              <i className={style.icon} style={{ color: style.iconColor, marginRight: '8px' }}></i>
+                              {notification.title}
+                            </div>
+                            <div className="notification-priority">{notification.priority}</div>
+                          </div>
+                          <div className="notification-message">{notification.message}</div>
+                          <div className="notification-footer">
+                            <div className="notification-time">
+                              {new Date(notification.createdAt).toLocaleString()}
+                            </div>
+                            <div className="notification-category">{notification.category}</div>
+                          </div>
+                          {!isRead && (
+                            <div className="notification-unread-indicator">
+                              <i className="bi bi-circle-fill"></i> Unread
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                <div className="dashboard-card-actions">
+                  <button className="btn-secondary" onClick={() => navigate('/doctor/notifications')}>
+                    <i className="bi bi-bell"></i> View All Notifications
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
