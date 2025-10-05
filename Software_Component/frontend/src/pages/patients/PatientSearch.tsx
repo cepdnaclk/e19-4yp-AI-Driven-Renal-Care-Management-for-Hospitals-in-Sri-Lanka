@@ -95,14 +95,24 @@ const PatientSearch: React.FC<PatientSearchProps> = ({ role }) => {
 
     // Unified UI for doctor and nurse
     return (
-        <div className="general-container">
-            <h1 className="general-h1">{lang.patient_search.title}</h1>
-            <div className="patient-display">
+        <div id="container">
+            <div id="header">
+                <h1>{lang.patient_search.title}</h1>
+            </div>
 
+            <div id="sub_container">
                 {/* Add Patients - If only has add permissions */}
-                {canAdd && (
-                    <button className="btn btn-blue margin_bottom_20" onClick={handleAddNewPatient}>{lang.patient_search.add_new_patient}</button>
-                )}
+                <div className="patient-search-actions">
+                    {canAdd && (
+                        <button className="btn btn-green" onClick={handleAddNewPatient}>
+                            <i className="bi bi-person-plus-fill"></i> {lang.patient_search.add_new_patient}
+                        </button>
+                    )}
+
+                    <div id="info-box">
+                        <i className="bi bi-people-fill"></i>{filteredPatients.length} Patient{filteredPatients.length !== 1 ? 's' : ''}
+                    </div>
+                </div>
 
                 {/* Search Patients */}
                 <SearchBar
@@ -113,28 +123,31 @@ const PatientSearch: React.FC<PatientSearchProps> = ({ role }) => {
                 />
 
                 {loading ? (
-                    <div className="patient-search-loading">
+                    <div id="table-data-loading">
                         <span>{lang.loading}</span>
                     </div>
                 ) : error ? (
-                    <div className="patient-search-error">
+                    <div id="table-data-error">
                         <span>{lang.error} {error}</span>
                     </div>
                 ) : (
-                    <div>
-                        <table className="display-table">
+                    <div id="table-container">
+                        <table id="table" className="patient-table">
                             <thead>
                                 <tr>
                                     {patientTableConfig[role].map((col: any) => (
                                         <th key={col.key}>{col.label}</th>
                                     ))}
-                                    <th>Actions</th>
+                                    <th>{lang.table.actions}</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {filteredPatients.length === 0 ? (
                                     <tr>
-                                        <td colSpan={patientTableConfig[role].length + 1} className="no-patients">{lang.patient_search.no_patients_found}</td>
+                                        <td colSpan={patientTableConfig[role].length + 1} id="no-data-message">
+                                            <p>{lang.patient_search.no_patient_data}</p>
+                                            <span>{lang.table.no_search_data}</span>
+                                        </td>
                                     </tr>
                                 ) : (
                                     filteredPatients.map((patient: any) => (
@@ -147,10 +160,10 @@ const PatientSearch: React.FC<PatientSearchProps> = ({ role }) => {
                                             <td>
                                                 {canView ? (
                                                     <button className="btn btn-blue" onClick={() => handleViewPatient(patient.patientId ?? patient.id)}>
-                                                        View
+                                                        <i className="bi bi-eye-fill"></i> {lang.table.view}
                                                     </button>
                                                 ) : (
-                                                    <span className="text-muted">{lang.restricted}</span>
+                                                    <span id="restricted">{lang.restricted}</span>
                                                 )}
                                             </td>
                                         </tr>

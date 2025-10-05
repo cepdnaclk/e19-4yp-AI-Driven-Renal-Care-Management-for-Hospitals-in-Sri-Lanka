@@ -3,7 +3,8 @@
         "title": "Patient Search",
         "add_new_patient": "Add New Patient",
         "no_patients_found": "No patients found.",
-        "searchbar_placeholder": "Search by Patient ID / Name / Doctor Name"
+        "searchbar_placeholder": "Search by Patient ID / Name / Doctor Name",
+        "no_patient_data": "No Patients Found!"
     },
     "toasts": {
         "patient_search": {
@@ -11,7 +12,14 @@
             "no_add_permission": "You don't have permission to add a new patient."
         }
     },
+    "table": {
+        "actions": "Actions",
+        "view": "View",
+        "edit": "Edit",
+        "delete": "Delete",
+        "no_search_data": "Try adjusting your search criteria"
+    },
     "error": "Error:",
     "loading": "Loading...",
-    "restricted": "Restricted Access"
+    "restricted": "Restricted Access!"
 }
