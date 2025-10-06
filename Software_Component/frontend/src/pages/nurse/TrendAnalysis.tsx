@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { HeadingLarge, HeadingMedium } from 'baseui/typography';
-import { Card, StyledBody } from 'baseui/card';
-import { Grid, Cell } from 'baseui/layout-grid';
-import { Block } from 'baseui/block';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 // Define your types
@@ -176,166 +172,154 @@ const NurseTrendAnalysis: React.FC = () => {
   }, [dialysisSessions, monthlyInvestigations]);
 
   return (
-    <Block padding="scale600">
-      <HeadingLarge>Trend Analysis</HeadingLarge>
-      <HeadingMedium>Patient ID: {patientId}</HeadingMedium>
+    <div style={{ padding: '2rem' }}>
+      <h1>Trend Analysis</h1>
+      <h2>Patient ID: {patientId}</h2>
 
-      <Grid gridMargins={[16, 32]} gridGutters={[16, 32]} gridMaxWidth={1200}>
-        <Cell span={12}>
-          <Block marginBottom="24px">
-            <Card>
-              <StyledBody>
-                <HeadingMedium>Weight Trends</HeadingMedium>
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart
-                    data={weightTrendData}
-                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Area
-                      type="monotone"
-                      dataKey="preWeight"
-                      name="Pre-Dialysis Weight"
-                      stroke="#8884d8"
-                      fill="#8884d8"
-                      fillOpacity={0.3}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="postWeight"
-                      name="Post-Dialysis Weight"
-                      stroke="#82ca9d"
-                      fill="#82ca9d"
-                      fillOpacity={0.3}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="ufGoal"
-                      name="UF Goal"
-                      stroke="#ffc658"
-                      fill="#ffc658"
-                      fillOpacity={0.3}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </StyledBody>
-            </Card>
-          </Block>
-        </Cell>
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ marginBottom: '24px' }}>
+          <div style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '1rem' }}>
+            <h3>Weight Trends</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart
+                data={weightTrendData}
+                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Area
+                  type="monotone"
+                  dataKey="preWeight"
+                  name="Pre-Dialysis Weight"
+                  stroke="#8884d8"
+                  fill="#8884d8"
+                  fillOpacity={0.3}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="postWeight"
+                  name="Post-Dialysis Weight"
+                  stroke="#82ca9d"
+                  fill="#82ca9d"
+                  fillOpacity={0.3}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="ufGoal"
+                  name="UF Goal"
+                  stroke="#ffc658"
+                  fill="#ffc658"
+                  fillOpacity={0.3}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
 
-        <Cell span={12}>
-          <Block marginBottom="24px">
-            <Card>
-              <StyledBody>
-                <HeadingMedium>Blood Pressure Trends</HeadingMedium>
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart
-                    data={bpTrendData}
-                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Area
-                      type="monotone"
-                      dataKey="preSystolic"
-                      name="Pre-Dialysis Systolic"
-                      stroke="#8884d8"
-                      fill="#8884d8"
-                      fillOpacity={0.3}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="preDiastolic"
-                      name="Pre-Dialysis Diastolic"
-                      stroke="#82ca9d"
-                      fill="#82ca9d"
-                      fillOpacity={0.3}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="postSystolic"
-                      name="Post-Dialysis Systolic"
-                      stroke="#ffc658"
-                      fill="#ffc658"
-                      fillOpacity={0.3}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="postDiastolic"
-                      name="Post-Dialysis Diastolic"
-                      stroke="#ff8042"
-                      fill="#ff8042"
-                      fillOpacity={0.3}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </StyledBody>
-            </Card>
-          </Block>
-        </Cell>
+        <div style={{ marginBottom: '24px' }}>
+          <div style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '1rem' }}>
+            <h3>Blood Pressure Trends</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart
+                data={bpTrendData}
+                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Area
+                  type="monotone"
+                  dataKey="preSystolic"
+                  name="Pre-Dialysis Systolic"
+                  stroke="#8884d8"
+                  fill="#8884d8"
+                  fillOpacity={0.3}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="preDiastolic"
+                  name="Pre-Dialysis Diastolic"
+                  stroke="#82ca9d"
+                  fill="#82ca9d"
+                  fillOpacity={0.3}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="postSystolic"
+                  name="Post-Dialysis Systolic"
+                  stroke="#ffc658"
+                  fill="#ffc658"
+                  fillOpacity={0.3}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="postDiastolic"
+                  name="Post-Dialysis Diastolic"
+                  stroke="#ff8042"
+                  fill="#ff8042"
+                  fillOpacity={0.3}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
 
-        <Cell span={12}>
-          <Block marginBottom="24px">
-            <Card>
-              <StyledBody>
-                <HeadingMedium>Laboratory Parameter Trends</HeadingMedium>
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart
-                    data={labTrendData}
-                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Area
-                      type="monotone"
-                      dataKey="hemoglobin"
-                      name="Hemoglobin"
-                      stroke="#8884d8"
-                      fill="#8884d8"
-                      fillOpacity={0.3}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="potassium"
-                      name="Potassium"
-                      stroke="#82ca9d"
-                      fill="#82ca9d"
-                      fillOpacity={0.3}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="phosphorus"
-                      name="Phosphorus"
-                      stroke="#ffc658"
-                      fill="#ffc658"
-                      fillOpacity={0.3}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="albumin"
-                      name="Albumin"
-                      stroke="#ff8042"
-                      fill="#ff8042"
-                      fillOpacity={0.3}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </StyledBody>
-            </Card>
-          </Block>
-        </Cell>
-      </Grid>
-    </Block>
+        <div style={{ marginBottom: '24px' }}>
+          <div style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '1rem' }}>
+            <h3>Laboratory Parameter Trends</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart
+                data={labTrendData}
+                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Area
+                  type="monotone"
+                  dataKey="hemoglobin"
+                  name="Hemoglobin"
+                  stroke="#8884d8"
+                  fill="#8884d8"
+                  fillOpacity={0.3}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="potassium"
+                  name="Potassium"
+                  stroke="#82ca9d"
+                  fill="#82ca9d"
+                  fillOpacity={0.3}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="phosphorus"
+                  name="Phosphorus"
+                  stroke="#ffc658"
+                  fill="#ffc658"
+                  fillOpacity={0.3}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="albumin"
+                  name="Albumin"
+                  stroke="#ff8042"
+                  fill="#ff8042"
+                  fillOpacity={0.3}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
