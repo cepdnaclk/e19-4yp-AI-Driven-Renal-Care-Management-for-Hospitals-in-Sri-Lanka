@@ -1,71 +1,4 @@
 import React, { useState } from 'react';
-import {
-  useStyletron,
-  styled,
-  ThemeProvider,
-  createTheme,
-  darkThemePrimitives
-} from 'baseui';
-import { FormControl } from 'baseui/form-control';
-import { Input } from 'baseui/input';
-import { Textarea } from 'baseui/textarea';
-import { Select, TYPE } from 'baseui/select';
-import { DatePicker } from 'baseui/datepicker';
-import { Radio, RadioGroup } from 'baseui/radio';
-import { Button } from 'baseui/button';
-import { Block } from 'baseui/block';
-import { Card } from 'baseui/card';
-import { Modal, ModalHeader, ModalBody, ModalFooter, ModalButton, SIZE } from 'baseui/modal';
-import { Plus, Delete } from 'baseui/icon';
-import { PhoneInput } from 'baseui/phone-input';
-import { toaster } from 'baseui/toast';
-// Create a custom theme with black as primary color
-const customTheme = createTheme(
-  {
-    ...darkThemePrimitives,
-    primaryFontFamily: '"Roboto", sans-serif',
-  },
-  {
-    colors: {
-      buttonPrimaryFill: 'black',
-      buttonPrimaryHover: '#333',
-      buttonPrimaryActive: '#555',
-      buttonPrimarySelectedFill: 'black',
-      buttonPrimarySelectedText: 'white',
-      
-      // Focus colors
-      borderFocus: 'black',
-      borderSelected: 'black',
-    },
-  }
-);
-
-// Styled components
-const FormSection = styled('div', {
-  marginBottom: '2rem',
-});
-
-const SectionTitle = styled('h2', {
-  borderBottom: '1px solid #e2e8f0',
-  paddingBottom: '0.5rem',
-  marginBottom: '1.5rem',
-  fontSize: '1.25rem',
-  fontWeight: '600',
-});
-
-const FormGrid = styled('div', {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(1, 1fr)',
-  gap: '1rem',
-  '@media screen and (min-width: 768px)': {
-    gridTemplateColumns: 'repeat(2, 1fr)',
-  },
-});
-
-const FullWidthGrid = styled('div', {
-  gridColumn: '1 / -1',
-});
-
 // Interfaces
 interface MedicalProblem {
   id: number;
@@ -123,7 +56,6 @@ interface PatientFormData {
 }
 
 const AddPatient: React.FC = () => {
-  const [css, theme] = useStyletron();
   const [showCancelConfirm, setShowCancelConfirm] = useState<boolean>(false);
   const [formData, setFormData] = useState<PatientFormData>({
     // Basic Info
@@ -367,410 +299,146 @@ const AddPatient: React.FC = () => {
   };
 
   return (
-      <Block
-        padding="2rem"
-        backgroundColor="#f8f8f8"
-        minHeight="100vh"
-      >
-        <Card
-          overrides={{
-            Root: {
-              style: {
-                maxWidth: '1000px',
-                margin: '0 auto',
-              },
-            },
-            HeaderImage: {
-              style: {
-                backgroundColor: 'black',
-                height: '80px',
-                display: 'flex',
-                alignItems: 'center',
-                padding: '0 2rem',
-              },
-            },
-            Contents: {
-              style: {
-                padding: '2rem',
-              },
-            },
-          }}
-        //   headerImage={() => (
-        //     <Block color="white" font="font500" marginLeft="1rem">
-        //       <h1 className={css({ fontSize: '1.5rem', margin: 0 })}>Add New Patient</h1>
-        //     </Block>
-        //   )}
-        >
-          <form onSubmit={handleSubmit}>
-            {/* Basic Information Section */}
-            <FormSection>
-              <SectionTitle>Basic Information</SectionTitle>
-              <FormGrid>
-                <FormControl label="Name">
-                  <Input
-                    value={formData.name}
-                    onChange={e => handleInputChange('name', e.currentTarget.value)}
-                    placeholder="Enter patient name"
-                    required
-                  />
-                </FormControl>
-                
-                <FormControl label="Date of Birth">
-                  <DatePicker
-                    value={formData.dob ? [formData.dob] : []}
-                    // onChange={({ date }) => handleDateChange('dob', Array.isArray(date) ? date[0] : date)}
-                    placeholder="YYYY/MM/DD"
-                    required
-                  />
-                </FormControl>
-                
-                <FormControl label="Sex">
-                  <Select
-                    options={[
-                      { id: 'male', label: 'Male' },
-                      { id: 'female', label: 'Female' },
-                      { id: 'other', label: 'Other' },
-                    ]}
-                    value={formData.sex}
-                    // onChange={params => handleSelectChange('sex', params.value)}
-                    placeholder="Select sex"
-                    required
-                    type={TYPE.select}
-                  />
-                </FormControl>
-                
-                <FormControl label="Height (cm)">
-                  <Input
-                    value={formData.height}
-                    onChange={e => handleInputChange('height', e.currentTarget.value)}
-                    type="number"
-                    placeholder="Enter height in cm"
-                    required
-                  />
-                </FormControl>
-                
-                <FormControl label="Contact Number">
-                  <PhoneInput
-                    text={formData.contactNumber.text}
-                    // country={formData.contactNumber.country}
-                    // onTextChange={text => handlePhoneChange(text, formData.contactNumber.country)}
-                    // onCountryChange={country => handlePhoneChange(formData.contactNumber.text, country)}
-                    required
-                  />
-                </FormControl>
-                
-                <FullWidthGrid>
-                  <FormControl label="Address">
-                    <Textarea
-                      value={formData.address}
-                      onChange={e => handleInputChange('address', e.currentTarget.value)}
-                      placeholder="Enter patient address"
-                      required
-                    />
-                  </FormControl>
-                </FullWidthGrid>
-              </FormGrid>
-            </FormSection>
-            
-            {/* Renal Information Section */}
-            <FormSection>
-              <SectionTitle>Renal Information</SectionTitle>
-              <FormGrid>
-                <FormControl label="Renal Diagnosis">
-                  <Input
-                    value={formData.renalDiagnosis}
-                    onChange={e => handleInputChange('renalDiagnosis', e.currentTarget.value)}
-                    placeholder="Enter renal diagnosis"
-                    required
-                  />
-                </FormControl>
-                
-                <FormControl label="Aetiology">
-                  <Input
-                    value={formData.aetiology}
-                    onChange={e => handleInputChange('aetiology', e.currentTarget.value)}
-                    placeholder="Enter aetiology"
-                    required
-                  />
-                </FormControl>
-              </FormGrid>
-              
-              {/* Medical Problems Section */}
-              <Block marginTop="1.5rem">
-                <Block
-                  display="flex"
-                  justifyContent="space-between"
-                  alignItems="center"
-                  marginBottom="0.5rem"
-                >
-                  <Block font="font500">Other Medical Problems</Block>
-                  <Button
-                    onClick={handleAddMedicalProblem}
-                    size="compact"
-                    kind="primary"
-                    startEnhancer={<Plus size={16} />}
-                  >
-                    Add Problem
-                  </Button>
-                </Block>
-                
-                {formData.medicalProblems.length === 0 && (
-                  <Block color="gray" marginTop="0.5rem" font="font300" as="i">
-                    No medical problems added
-                  </Block>
-                )}
-                
-                {formData.medicalProblems.map((problem) => (
-                  <Block key={problem.id} display="flex" alignItems="center" marginTop="0.5rem">
-                    <Block flex="1">
-                      <Input
-                        value={problem.problem}
-                        onChange={e => handleMedicalProblemChange(problem.id, e.currentTarget.value)}
-                        placeholder="Enter medical problem"
-                      />
-                    </Block>
-                    <Block marginLeft="0.5rem">
-                      <Button
-                        onClick={() => handleRemoveMedicalProblem(problem.id)}
-                        size="compact"
-                        kind="secondary"
-                        shape="circle"
-                      >
-                        <Delete size={16} />
-                      </Button>
-                    </Block>
-                  </Block>
-                ))}
-              </Block>
-            </FormSection>
-            
-            {/* Transplant Information Section */}
-            <FormSection>
-              <SectionTitle>Transplant Information</SectionTitle>
-              <FormControl label="Transplant Work Up">
-                <RadioGroup
-                  value={formData.transplantWorkUp}
-                  onChange={e => handleInputChange('transplantWorkUp', e.currentTarget.value)}
+    <div style={{ padding: '2rem', backgroundColor: '#f8f8f8', minHeight: '100vh' }}>
+      <div style={{ maxWidth: '1000px', margin: '0 auto', border: '1px solid #ccc', borderRadius: '8px', padding: '2rem', backgroundColor: 'white' }}>
+        <h1>Add New Patient</h1>
+        
+        <form onSubmit={handleSubmit}>
+          {/* Basic Information Section */}
+          <div style={{ marginBottom: '2rem' }}>
+            <h2 style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem', marginBottom: '1.5rem', fontSize: '1.25rem', fontWeight: '600' }}>Basic Information</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
+              <div>
+                <label>Name</label>
+                <input
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  placeholder="Enter patient name"
                   required
-                  align="horizontal"
+                  style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+                />
+              </div>
+              
+              <div>
+                <label>Date of Birth</label>
+                <input
+                  value={formData.dob ? formData.dob.toISOString().split('T')[0] : ''}
+                  onChange={(e) => handleDateChange('dob', new Date(e.target.value))}
+                  type="date"
+                  placeholder="YYYY/MM/DD"
+                  required
+                  style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+                />
+              </div>
+              
+              <div>
+                <label>Sex</label>
+                <select
+                  value={formData.sex[0]?.id || ''}
+                  onChange={(e) => handleSelectChange('sex', [{ id: e.target.value, label: e.target.options[e.target.selectedIndex].text }])}
+                  required
+                  style={{ width: '100%', padding: '8px', marginTop: '4px' }}
                 >
-                  <Radio value="Live donor KT">Live donor KT</Radio>
-                  <Radio value="None">None</Radio>
-                  <Radio value="Patient not willing">Patient not willing</Radio>
-                </RadioGroup>
-              </FormControl>
+                  <option value="">Select sex</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
               
-              <FormControl label="Status">
-                <RadioGroup
-                  value={formData.status}
-                  onChange={e => handleInputChange('status', e.currentTarget.value)}
-                  align="horizontal"
-                >
-                  <Radio value="Completed">Completed</Radio>
-                  <Radio value="Being worked up">Being worked up</Radio>
-                </RadioGroup>
-              </FormControl>
-            </FormSection>
-            
-            {/* Vaccination Status Section */}
-            <FormSection>
-              <SectionTitle>Vaccination Status</SectionTitle>
+              <div>
+                <label>Height (cm)</label>
+                <input
+                  value={formData.height}
+                  onChange={(e) => handleInputChange('height', e.target.value)}
+                  type="number"
+                  placeholder="Enter height in cm"
+                  required
+                  style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+                />
+              </div>
               
-              {/* Hepatitis Bs Ag */}
-              <Block marginBottom="1.5rem">
-                <FormControl label="Hepatitis Bs Ag">
-                  <Block display="flex" flexDirection={['column', 'column', 'row']} alignItems="flex-start">
-                    <Block marginRight="2rem" marginBottom={['0.5rem', '0.5rem', '0']}>
-                      <RadioGroup
-                        value={formData.hepatitisBsAg.status}
-                        onChange={e => handleVaccinationStatusChange('hepatitisBsAg', 'status', e.currentTarget.value)}
-                        align="horizontal"
-                      >
-                        <Radio value="Positive">Positive</Radio>
-                        <Radio value="Negative">Negative</Radio>
-                      </RadioGroup>
-                    </Block>
-                    <Block flex="1" width={['100%', '100%', 'auto']}>
-                      <Input
-                        value={formData.hepatitisBsAg.comment}
-                        onChange={e => handleVaccinationStatusChange('hepatitisBsAg', 'comment', e.currentTarget.value)}
-                        placeholder="Comments"
-                      />
-                    </Block>
-                  </Block>
-                </FormControl>
-              </Block>
+              <div>
+                <label>Contact Number</label>
+                <input
+                  value={formData.contactNumber.text}
+                  onChange={(e) => handlePhoneChange(e.target.value, formData.contactNumber.country)}
+                  placeholder="Enter contact number"
+                  required
+                  style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+                />
+              </div>
               
-              {/* Hepatitis C Ab */}
-              <Block marginBottom="1.5rem">
-                <FormControl label="Hepatitis C Ab">
-                  <Block display="flex" flexDirection={['column', 'column', 'row']} alignItems="flex-start">
-                    <Block marginRight="2rem" marginBottom={['0.5rem', '0.5rem', '0']}>
-                      <RadioGroup
-                        value={formData.hepatitisCAb.status}
-                        onChange={e => handleVaccinationStatusChange('hepatitisCAb', 'status', e.currentTarget.value)}
-                        align="horizontal"
-                      >
-                        <Radio value="Positive">Positive</Radio>
-                        <Radio value="Negative">Negative</Radio>
-                      </RadioGroup>
-                    </Block>
-                    <Block flex="1" width={['100%', '100%', 'auto']}>
-                      <Input
-                        value={formData.hepatitisCAb.comment}
-                        onChange={e => handleVaccinationStatusChange('hepatitisCAb', 'comment', e.currentTarget.value)}
-                        placeholder="Comments"
-                      />
-                    </Block>
-                  </Block>
-                </FormControl>
-              </Block>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label>Address</label>
+                <textarea
+                  value={formData.address}
+                  onChange={(e) => handleInputChange('address', e.target.value)}
+                  placeholder="Enter patient address"
+                  required
+                  style={{ width: '100%', padding: '8px', marginTop: '4px', minHeight: '80px' }}
+                />
+              </div>
+            </div>
+          </div>
+          
+          {/* Renal Information Section */}
+          <div style={{ marginBottom: '2rem' }}>
+            <h2 style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem', marginBottom: '1.5rem', fontSize: '1.25rem', fontWeight: '600' }}>Renal Information</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
+              <div>
+                <label>Renal Diagnosis</label>
+                <input
+                  value={formData.renalDiagnosis}
+                  onChange={(e) => handleInputChange('renalDiagnosis', e.target.value)}
+                  placeholder="Enter renal diagnosis"
+                  required
+                  style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+                />
+              </div>
               
-              {/* HIV Ab */}
-              <Block marginBottom="1.5rem">
-                <FormControl label="HIV Ab">
-                  <Block display="flex" flexDirection={['column', 'column', 'row']} alignItems="flex-start">
-                    <Block marginRight="2rem" marginBottom={['0.5rem', '0.5rem', '0']}>
-                      <RadioGroup
-                        value={formData.hivAb.status}
-                        onChange={e => handleVaccinationStatusChange('hivAb', 'status', e.currentTarget.value)}
-                        align="horizontal"
-                      >
-                        <Radio value="Positive">Positive</Radio>
-                        <Radio value="Negative">Negative</Radio>
-                      </RadioGroup>
-                    </Block>
-                    <Block flex="1" width={['100%', '100%', 'auto']}>
-                      <Input
-                        value={formData.hivAb.comment}
-                        onChange={e => handleVaccinationStatusChange('hivAb', 'comment', e.currentTarget.value)}
-                        placeholder="Comments"
-                      />
-                    </Block>
-                  </Block>
-                </FormControl>
-              </Block>
-            </FormSection>
-            
-            {/* Additional Vaccines Section */}
-            <FormSection>
-              <SectionTitle>Additional Vaccines</SectionTitle>
-              
-              {formData.vaccines.map((vaccine) => (
-                <Block key={vaccine.id} marginBottom="2rem">
-                  <Block display="flex" alignItems="center" marginBottom="0.5rem">
-                    <Block flex="1">
-                      <Input
-                        value={vaccine.name}
-                        onChange={e => handleVaccineNameChange(vaccine.id, e.currentTarget.value)}
-                        placeholder={vaccine.id === 3 ? "Enter vaccine name" : ""}
-                        disabled={vaccine.id !== 3}
-                      />
-                    </Block>
-                    <Block marginLeft="0.5rem">
-                      <Button
-                        onClick={() => handleAddVaccinationDate(vaccine.id)}
-                        size="compact"
-                        kind="primary"
-                        disabled={vaccine.dates.length >= 3}
-                        startEnhancer={<Plus size={16} />}
-                      >
-                        Add Date
-                      </Button>
-                    </Block>
-                  </Block>
-                  
-                  {vaccine.dates.length === 0 ? (
-                    <Block color="gray" marginTop="0.5rem" font="font300" as="i">
-                      No vaccination dates added
-                    </Block>
-                  ) : (
-                    <Block marginLeft="1rem">
-                      {vaccine.dates.map((dateObj) => (
-                        <Block key={dateObj.id} display="flex" alignItems="center" marginTop="0.5rem">
-                          <Block flex="1">
-                            <DatePicker
-                              value={dateObj.date ? [dateObj.date] : []}
-                            //   onChange={({ date }) => 
-                            //     handleVaccinationDateChange(
-                            //       vaccine.id, 
-                            //       dateObj.id, 
-                            //       Array.isArray(date) ? date[0] : date
-                            //     )
-                            //   }
-                              placeholder="Select vaccination date"
-                            />
-                          </Block>
-                          <Block marginLeft="0.5rem">
-                            <Button
-                              onClick={() => handleRemoveVaccinationDate(vaccine.id, dateObj.id)}
-                              size="compact"
-                              kind="secondary"
-                              shape="circle"
-                            >
-                              <Delete size={16} />
-                            </Button>
-                          </Block>
-                        </Block>
-                      ))}
-                    </Block>
-                  )}
-                </Block>
-              ))}
-            </FormSection>
-            
-            {/* Form Actions */}
-            <Block display="flex" justifyContent="flex-end" marginTop="2rem">
-              <Button
-                onClick={handleCancel}
-                kind="tertiary"
-                // marginRight="1rem"
-                overrides={{
-                  BaseButton: {
-                    style: {
-                      borderColor: 'black',
-                      color: 'black',
-                    },
-                  },
-                }}
-              >
-                Cancel
-              </Button>
-              <Button type="submit">
-                Submit
-              </Button>
-            </Block>
-          </form>
-        </Card>
-      <Modal
-        isOpen={showCancelConfirm}
-        // onClose={handleCloseModal}
-        closeable
-        animate
-        size={SIZE.default}
-        // overrides={{
-        //   Dialog: {
-        //     style: {
-        //       width: '400px',
-        //       maxWidth: '90%',
-        //     },
-        //   },
-        // }}
-      >
-        <ModalHeader>Confirm Cancel</ModalHeader>
-        <ModalBody>Are you sure you want to cancel? All changes will be lost.</ModalBody>
-        <ModalFooter>
-          <ModalButton kind="tertiary" 
-        //   onClick={handleCloseModal}
-          >
-            No, Go Back
-          </ModalButton>
-          <ModalButton onClick={handleConfirmCancel} kind="primary">
-            Yes, Cancel
-          </ModalButton>
-        </ModalFooter>
-      </Modal>
-      </Block>
-    );
+              <div>
+                <label>Aetiology</label>
+                <input
+                  value={formData.aetiology}
+                  onChange={(e) => handleInputChange('aetiology', e.target.value)}
+                  placeholder="Enter aetiology"
+                  required
+                  style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+                />
+              </div>
+            </div>
+          </div>
+          
+          {/* Form Actions */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '2rem', gap: '1rem' }}>
+            <button
+              type="button"
+              onClick={handleCancel}
+              style={{ padding: '8px 16px', border: '1px solid black', backgroundColor: 'transparent', color: 'black' }}
+            >
+              Cancel
+            </button>
+            <button type="submit" style={{ padding: '8px 16px' }}>
+              Submit
+            </button>
+          </div>
+        </form>
+      </div>
+      
+      {showCancelConfirm && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ backgroundColor: 'white', padding: '2rem', borderRadius: '8px', maxWidth: '400px', width: '90%' }}>
+            <h3>Confirm Cancel</h3>
+            <p>Are you sure you want to cancel? All changes will be lost.</p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
+              <button onClick={() => setShowCancelConfirm(false)} style={{ padding: '8px 16px' }}>No, Go Back</button>
+              <button onClick={handleConfirmCancel} style={{ padding: '8px 16px' }}>Yes, Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 export default AddPatient;

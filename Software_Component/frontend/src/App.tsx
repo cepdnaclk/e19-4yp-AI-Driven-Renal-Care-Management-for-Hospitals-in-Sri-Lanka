@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 
-import { ToasterContainer } from 'baseui/toast'; //Toast - Notification Popup
-
 // Auth Components
 import Login from './components/auth/Login';
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -66,9 +64,7 @@ function App() {
   }
 
   return (
-    <>
-      <ToasterContainer />
-      <Routes>
+    <Routes>
         <Route path="/login"
           element={
             user ? (
@@ -134,7 +130,6 @@ function App() {
         } />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </>
   );
 }
 
