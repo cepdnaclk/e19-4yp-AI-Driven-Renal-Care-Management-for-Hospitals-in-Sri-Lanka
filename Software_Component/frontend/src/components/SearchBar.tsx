@@ -5,24 +5,38 @@ interface SearchBarProps {
   onChange: (value: string) => void
   placeholder?: string
   disabled?: boolean
-  id?: string
-  className?: string
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({ value, onChange, placeholder = '', disabled = false, id = 'search-input', className = 'search-input' }) => {
+const SearchBar: React.FC<SearchBarProps> = ({
+  value,
+  onChange,
+  placeholder = '',
+  disabled = false
+}) => {
   return (
-    <div className="search-box">
-      <div className="search-input-wrapper">
-        <i className="search-icon bi bi-search" aria-label="search"></i>
+    <div id="searchbar-container">
+      <div id="searchbar-wrapper">
+        <div id="search-icon-container">
+          <i className="bi bi-search search-icon-modern" aria-label="search"></i>
+        </div>
         <input
-          id={id}
           type="text"
           value={value}
           onChange={e => onChange(e.currentTarget.value)}
           placeholder={placeholder}
-          className={className}
-          disabled={disabled}
+          className="search-input"
+          disabled={false}
         />
+        {value && (
+          <button
+            type="button"
+            id="searchbar-clear-btn"
+            onClick={() => onChange('')}
+            aria-label="Clear search"
+          >
+            <i className="bi bi-x-circle-fill"></i>
+          </button>
+        )}
       </div>
     </div>
   )

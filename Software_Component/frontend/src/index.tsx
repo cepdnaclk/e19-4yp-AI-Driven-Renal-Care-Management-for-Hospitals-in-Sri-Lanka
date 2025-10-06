@@ -9,7 +9,7 @@ import { LightTheme, DarkTheme, BaseProvider } from 'baseui';
 
 // Import other files
 import App from './App';
-import './index.css';
+import './main.css';
 
 const engine = new Styletron();
 

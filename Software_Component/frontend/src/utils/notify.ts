@@ -12,172 +12,120 @@ function ensureContainer() {
   if (!container) {
     container = document.createElement('div')
     container.id = containerId
-    Object.assign(container.style, {
-      position: 'fixed',
-      top: '1rem',
-      right: '1rem',
-      zIndex: '1060',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '0.75rem',
-      pointerEvents: 'none'
-    })
+    container.className = 'toast-container'
     document.body.appendChild(container)
   }
   return container
 }
 
-const variantStyles: Record<Variant, {bg: string; color: string}> = {
-  success: { bg: '#d1e7dd', color: '#0f5132' },
-  info: { bg: '#cff4fc', color: '#055160' },
-  warning: { bg: '#fff3cd', color: '#664d03' },
-  danger: { bg: '#f8d7da', color: '#842029' }
+const variantIcons: Record<Variant, string> = {
+  success: 'bi-check-circle-fill',
+  info: 'bi-info-circle-fill',
+  warning: 'bi-exclamation-triangle-fill',
+  danger: 'bi-x-circle-fill'
 }
 
 export function showToast(message: string, options: Options = {}) {
-  const { duration = 3000, variant = 'info' } = options
+  const { duration = 4000, variant = 'info' } = options
   const container = ensureContainer()
 
-  // Build toast: content + close button + progress
+  // Build toast with improved structure
   const toast = document.createElement('div')
   toast.setAttribute('role', 'status')
   toast.setAttribute('aria-live', 'polite')
-  toast.style.pointerEvents = 'auto'
-  toast.style.minWidth = '260px'
-  toast.style.maxWidth = '480px'
-  toast.style.padding = '0.9rem 1.1rem'
-  toast.style.borderRadius = '0.5rem'
-  toast.style.boxShadow = '0 0.75rem 1.25rem rgba(0,0,0,0.18)'
-  toast.style.fontSize = '1rem'
-  toast.style.lineHeight = '1.4'
-  toast.style.transition = 'transform 180ms ease, opacity 180ms ease'
-  toast.style.transform = 'translateY(-6px)'
-  toast.style.opacity = '0'
-  toast.style.position = 'relative'
+  toast.className = `toast-notification toast-${variant}`
 
-  const styles = variantStyles[variant]
-  toast.style.background = styles.bg
-  toast.style.color = styles.color
+  // Icon area
+  const iconArea = document.createElement('div')
+  iconArea.className = 'toast-icon'
+  iconArea.innerHTML = `<i class="bi ${variantIcons[variant]}"></i>`
 
-  // content wrapper
-  const content = document.createElement('div')
-  content.style.display = 'flex'
-  content.style.alignItems = 'center'
-  content.style.gap = '0.5rem'
-  content.style.paddingRight = '1.6rem' // space for close button
-  content.textContent = message
+  // Content area
+  const contentArea = document.createElement('div')
+  contentArea.className = 'toast-content'
+  contentArea.textContent = message
 
-  // close button
+  // Close button
   const closeBtn = document.createElement('button')
-  closeBtn.setAttribute('aria-label', 'Close')
-  closeBtn.innerHTML = '&times;'
-  Object.assign(closeBtn.style, {
-    position: 'absolute',
-    top: '6px',
-    right: '8px',
-    border: 'none',
-    background: 'transparent',
-    color: styles.color,
-    fontSize: '1.2rem',
-    lineHeight: '1',
-    padding: '0',
-    cursor: 'pointer'
-  })
+  closeBtn.setAttribute('aria-label', 'Close notification')
+  closeBtn.className = 'toast-close-btn'
+  closeBtn.innerHTML = '<i class="bi bi-x"></i>'
 
-  // progress bar container
-  const progressWrap = document.createElement('div')
-  progressWrap.style.position = 'absolute'
-  progressWrap.style.left = '0'
-  progressWrap.style.right = '0'
-  progressWrap.style.bottom = '0'
-  progressWrap.style.height = '6px'
-  progressWrap.style.borderRadius = '0 0 0.5rem 0.5rem'
-  progressWrap.style.overflow = 'hidden'
-  progressWrap.style.background = 'rgba(0,0,0,0.06)'
+  // Progress bar
+  const progressBar = document.createElement('div')
+  progressBar.className = 'toast-progress'
+  const progressInner = document.createElement('div')
+  progressInner.className = 'toast-progress-inner'
+  progressBar.appendChild(progressInner)
 
-  const innerBar = document.createElement('div')
-  innerBar.style.height = '100%'
-  innerBar.style.width = '100%'
-  innerBar.style.background = 'rgba(0,0,0,0.12)'
-  innerBar.style.transformOrigin = 'left center'
-  innerBar.style.transition = `width ${duration}ms linear`
-
-  progressWrap.appendChild(innerBar)
-
-  toast.appendChild(content)
+  // Assemble toast
+  toast.appendChild(iconArea)
+  toast.appendChild(contentArea)
   toast.appendChild(closeBtn)
-  toast.appendChild(progressWrap)
+  toast.appendChild(progressBar)
 
   // Insert at the top
   container.insertBefore(toast, container.firstChild)
 
-  // show + start progress
+  // Animation and timing logic
   let start = Date.now()
   let remaining = duration
   let timeout: ReturnType<typeof setTimeout>
 
   const hide = () => {
-    toast.style.transform = 'translateY(-6px)'
-    toast.style.opacity = '0'
+    toast.classList.add('toast-hiding')
     setTimeout(() => {
       try { container.removeChild(toast) } catch { /* ignore */ }
-    }, 200)
+    }, 300)
   }
 
   const startTimer = (ms: number) => {
-    // ensure any existing timer is cleared
     if (timeout) clearTimeout(timeout)
     start = Date.now()
     remaining = ms
-    // trigger transition to 0 width over remaining ms
-    innerBar.style.transition = `width ${remaining}ms linear`
-    // force layout then set to 0 to animate
+    progressInner.style.transition = `width ${remaining}ms linear`
     requestAnimationFrame(() => {
-      innerBar.style.width = '0%'
+      progressInner.style.width = '0%'
     })
     timeout = setTimeout(hide, remaining)
   }
 
-  // Kick off
+  // Show toast with animation
   requestAnimationFrame(() => {
-    toast.style.transform = 'translateY(0)'
-    toast.style.opacity = '1'
-    // start progress animation
+    toast.classList.add('toast-showing')
     startTimer(duration)
   })
 
-  // close button dismiss
+  // Event handlers
   closeBtn.addEventListener('click', (e) => {
     e.stopPropagation()
     if (timeout) clearTimeout(timeout)
     hide()
   })
 
-  // clicking the toast (outside close) dismisses early too
   toast.addEventListener('click', () => {
     if (timeout) clearTimeout(timeout)
     hide()
   })
 
-  // Pause on hover: compute elapsed and freeze progress
+  // Pause on hover
   toast.addEventListener('mouseenter', () => {
     if (!timeout) return
     const elapsed = Date.now() - start
     const newRemaining = Math.max(remaining - elapsed, 0)
-    // freeze progress bar: compute current width percentage
     const currentPct = Math.max(0, 100 * (1 - elapsed / remaining))
-    innerBar.style.transition = 'none'
-    innerBar.style.width = `${currentPct}%`
+    progressInner.style.transition = 'none'
+    progressInner.style.width = `${currentPct}%`
     if (timeout) clearTimeout(timeout)
-    // set remaining to newRemaining for resume
     remaining = newRemaining
+    toast.classList.add('toast-paused')
   })
 
   // Resume on leave
   toast.addEventListener('mouseleave', () => {
-    // if already finished, don't restart
     if (remaining <= 0) return
     startTimer(remaining)
+    toast.classList.remove('toast-paused')
   })
 
   return {

@@ -8,13 +8,14 @@ export type Permission = 'patients:add' | 'patients:view' | 'patients:edit' | 'p
 
 const rolePermissions: Record<RoleKey, Permission[]> = {
   nurse: ['patients:add', 'patients:view'],
-  doctor: ['patients:view'],
-  admin: []
+  doctor: ['patients:view', 'patients:edit'],
+  // grant admin all current permissions; update this map when new permissions are added
+  admin: ['patients:add', 'patients:view', 'patients:edit', 'patients:delete']
 }
 
-export const can = (role: RoleKey | string, permission: Permission): boolean => {
-  // normalize incoming role strings to ensure we handle unknown roles gracefully
-  const key = (role || '').toLowerCase() as RoleKey
+export const can = (role: RoleKey | string | undefined, permission: Permission): boolean => {
+  if (!role) return false
+  const key = (role as string).toLowerCase() as RoleKey
   const perms = rolePermissions[key]
   if (!perms) return false
   return perms.includes(permission)
