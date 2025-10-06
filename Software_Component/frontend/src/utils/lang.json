@@ -19,6 +19,17 @@
         "delete": "Delete",
         "no_search_data": "Try adjusting your search criteria"
     },
+    "buttons": {
+        "submit": "Submit",
+        "update": "Update",
+        "cancel": "Cancel",
+        "close": "Close",
+        "back": "< Back",
+        "save": "Save",
+        "add": "Add",
+        "reset": "Reset",
+        "load_more": "Load More"
+    },
     "error": "Error:",
     "loading": "Loading...",
     "restricted": "Restricted Access!"

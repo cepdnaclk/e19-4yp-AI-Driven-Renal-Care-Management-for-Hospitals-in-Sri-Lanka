@@ -1,160 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LineChart, Line } from 'recharts';
+import { Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LineChart, Line } from 'recharts';
 
 import { Patient, ClinicalDecision } from '../../types';
 import { fetchPatientById, fetchMonthlyInvestigations, fetchDialysisSessions, fetchHemoglobinTrend, fetchAIPrediction } from './PatientService';
 
 import lang from '../../utils/lang.json'
-
-// Inlined PatientDisplay component (merged into this single file)
-export interface PatientDisplayProps {
-  patient: Patient;
-  backTo?: string; // optional route to go back
-  leftActions?: React.ReactNode; // optional extra actions rendered at bottom
-}
-
-
-export const PatientDisplay: React.FC<PatientDisplayProps> = ({ patient, backTo, leftActions }) => {
-  const navigate = useNavigate();
-
-  const getFormattedAddress = (address: string | any): string => {
-    if (typeof address === 'string') return address;
-    if (address && typeof address === 'object') {
-      return `${address.street}, ${address.city}, ${address.state} ${address.zipCode}, ${address.country}`;
-    }
-    return 'No address available';
-  };
-
-  const getFormattedEmergencyContact = (emergencyContact: string | any): string => {
-    if (typeof emergencyContact === 'string') return emergencyContact;
-    if (emergencyContact && typeof emergencyContact === 'object') {
-      return `${emergencyContact.name} (${emergencyContact.relationship}) - ${emergencyContact.phone}`;
-    }
-    return 'No emergency contact available';
-  };
-
-  function getFormattedMedicalHistory(medicalHistory: any): React.ReactNode {
-    if (typeof medicalHistory === 'string') {
-      return medicalHistory;
-    }
-
-    if (medicalHistory && typeof medicalHistory === 'object') {
-      return (
-        <div className="patient-medhistory">
-          {medicalHistory.renalDiagnosis && (
-            <div className="patient-section" style={{ marginBottom: 8 }}>
-              <strong>Renal Diagnosis:</strong> {medicalHistory.renalDiagnosis}
-            </div>
-          )}
-
-          {medicalHistory.medicalProblems && medicalHistory.medicalProblems.length > 0 && (
-            <div className="patient-section" style={{ marginBottom: 8 }}>
-              <strong>Medical Problems:</strong>
-              {medicalHistory.medicalProblems.map((problem: any, index: number) => (
-                <div key={index} style={{ marginLeft: 16, marginTop: 4 }}>
-                  • {problem.problem} (Diagnosed: {problem.diagnosedDate}, Status: {problem.status})
-                </div>
-              ))}
-            </div>
-          )}
-
-          {medicalHistory.allergies && medicalHistory.allergies.length > 0 && (
-            <div className="patient-section" style={{ marginBottom: 8 }}>
-              <strong>Allergies:</strong> {medicalHistory.allergies.join(', ')}
-            </div>
-          )}
-
-          {medicalHistory.medications && medicalHistory.medications.length > 0 && (
-            <div className="patient-section" style={{ marginBottom: 8 }}>
-              <strong>Current Medications:</strong>
-              {medicalHistory.medications.map((medication: any, index: number) => (
-                <div key={index} style={{ marginLeft: 16, marginTop: 4 }}>
-                  • {medication.name} - {medication.dosage} ({medication.frequency})
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    return 'No medical history available';
-  }
-
-  return (
-    <div className="patient-display">
-      <div className="patient-header" style={{ textAlign: 'center', marginBottom: 16 }}>
-        <div className="patient-avatar" aria-hidden>
-          {patient.name ? patient.name.charAt(0) : ''}
-        </div>
-        <h3 style={{ margin: '8px 0' }}>{patient.name}</h3>
-        <div className="patient-id">ID: {patient.patientId || patient.id}</div>
-      </div>
-
-      <div className="patient-details">
-        <div className="patient-row">
-          <div className="patient-label">Age:</div>
-          <div className="patient-value">{patient.age}</div>
-        </div>
-        <div className="patient-row">
-          <div className="patient-label">Gender:</div>
-          <div className="patient-value">{patient.gender}</div>
-        </div>
-        <div className="patient-row">
-          <div className="patient-label">Blood Type:</div>
-          <div className="patient-value">{patient.bloodType}</div>
-        </div>
-        <div className="patient-row">
-          <div className="patient-label">Contact:</div>
-          <div className="patient-value">{patient.contactNumber}</div>
-        </div>
-        <div className="patient-row">
-          <div className="patient-label">Emergency Contact:</div>
-          <div className="patient-value">{getFormattedEmergencyContact(patient.emergencyContact)}</div>
-        </div>
-        <div className="patient-row">
-          <div className="patient-label">Assigned Doctor:</div>
-          <div className="patient-value">{typeof patient.assignedDoctor === 'string' ? patient.assignedDoctor : patient.assignedDoctor?.name || 'Not assigned'}</div>
-        </div>
-        <div className="patient-row">
-          <div className="patient-label">Registration Date:</div>
-          <div className="patient-value">{patient.registrationDate ? new Date(patient.registrationDate).toLocaleDateString() : 'N/A'}</div>
-        </div>
-      </div>
-
-      <div className="patient-section" style={{ marginTop: 16 }}>
-        <h4>Address</h4>
-        <div>{getFormattedAddress(patient.address)}</div>
-      </div>
-
-      <div className="patient-section" style={{ marginTop: 16 }}>
-        <h4>Medical History</h4>
-        <div style={{ whiteSpace: 'pre-line' }}>{getFormattedMedicalHistory(patient.medicalHistory)}</div>
-      </div>
-
-      {patient.dialysisInfo && (
-        <div className="patient-section" style={{ marginTop: 16 }}>
-          <h4>Dialysis Information</h4>
-          <div>Type: {patient.dialysisInfo.dialysisType}</div>
-          <div>Frequency: {patient.dialysisInfo.frequency?.replace('_', ' ')}</div>
-          <div>Access: {patient.dialysisInfo.accessType} ({patient.dialysisInfo.accessSite})</div>
-          <div>Dry Weight: {patient.dialysisInfo.dryWeight} kg</div>
-          <div>Target UFR: {patient.dialysisInfo.targetUfr} ml/hr</div>
-        </div>
-      )}
-
-      <div className="patient-actions" style={{ marginTop: 24 }}>
-        {backTo ? (
-          <button className="btn" onClick={() => navigate(backTo)}>Back</button>
-        ) : null}
-
-        {leftActions}
-      </div>
-    </div>
-  );
-};
+import { PersonalInfo } from './PatientPersonalInfo';
 
 export type ProfileRole = 'doctor' | 'nurse' | 'admin' | 'other'
 
@@ -388,7 +241,7 @@ const PatientProfile: React.FC<PatientProfile> = ({ role = 'other', backTo }) =>
       <div className="patient-profile-grid">
         <div className="patient-profile-left">
           {patient && (
-            <PatientDisplay
+            <PersonalInfo
               patient={patient}
               backTo={backTo}
               leftActions={
