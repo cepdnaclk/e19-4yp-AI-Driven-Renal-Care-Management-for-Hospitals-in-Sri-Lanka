@@ -5,8 +5,6 @@ import { User, Role } from '../../types/index';
 import icon from '../../images/icon.png';
 import data from '../../data.json';
 
-import '../../main.css';
-
 interface LayoutProps {
   user: User | null;
   onLogout: () => void;
