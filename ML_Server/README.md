@@ -48,10 +48,6 @@ Include JWT token in requests:
 Authorization: Bearer <your-jwt-token>
 ```
 
-## Patient ID Format
-
-All endpoints require patient ID in the format: `RHD_THP_XXX` (e.g., RHD_THP_001)
-
 ## Quick Start
 
 ### Option 1: Use the startup script (Windows)
@@ -208,7 +204,6 @@ ML_Server/
 ## Development Notes
 
 - The server uses dummy models for development if real model files are not available
-- All prediction endpoints validate the patient ID format (RHD_THP_XXX)
 - JWT authentication uses the same secret as the Express.js backend for token compatibility
 - Prediction endpoints require DOCTOR or NURSE roles for access
 - Public endpoints (health checks, models info) don't require authentication

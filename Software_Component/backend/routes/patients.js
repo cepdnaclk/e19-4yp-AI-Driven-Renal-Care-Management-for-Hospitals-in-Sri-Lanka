@@ -1,394 +1,464 @@
 const express = require('express');
-const { body, validationResult } = require('express-validator');
-const Patient = require('../models/Patient');
 const { protect, authorize, checkPatientAssignment } = require('../middleware/auth');
+const {
+  validateCreatePatient,
+  validateUpdatePatient,
+  validatePatientNote,
+  validateSearchQuery,
+  validatePatientId
+} = require('../middleware/patientValidation');
+const {
+  getPatients,
+  getPatientById,
+  createPatient,
+  updatePatient,
+  deletePatient,
+  addPatientNote,
+  getPatientStats,
+  searchPatients
+} = require('../controllers/patientController');
+
 const router = express.Router();
 
-// @desc    Get all patients
-// @route   GET /api/patients
-// @access  Private
-router.get('/', protect, authorize('doctor', 'nurse'), async (req, res) => {
-  try {
-    const query = {};
+/**
+ * @swagger
+ * /api/patients:
+ *   get:
+ *     summary: Get all patients
+ *     tags: [Patients]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of patients retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 count:
+ *                   type: number
+ *                 total:
+ *                   type: number
+ *                 patients:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Patient'
+ */
+router.get('/', protect, authorize('doctor', 'nurse'), getPatients);
 
-    const patients = await Patient.find(query)
-      .select('id patientId name gender dateOfBirth bloodType contactNumber assignedDoctor')
-      .populate('assignedDoctor', 'name')
-      .populate('assignedNurse', 'name')
-      .sort({ createdAt: -1 });
+/**
+ * @swagger
+ * /api/patients/{id}:
+ *   get:
+ *     summary: Get patient by ID
+ *     tags: [Patients]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Patient ID
+ *     responses:
+ *       200:
+ *         description: Patient retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 patient:
+ *                   $ref: '#/components/schemas/Patient'
+ *       404:
+ *         description: Patient not found
+ */
+router.get('/:id', protect, validatePatientId, getPatientById);
 
-    const total = await Patient.countDocuments(query);
+/**
+ * @swagger
+ * /api/patients:
+ *   post:
+ *     summary: Create new patient
+ *     tags: [Patients]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreatePatient'
+ *     responses:
+ *       201:
+ *         description: Patient created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 patient:
+ *                   $ref: '#/components/schemas/Patient'
+ *       400:
+ *         description: Validation error or patient ID already exists
+ */
+router.post('/', protect, authorize('nurse', 'doctor', 'admin'), validateCreatePatient, createPatient);
 
-    res.json({
-      success: true,
-      count: patients.length,
-      total,
-      patients
-    });
-  } 
-  catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
-    });
-  }
-})
+/**
+ * @swagger
+ * /api/patients/{id}:
+ *   put:
+ *     summary: Update patient
+ *     tags: [Patients]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Patient ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdatePatient'
+ *     responses:
+ *       200:
+ *         description: Patient updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 patient:
+ *                   $ref: '#/components/schemas/Patient'
+ *       404:
+ *         description: Patient not found
+ */
+router.put('/:id', protect, checkPatientAssignment, validatePatientId, validateUpdatePatient, updatePatient);
 
-// @desc    Get patient by ID
-// @route   GET /api/patients/:id
-// @access  Private
-router.get('/:id', protect, async (req, res) => {
-  try {
-    const patient = await Patient.findOne({ patientId: req.params.id })
-      .populate('assignedDoctor', 'name email phoneNumber specialization')
-      .populate('assignedNurse', 'name email phoneNumber')
-      .populate('notes.addedBy', 'name role');
-    
+/**
+ * @swagger
+ * /api/patients/{id}:
+ *   delete:
+ *     summary: Delete patient (soft delete)
+ *     tags: [Patients]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Patient ID
+ *     responses:
+ *       200:
+ *         description: Patient deactivated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       404:
+ *         description: Patient not found
+ */
+router.delete('/:id', protect, authorize('admin'), validatePatientId, deletePatient);
 
+/**
+ * @swagger
+ * /api/patients/{id}/notes:
+ *   post:
+ *     summary: Add note to patient
+ *     tags: [Patients]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Patient ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               content:
+ *                 type: string
+ *                 description: Note content
+ *               type:
+ *                 type: string
+ *                 enum: [GENERAL, MEDICAL, ADMINISTRATIVE]
+ *                 description: Note type
+ *             required:
+ *               - content
+ *     responses:
+ *       201:
+ *         description: Note added successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 note:
+ *                   $ref: '#/components/schemas/PatientNote'
+ */
+router.post('/:id/notes', protect, checkPatientAssignment, validatePatientId, validatePatientNote, addPatientNote);
 
-    if (!patient) {
-      return res.status(404).json({
-        success: false,
-        message: 'Patient not found'
-      });
-    }
+/**
+ * @swagger
+ * /api/patients/stats/overview:
+ *   get:
+ *     summary: Get patient statistics overview
+ *     tags: [Patients]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Patient statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 stats:
+ *                   type: object
+ *                   properties:
+ *                     totalPatients:
+ *                       type: number
+ *                     activePatients:
+ *                       type: number
+ *                     patientsByDialysisType:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           _id:
+ *                             type: string
+ *                           count:
+ *                             type: number
+ *                     patientsByGender:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           _id:
+ *                             type: string
+ *                           count:
+ *                             type: number
+ *                     ageDistribution:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           _id:
+ *                             type: string
+ *                           count:
+ *                             type: number
+ */
+router.get('/stats/overview', protect, getPatientStats);
 
-    res.json({
-      success: true,
-      patient
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
-    });
-  }
-});
+/**
+ * @swagger
+ * /api/patients/search/query:
+ *   get:
+ *     summary: Search patients
+ *     tags: [Patients]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Search query
+ *     responses:
+ *       200:
+ *         description: Search results retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 count:
+ *                   type: number
+ *                 patients:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/PatientSummary'
+ *       400:
+ *         description: Search query is required
+ */
+router.get('/search/query', protect, validateSearchQuery, searchPatients);
 
-// @desc    Create new patient
-// @route   POST /api/patients
-// @access  Private/Nurse/Doctor/Admin
-router.post('/', protect, authorize('nurse', 'doctor', 'admin'), [
-  body('patientId').notEmpty().withMessage('Patient ID is required'),
-  body('name').notEmpty().withMessage('Patient name is required'),
-  body('dateOfBirth').isISO8601().withMessage('Valid date of birth is required'),
-  body('gender').isIn(['Male', 'Female', 'Other']).withMessage('Valid gender is required'),
-  body('bloodType').isIn(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']).withMessage('Valid blood type is required'),
-  body('contactNumber').notEmpty().withMessage('Contact number is required'),
-  body('assignedDoctor').isMongoId().withMessage('Valid assigned doctor is required'),
-  body('medicalHistory.renalDiagnosis').notEmpty().withMessage('Renal diagnosis is required'),
-  body('dialysisInfo.startDate').isISO8601().withMessage('Valid dialysis start date is required'),
-  body('dialysisInfo.accessType').isIn(['AVF', 'AVG', 'CENTRAL_CATHETER', 'PERITONEAL_CATHETER']).withMessage('Valid access type is required'),
-  body('dialysisInfo.dryWeight').isNumeric().withMessage('Valid dry weight is required')
-], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation errors',
-        errors: errors.array()
-      });
-    }
-
-    // Check if patient ID already exists
-    const existingPatient = await Patient.findOne({ patientId: req.body.patientId });
-    if (existingPatient) {
-      return res.status(400).json({
-        success: false,
-        message: 'Patient ID already exists'
-      });
-    }
-
-    const patient = await Patient.create(req.body);
-
-    await patient.populate('assignedDoctor', 'name email');
-    if (patient.assignedNurse) {
-      await patient.populate('assignedNurse', 'name email');
-    }
-
-    res.status(201).json({
-      success: true,
-      message: 'Patient created successfully',
-      patient
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
-    });
-  }
-});
-
-// @desc    Update patient
-// @route   PUT /api/patients/:id
-// @access  Private
-router.put('/:id', protect, checkPatientAssignment, [
-  body('name').optional().notEmpty().withMessage('Patient name cannot be empty'),
-  body('dateOfBirth').optional().isISO8601().withMessage('Valid date of birth is required'),
-  body('gender').optional().isIn(['Male', 'Female', 'Other']).withMessage('Valid gender is required'),
-  body('bloodType').optional().isIn(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']).withMessage('Valid blood type is required')
-], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation errors',
-        errors: errors.array()
-      });
-    }
-
-    const patient = await Patient.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      {
-        new: true,
-        runValidators: true
-      }
-    ).populate('assignedDoctor', 'name email')
-     .populate('assignedNurse', 'name email');
-
-    if (!patient) {
-      return res.status(404).json({
-        success: false,
-        message: 'Patient not found'
-      });
-    }
-
-    res.json({
-      success: true,
-      message: 'Patient updated successfully',
-      patient
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
-    });
-  }
-});
-
-// @desc    Delete patient
-// @route   DELETE /api/patients/:id
-// @access  Private/Admin
-router.delete('/:id', protect, authorize('admin'), async (req, res) => {
-  try {
-    const patient = await Patient.findById(req.params.id);
-    
-    if (!patient) {
-      return res.status(404).json({
-        success: false,
-        message: 'Patient not found'
-      });
-    }
-
-    // Soft delete - change status to inactive
-    patient.status = 'INACTIVE';
-    await patient.save();
-
-    res.json({
-      success: true,
-      message: 'Patient deactivated successfully'
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
-    });
-  }
-});
-
-// @desc    Add note to patient
-// @route   POST /api/patients/:id/notes
-// @access  Private
-router.post('/:id/notes', protect, checkPatientAssignment, [
-  body('content').notEmpty().withMessage('Note content is required'),
-  body('type').optional().isIn(['GENERAL', 'MEDICAL', 'ADMINISTRATIVE']).withMessage('Invalid note type')
-], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation errors',
-        errors: errors.array()
-      });
-    }
-
-    const patient = await Patient.findById(req.params.id);
-    
-    if (!patient) {
-      return res.status(404).json({
-        success: false,
-        message: 'Patient not found'
-      });
-    }
-
-    const note = {
-      content: req.body.content,
-      type: req.body.type || 'GENERAL',
-      addedBy: req.user.id,
-      addedAt: new Date()
-    };
-
-    patient.notes.push(note);
-    await patient.save();
-
-    await patient.populate('notes.addedBy', 'name role');
-
-    res.status(201).json({
-      success: true,
-      message: 'Note added successfully',
-      note: patient.notes[patient.notes.length - 1]
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
-    });
-  }
-});
-
-// @desc    Get patient statistics
-// @route   GET /api/patients/stats/overview
-// @access  Private
-router.get('/stats/overview', protect, async (req, res) => {
-  try {
-    let matchCondition = {};
-
-    // Role-based filtering
-    if (req.user.role === 'doctor') {
-      matchCondition.assignedDoctor = req.user.id;
-    } else if (req.user.role === 'nurse') {
-      matchCondition.assignedNurse = req.user.id;
-    }
-
-    const totalPatients = await Patient.countDocuments(matchCondition);
-    const activePatients = await Patient.countDocuments({ ...matchCondition, status: 'ACTIVE' });
-    
-    const patientsByDialysisType = await Patient.aggregate([
-      { $match: matchCondition },
-      {
-        $group: {
-          _id: '$dialysisInfo.dialysisType',
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-
-    const patientsByGender = await Patient.aggregate([
-      { $match: matchCondition },
-      {
-        $group: {
-          _id: '$gender',
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-
-    const ageDistribution = await Patient.aggregate([
-      { $match: matchCondition },
-      {
-        $addFields: {
-          age: {
-            $floor: {
-              $divide: [
-                { $subtract: [new Date(), '$dateOfBirth'] },
-                365.25 * 24 * 60 * 60 * 1000
-              ]
-            }
-          }
-        }
-      },
-      {
-        $group: {
-          _id: {
-            $switch: {
-              branches: [
-                { case: { $lt: ['$age', 30] }, then: 'Under 30' },
-                { case: { $lt: ['$age', 50] }, then: '30-49' },
-                { case: { $lt: ['$age', 70] }, then: '50-69' },
-                { case: { $gte: ['$age', 70] }, then: '70+' }
-              ]
-            }
-          },
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-
-    res.json({
-      success: true,
-      stats: {
-        totalPatients,
-        activePatients,
-        patientsByDialysisType,
-        patientsByGender,
-        ageDistribution
-      }
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
-    });
-  }
-});
-
-// @desc    Search patients
-// @route   GET /api/patients/search
-// @access  Private
-router.get('/search/query', protect, async (req, res) => {
-  try {
-    const { q } = req.query;
-    
-    if (!q) {
-      return res.status(400).json({
-        success: false,
-        message: 'Search query is required'
-      });
-    }
-
-    let baseQuery = {};
-
-    // Role-based filtering
-    if (req.user.role === 'doctor') {
-      baseQuery.assignedDoctor = req.user.id;
-    } else if (req.user.role === 'nurse') {
-      baseQuery.assignedNurse = req.user.id;
-    }
-
-    const patients = await Patient.find({
-      ...baseQuery,
-      $or: [
-        { name: { $regex: q, $options: 'i' } },
-        { patientId: { $regex: q, $options: 'i' } },
-        { 'medicalHistory.renalDiagnosis': { $regex: q, $options: 'i' } }
-      ]
-    })
-    .select('patientId name age gender medicalHistory.renalDiagnosis status')
-    .limit(20);
-
-    res.json({
-      success: true,
-      count: patients.length,
-      patients
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
-    });
-  }
-});
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Patient:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *         patientId:
+ *           type: string
+ *         name:
+ *           type: string
+ *         gender:
+ *           type: string
+ *           enum: [Male, Female, Other]
+ *         dateOfBirth:
+ *           type: string
+ *           format: date
+ *         bloodType:
+ *           type: string
+ *           enum: [A+, A-, B+, B-, AB+, AB-, O+, O-]
+ *         contactNumber:
+ *           type: string
+ *         assignedDoctor:
+ *           type: object
+ *         assignedNurse:
+ *           type: object
+ *         status:
+ *           type: string
+ *           enum: [ACTIVE, INACTIVE]
+ *         notes:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/PatientNote'
+ *     
+ *     CreatePatient:
+ *       type: object
+ *       required:
+ *         - patientId
+ *         - name
+ *         - dateOfBirth
+ *         - gender
+ *         - bloodType
+ *         - contactNumber
+ *         - assignedDoctor
+ *       properties:
+ *         patientId:
+ *           type: string
+ *         name:
+ *           type: string
+ *         dateOfBirth:
+ *           type: string
+ *           format: date
+ *         gender:
+ *           type: string
+ *           enum: [Male, Female, Other]
+ *         bloodType:
+ *           type: string
+ *           enum: [A+, A-, B+, B-, AB+, AB-, O+, O-]
+ *         contactNumber:
+ *           type: string
+ *         assignedDoctor:
+ *           type: string
+ *         medicalHistory:
+ *           type: object
+ *           properties:
+ *             renalDiagnosis:
+ *               type: string
+ *         dialysisInfo:
+ *           type: object
+ *           properties:
+ *             startDate:
+ *               type: string
+ *               format: date
+ *             accessType:
+ *               type: string
+ *               enum: [AVF, AVG, CENTRAL_CATHETER, PERITONEAL_CATHETER]
+ *             dryWeight:
+ *               type: number
+ *     
+ *     UpdatePatient:
+ *       type: object
+ *       properties:
+ *         name:
+ *           type: string
+ *         dateOfBirth:
+ *           type: string
+ *           format: date
+ *         gender:
+ *           type: string
+ *           enum: [Male, Female, Other]
+ *         bloodType:
+ *           type: string
+ *           enum: [A+, A-, B+, B-, AB+, AB-, O+, O-]
+ *         contactNumber:
+ *           type: string
+ *     
+ *     PatientNote:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *         content:
+ *           type: string
+ *         type:
+ *           type: string
+ *           enum: [GENERAL, MEDICAL, ADMINISTRATIVE]
+ *         addedBy:
+ *           type: object
+ *         addedAt:
+ *           type: string
+ *           format: date-time
+ *     
+ *     PatientSummary:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *         patientId:
+ *           type: string
+ *         name:
+ *           type: string
+ *         age:
+ *           type: number
+ *         gender:
+ *           type: string
+ *         status:
+ *           type: string
+ *         medicalHistory:
+ *           type: object
+ *           properties:
+ *             renalDiagnosis:
+ *               type: string
+ */
 
 module.exports = router;

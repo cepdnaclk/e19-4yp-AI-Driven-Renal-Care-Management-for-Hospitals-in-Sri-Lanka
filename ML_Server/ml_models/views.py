@@ -3,7 +3,6 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
 import logging
-import re
 
 from .serializers import (
     DryWeightPredictionSerializer,
@@ -18,12 +17,6 @@ from .services import dry_weight_predictor, urr_predictor, hb_predictor
 from .middleware.auth import require_auth, require_role
 
 logger = logging.getLogger(__name__)
-
-
-def validate_patient_id(patient_id: str) -> bool:
-    """Validate patient ID format RHD_THP_XXX"""
-    pattern = r'^RHD_THP_\d{3}$'
-    return bool(re.match(pattern, patient_id))
 
 
 @extend_schema(
@@ -55,13 +48,6 @@ def predict_dry_weight(request):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         validated_data = serializer.validated_data
-        
-        # Validate patient ID format
-        if not validate_patient_id(validated_data['patient_id']):
-            return Response({
-                'error': 'Invalid patient ID format',
-                'message': 'Patient ID must be in format RHD_THP_XXX (e.g., RHD_THP_001)'
-            }, status=status.HTTP_400_BAD_REQUEST)
         
         # Make prediction
         prediction_result = dry_weight_predictor.predict(validated_data)
@@ -108,13 +94,6 @@ def predict_urr(request):
         
         validated_data = serializer.validated_data
         
-        # Validate patient ID format
-        if not validate_patient_id(validated_data['patient_id']):
-            return Response({
-                'error': 'Invalid patient ID format',
-                'message': 'Patient ID must be in format RHD_THP_XXX (e.g., RHD_THP_001)'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
         # Make prediction
         prediction_result = urr_predictor.predict(validated_data)
         
@@ -151,6 +130,7 @@ def predict_hb(request):
     try:
         # Validate input data
         serializer = HbPredictionSerializer(data=request.data)
+        print(serializer.is_valid(), serializer.errors)
         if not serializer.is_valid():
             return Response({
                 'error': 'Invalid input data',
@@ -159,13 +139,6 @@ def predict_hb(request):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         validated_data = serializer.validated_data
-        
-        # Validate patient ID format
-        if not validate_patient_id(validated_data['patient_id']):
-            return Response({
-                'error': 'Invalid patient ID format',
-                'message': 'Patient ID must be in format RHD_THP_XXX (e.g., RHD_THP_001)'
-            }, status=status.HTTP_400_BAD_REQUEST)
         
         # Make prediction
         prediction_result = hb_predictor.predict(validated_data)
@@ -205,7 +178,7 @@ def models_info(request):
             'name': 'Dry Weight Change Prediction',
             'description': 'Predicts if dry weight will change in next dialysis session',
             'input_parameters': [
-                'patient_id', 'age', 'gender', 'height', 'weight',
+                'age', 'gender', 'height', 'weight',
                 'systolic_bp', 'diastolic_bp', 'pre_dialysis_weight',
                 'post_dialysis_weight', 'ultrafiltration_volume', 'dialysis_duration'
             ],
@@ -215,7 +188,7 @@ def models_info(request):
             'name': 'URR Risk Prediction',
             'description': 'Predicts if URR will go to risk region (inadequate) next month',
             'input_parameters': [
-                'patient_id', 'pre_dialysis_urea', 'dialysis_duration',
+                'pre_dialysis_urea', 'dialysis_duration',
                 'blood_flow_rate', 'dialysate_flow_rate', 'ultrafiltration_rate',
                 'access_type', 'kt_v'
             ],
@@ -225,7 +198,7 @@ def models_info(request):
             'name': 'Hemoglobin Risk Prediction',
             'description': 'Predicts if hemoglobin will go to risk region next month',
             'input_parameters': [
-                'patient_id', 'albumin', 'bu_post_hd', 'bu_pre_hd', 's_ca',
+                'albumin', 'bu_post_hd', 'bu_pre_hd', 's_ca',
                 'scr_post_hd', 'scr_pre_hd', 'serum_k_post_hd', 'serum_k_pre_hd',
                 'serum_na_pre_hd', 'ua', 'hb_diff', 'hb'
             ],
@@ -235,7 +208,6 @@ def models_info(request):
     
     return Response({
         'available_models': models_info,
-        'patient_id_format': 'RHD_THP_XXX (e.g., RHD_THP_001)',
         'endpoints': {
             'dry_weight': '/api/ml/predict/dry-weight/',
             'urr': '/api/ml/predict/urr/',

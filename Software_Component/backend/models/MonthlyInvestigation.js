@@ -20,25 +20,25 @@ const monthlyInvestigationSchema = new mongoose.Schema({
   scrPreHD: {
     type: Number,
     min: 0,
-    max: 20,
+    max: 2000,
     required: false
   },
   scrPostHD: {
     type: Number,
     min: 0,
-    max: 20,
+    max: 1500,
     required: false
   },
   bu_pre_hd: {
     type: Number,
     min: 0,
-    max: 200,
+    max: 100,
     required: false
   },
   bu_post_hd: {
     type: Number,
     min: 0,
-    max: 200,
+    max: 50,
     required: false
   },
   hb: {
@@ -49,32 +49,32 @@ const monthlyInvestigationSchema = new mongoose.Schema({
   },
   serumNaPreHD: {
     type: Number,
-    min: 120,
-    max: 160,
+    min: 0,
+    max: 150,
     required: false
   },
   serumNaPostHD: {
     type: Number,
-    min: 120,
-    max: 160,
+    min: 0,
+    max: 150,
     required: false
   },
   serumKPreHD: {
     type: Number,
-    min: 2.0,
+    min: 0,
     max: 8.0,
     required: false
   },
   serumKPostHD: {
     type: Number,
-    min: 2.0,
-    max: 8.0,
+    min: 0,
+    max: 7.0,
     required: false
   },
   sCa: {
     type: Number,
-    min: 5,
-    max: 15,
+    min: 1.5,
+    max: 10,
     required: false
   },
   sPhosphate: {
@@ -85,14 +85,14 @@ const monthlyInvestigationSchema = new mongoose.Schema({
   },
   albumin: {
     type: Number,
-    min: 1.0,
-    max: 6.0,
+    min: 10,
+    max: 60,
     required: false
   },
   ua: {
     type: Number,
     min: 0,
-    max: 15,
+    max: 1000,
     required: false
   },
   hco: {

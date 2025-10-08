@@ -1,9 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const helmet = require('helmet');
 const morgan = require('morgan');
-const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
@@ -20,8 +18,6 @@ const monthlyInvestigationRoutes = require('./routes/monthlyInvestigations');
 const clinicalDecisionRoutes = require('./routes/clinicalDecisions');
 const notificationRoutes = require('./routes/notifications');
 const aiPredictionRoutes = require('./routes/aiPredictions');
-const dashboardRoutes = require('./routes/dashboard');
-const reportRoutes = require('./routes/reports');
 const trendsRoutes = require('./routes/trends');
 
 // Import middleware
@@ -43,10 +39,6 @@ const io = initializeSocket(server);
 // Connect to MongoDB
 connectDB();
 
-// Security middleware
-app.use(helmet());
-app.use(compression());
-
 // Rate limiting
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW) * 60 * 1000 || 15 * 60 * 1000,
@@ -65,8 +57,8 @@ app.use(cors({
 }));
 
 // Body parsing middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));  
 
 // Logging middleware
 if (process.env.NODE_ENV === 'development') {
@@ -128,8 +120,6 @@ app.use('/api/monthly-investigations', monthlyInvestigationRoutes);
 app.use('/api/clinical-decisions', clinicalDecisionRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/ai-predictions', aiPredictionRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/reports', reportRoutes);
 app.use('/api/trends', trendsRoutes);
 
 // Error handling middleware
@@ -151,12 +141,16 @@ server.listen(PORT, () => {
   console.log(`🏥 Renal Care Management System Backend`);
 });
 
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (err, promise) => {
-  console.log(`Error: ${err.message}`);
-  server.close(() => {
-    process.exit(1);
-  });
+// Global Error Handler - Handle uncaught errors gracefully
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err.message);
+  console.error('Stack:', err.stack);
+  // Keep server running
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Keep server running
 });
 
 module.exports = app;

@@ -291,20 +291,20 @@ const seedDatabase = async () => {
           patient: patient._id,
           date: investigationDate,
           
-          // Laboratory Parameters based on your requirements
-          scrPreHD: 8 + Math.random() * 4, // SCR pre HD
-          scrPostHD: 4 + Math.random() * 2, // SCR post HD  
-          bu_pre_hd: 60 + Math.random() * 40, // BU pre HD (Blood Urea pre-dialysis)
-          bu_post_hd: 30 + Math.random() * 20, // BU post HD (Blood Urea post-dialysis)
-          hb: 9 + patientIndex + Math.random() * 3 - 1.5, // Hemoglobin
-          serumNaPreHD: 138 + Math.random() * 6 - 3, // Serum Na Pre-HD
-          serumNaPostHD: 140 + Math.random() * 4 - 2, // Serum Na Post-HD
-          serumKPreHD: 4.5 + Math.random() * 1.5 - 0.75, // Serum K Pre-HD
-          serumKPostHD: 3.5 + Math.random() * 1, // Serum K Post-HD
-          sCa: 9.2 + Math.random() * 1.6 - 0.8, // S Ca (Serum Calcium)
-          sPhosphate: 4.5 + Math.random() * 2, // S Phosphate
-          albumin: 3.5 + Math.random() * 1, // Albumin
-          ua: 6 + Math.random() * 3, // UA (Uric Acid)
+          // Laboratory Parameters compatible with both MongoDB model and ML server
+          scrPreHD: 300 + Math.random() * 1200, // SCR pre HD (300-1500 µmol/L)
+          scrPostHD: 200 + Math.random() * 800, // SCR post HD (200-1000 µmol/L)
+          bu_pre_hd: 20 + Math.random() * 60, // BU pre HD (20-80 mmol/L)
+          bu_post_hd: 8 + Math.random() * 30, // BU post HD (8-38 mmol/L)
+          hb: 6 + Math.random() * 14, // Hemoglobin (6-20 g/dL)
+          serumNaPreHD: 130 + Math.random() * 15, // Serum Na Pre-HD (130-145 mmol/L)
+          serumNaPostHD: 135 + Math.random() * 10, // Serum Na Post-HD (135-145 mmol/L)
+          serumKPreHD: 3.5 + Math.random() * 3.5, // Serum K Pre-HD (3.5-7.0 mmol/L)
+          serumKPostHD: 2.5 + Math.random() * 3.5, // Serum K Post-HD (2.5-6.0 mmol/L)
+          sCa: 2.0 + Math.random() * 6.0, // S Ca (2.0-8.0 mmol/L)
+          sPhosphate: 1.0 + Math.random() * 6.0, // S Phosphate (1.0-7.0)
+          albumin: 15 + Math.random() * 35, // Albumin (15-50 g/L)
+          ua: 200 + Math.random() * 600, // UA (200-800 µmol/L)
           hco: 22 + Math.random() * 6 - 3, // HCO (Bicarbonate)
           al: 100 + Math.random() * 100, // AL (Alkaline Phosphatase)
           hbA1C: 6.5 + Math.random() * 2, // HbA1C

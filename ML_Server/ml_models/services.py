@@ -25,74 +25,32 @@ class MLModelManager:
         
     def load_model(self, model_name: str):
         """Load a specific ML model"""
-        try:
-            if model_name not in self.models:
-                model_path = os.path.join(os.path.dirname(__file__), self.model_paths[model_name])
-                if os.path.exists(model_path):
-                    self.models[model_name] = joblib.load(model_path)
-                    self.model_versions[model_name] = "1.0.0"  # Default version
-                    logger.info(f"Loaded model: {model_name}")
-                else:
-                    logger.warning(f"Model file not found: {model_path}")
-                    # Return a dummy model for development
-                    self.models[model_name] = DummyModel(model_name)
-                    self.model_versions[model_name] = "0.0.1-dev"
+        if model_name not in self.models:
+            model_path = os.path.join(os.path.dirname(__file__), self.model_paths[model_name])
+            if not os.path.exists(model_path):
+                raise FileNotFoundError(f"Model file not found: {model_path}")
             
-            return self.models[model_name]
-        except Exception as e:
-            logger.error(f"Error loading model {model_name}: {str(e)}")
-            # Return dummy model on error
-            self.models[model_name] = DummyModel(model_name)
-            self.model_versions[model_name] = "0.0.1-dev"
-            return self.models[model_name]
+            try:
+                loaded_model = joblib.load(model_path)
+            except Exception as e:
+                raise ValueError(f"Failed to load model from {model_path}: {str(e)}")
+            
+            # Check if the loaded object has predict method
+            if not hasattr(loaded_model, 'predict'):
+                raise ValueError(f"Loaded object for {model_name} is not a valid ML model (type: {type(loaded_model)}). Expected an object with 'predict' method.")
+            
+            self.models[model_name] = loaded_model
+            self.model_versions[model_name] = "1.0.0"  # Default version
+            logger.info(f"Successfully loaded model: {model_name}")
+        
+        return self.models[model_name]
     
     def get_model_version(self, model_name: str) -> str:
         """Get the version of a loaded model"""
         return self.model_versions.get(model_name, "unknown")
 
 
-class DummyModel:
-    """
-    Dummy model for development and testing purposes
-    """
-    
-    def __init__(self, model_type: str):
-        self.model_type = model_type
-        
-    def predict(self, features):
-        """Generate dummy predictions based on model type"""
-        if hasattr(features, 'shape'):
-            n_samples = features.shape[0]
-        else:
-            n_samples = 1
-            
-        if self.model_type == 'dry_weight':
-            # Generate binary classification predictions (0: No change, 1: Change expected)
-            return np.random.choice([0, 1], n_samples, p=[0.7, 0.3])
-        elif self.model_type == 'urr':
-            # Generate binary classification predictions (0: No risk, 1: Risk of inadequate URR)
-            return np.random.choice([0, 1], n_samples, p=[0.8, 0.2])
-        elif self.model_type == 'hb':
-            # Generate binary classification predictions (0: No risk, 1: Risk region)
-            return np.random.choice([0, 1], n_samples, p=[0.75, 0.25])
-        else:
-            return np.random.choice([0, 1], n_samples)
-            
-    def predict_proba(self, features):
-        """Generate dummy probability predictions for classification"""
-        if hasattr(features, 'shape'):
-            n_samples = features.shape[0]
-        else:
-            n_samples = 1
-        
-        # Return probabilities for binary classification [prob_class_0, prob_class_1]
-        prob_class_1 = np.random.uniform(0.1, 0.9, n_samples)
-        prob_class_0 = 1 - prob_class_1
-        
-        if n_samples == 1:
-            return np.array([[prob_class_0[0], prob_class_1[0]]])
-        else:
-            return np.column_stack([prob_class_0, prob_class_1])
+
 
 
 class DryWeightPredictor:
@@ -124,8 +82,7 @@ class DryWeightPredictor:
                 confidence = max(probabilities)
                 risk_probability = probabilities[1] if len(probabilities) > 1 else probabilities[0]
             else:
-                confidence = np.random.uniform(0.7, 0.95)
-                risk_probability = np.random.uniform(0.1, 0.9)
+                raise ValueError(f"Model {self.model_name} does not support probability predictions")
             
             # Interpret prediction
             will_change = bool(prediction)
@@ -192,8 +149,7 @@ class URRPredictor:
                 confidence = max(probabilities)
                 risk_probability = probabilities[1] if len(probabilities) > 1 else probabilities[0]
             else:
-                confidence = np.random.uniform(0.7, 0.95)
-                risk_probability = np.random.uniform(0.1, 0.9)
+                raise ValueError(f"Model {self.model_name} does not support probability predictions")
             
             # Interpret prediction
             at_risk = bool(prediction)
@@ -258,8 +214,7 @@ class HbPredictor:
                 confidence = max(probabilities)
                 risk_probability = probabilities[1] if len(probabilities) > 1 else probabilities[0]
             else:
-                confidence = np.random.uniform(0.7, 0.95)
-                risk_probability = np.random.uniform(0.1, 0.9)
+                raise ValueError(f"Model {self.model_name} does not support probability predictions")
             
             # Interpret prediction
             at_risk = bool(prediction)
@@ -281,7 +236,6 @@ class HbPredictor:
             recommendations = self._generate_recommendations(input_data, at_risk, current_hb)
             
             return {
-                'patient_id': str(input_data['patient_id']),
                 'hb_risk_predicted': at_risk,
                 'risk_status': risk_status,
                 'hb_trend': trend,
