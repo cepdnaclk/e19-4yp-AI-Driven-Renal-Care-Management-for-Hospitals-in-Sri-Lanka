@@ -1,9 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { HeadingLarge, HeadingMedium } from 'baseui/typography';
-import { Card, StyledBody } from 'baseui/card';
-import { Grid, Cell } from 'baseui/layout-grid';
-import { Block } from 'baseui/block';
-import { Button } from 'baseui/button';
 import { useNavigate } from 'react-router-dom';
 import { Notification } from '../../types';
 
@@ -55,177 +50,175 @@ const AdminDashboard: React.FC = () => {
   };
 
   return (
-    <Block>
-      <HeadingLarge>Admin Dashboard</HeadingLarge>
+    <div className="general-container">
+      <div className="dashboard-header">
+        <h1 className="general-h1">Admin Dashboard</h1>
+        <p className="dashboard-subtitle">Welcome back! Here's an overview of your system.</p>
+        <div className="dashboard-date">Today: {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+      </div>
 
-      <Grid gridMargins={[16, 32]} gridGutters={[16, 32]} gridMaxWidth={1200}>
-        <Cell span={[4, 8, 8]}>
-          <Card
-            overrides={{
-              Root: {
-                style: {
-                  marginBottom: '20px',
-                },
-              },
-            }}
-          >
-            <StyledBody>
-              <HeadingMedium>User Statistics</HeadingMedium>
-
-              <Block
-                display="flex"
-                overrides={{
-                  Block: {
-                    style: {
-                      flexWrap: 'wrap',
-                      gap: '16px',
+      <div className="dashboard-content">
+        <div className="dashboard-grid-modern">
+          <div className="dashboard-main">
+            <div className="dashboard-card">
+              <div className="dashboard-card-header">
+                <h2 className="dashboard-card-title">
+                  <i className="bi bi-bar-chart-line"></i> User Statistics
+                </h2>
+              </div>
+              <div className="dashboard-card-body">
+                <div className="stats-grid">
+                  {[
+                    {
+                      label: 'Total Doctors',
+                      value: userStats.totalDoctors,
+                      icon: 'bi bi-person-badge',
+                      color: '#4CAF50',
                     },
-                  },
-                }}
-              >
-                {[
-                  {
-                    label: 'Total Doctors',
-                    value: userStats.totalDoctors,
-                    color: undefined,
-                  },
-                  {
-                    label: 'Total Nurses',
-                    value: userStats.totalNurses,
-                    color: undefined,
-                  },
-                  {
-                    label: 'Pending Approvals',
-                    value: userStats.pendingApprovals,
-                    color: userStats.pendingApprovals > 0 ? 'warning' : 'inherit',
-                  },
-                  {
-                    label: 'Recently Active Users',
-                    value: userStats.recentlyActive,
-                    color: undefined,
-                  },
-                ].map(({ label, value, color }) => (
-                  <Block
-                    key={label}
-                    width="calc(50% - 8px)"
-                    padding="16px"
-                    overrides={{
-                      Block: {
-                        style: {
-                          backgroundColor: 'rgba(0, 0, 0, 0.03)',
-                        },
-                      },
-                    }}
-                  >
-                    <Block font="font400">{label}</Block>
-                    <Block
-                      font="font700"
-                      color={color}
-                      overrides={{
-                        Block: {
-                          style: {
-                            fontSize: '24px',
-                          },
-                        },
-                      }}
-                    >
-                      {value}
-                    </Block>
-                  </Block>
-                ))}
-              </Block>
-
-              <Block display="flex" justifyContent="center" marginTop="16px">
-                <Button onClick={() => navigate('/admin/user-management')}>
-                  Manage Users
-                </Button>
-              </Block>
-            </StyledBody>
-          </Card>
-
-          <Card>
-            <StyledBody>
-              <HeadingMedium>Quick Actions</HeadingMedium>
-
-              <Block
-                display="flex"
-                overrides={{
-                  Block: {
-                    style: {
-                      flexWrap: 'wrap',
-                      gap: '16px',
+                    {
+                      label: 'Total Nurses',
+                      value: userStats.totalNurses,
+                      icon: 'bi bi-heart-pulse',
+                      color: '#2196F3',
                     },
-                  },
-                }}
-              >
-                <Button onClick={() => navigate('/admin/user-management')}>
-                  User Management
-                </Button>
-                <Button onClick={() => navigate('/admin/notifications')}>
-                  All Notifications
-                </Button>
-              </Block>
-            </StyledBody>
-          </Card>
-        </Cell>
+                    {
+                      label: 'Pending Approvals',
+                      value: userStats.pendingApprovals,
+                      icon: 'bi bi-clock',
+                      color: userStats.pendingApprovals > 0 ? '#FF9800' : '#4CAF50',
+                    },
+                    {
+                      label: 'Recently Active Users',
+                      value: userStats.recentlyActive,
+                      icon: 'bi bi-activity',
+                      color: '#9C27B0',
+                    },
+                  ].map(({ label, value, icon, color }) => (
+                    <div key={label} className="stat-card" style={{ borderLeft: `4px solid ${color}` }}>
+                      <div className="stat-icon">
+                        <i className={icon} style={{ color }}></i>
+                      </div>
+                      <div className="stat-content">
+                        <div className="stat-label">{label}</div>
+                        <div className="stat-value" style={{ color }}>{value}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
 
-        <Cell span={[4, 8, 4]}>
-          <Card>
-            <StyledBody>
-              <HeadingMedium>Notifications</HeadingMedium>
-              {notifications.length === 0 ? (
-                <Block padding="16px" font="font300">
-                  No new notifications
-                </Block>
-              ) : (
-                notifications.map((notification) => (
-                  <Block
-                    key={notification.id}
-                    onClick={() => handleNotificationClick(notification)}
-                    overrides={{
-                      Block: {
-                        style: {
-                          marginBottom: '16px',
-                          padding: '16px',
-                          backgroundColor:
-                            notification.type === 'critical'
-                              ? 'rgba(255, 0, 0, 0.1)'
-                              : notification.type === 'warning'
-                                ? 'rgba(255, 165, 0, 0.1)'
-                                : 'rgba(0, 0, 0, 0.03)',
-                          border: notification.read
-                            ? 'none'
-                            : '2px solid rgba(0, 0, 0, 0.1)',
-                          cursor: 'pointer',
-                        },
-                      },
-                    }}
-                  >
-                    <Block font="font500">{notification.title}</Block>
-                    <Block font="font300">{notification.message}</Block>
-                    <Block
-                      color="primary400"
-                      font="font300"
-                      overrides={{
-                        Block: { style: { marginTop: '8px' } },
-                      }}
-                    >
-                      {new Date(notification.date).toLocaleString()}
-                    </Block>
-                  </Block>
-                ))
-              )}
+                <div className="dashboard-card-actions">
+                  <button className="btn btn-primary" onClick={() => navigate('/admin/user-management')}>
+                    <i className="bi bi-people"></i> Manage Users
+                  </button>
+                </div>
+              </div>
+            </div>
 
-              <Block display="flex" justifyContent="center" marginTop="16px">
-                <Button onClick={() => navigate('/admin/notifications')}>
-                  View All Notifications
-                </Button>
-              </Block>
-            </StyledBody>
-          </Card>
-        </Cell>
-      </Grid>
-    </Block>
+            <div className="dashboard-card">
+              <div className="dashboard-card-header">
+                <h2 className="dashboard-card-title">
+                  <i className="bi bi-lightning"></i> Quick Actions
+                </h2>
+              </div>
+              <div className="dashboard-card-body">
+                <div className="quick-actions-grid">
+                  <button className="action-btn" onClick={() => navigate('/admin/user-management')}>
+                    <i className="bi bi-person-plus"></i>
+                    <span>User Management</span>
+                  </button>
+                  <button className="action-btn" onClick={() => navigate('/admin/notifications')}>
+                    <i className="bi bi-bell"></i>
+                    <span>All Notifications</span>
+                  </button>
+                  <button className="action-btn" onClick={() => navigate('/admin/reports')}>
+                    <i className="bi bi-file-earmark-text"></i>
+                    <span>Reports</span>
+                  </button>
+                  <button className="action-btn" onClick={() => navigate('/admin/settings')}>
+                    <i className="bi bi-gear"></i>
+                    <span>Settings</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="dashboard-sidebar">
+            <div className="dashboard-card">
+              <div className="dashboard-card-header">
+                <h2 className="dashboard-card-title">
+                  <i className="bi bi-bell-fill"></i> Recent Notifications
+                </h2>
+              </div>
+              <div className="dashboard-card-body">
+                {notifications.length === 0 ? (
+                  <div className="no-notifications">
+                    <i className="bi bi-check-circle"></i>
+                    <span>No new notifications</span>
+                  </div>
+                ) : (
+                  <div className="notifications-list">
+                    {notifications.map((notification) => (
+                      <div
+                        key={notification.id}
+                        onClick={() => handleNotificationClick(notification)}
+                        className={`notification-item ${!notification.read ? 'unread' : ''} ${notification.type}`}
+                      >
+                        <div className="notification-icon">
+                          <i className={`bi ${
+                            notification.type === 'critical' ? 'bi-exclamation-triangle-fill' :
+                            notification.type === 'warning' ? 'bi-exclamation-circle-fill' :
+                            'bi-info-circle-fill'
+                          }`}></i>
+                        </div>
+                        <div className="notification-content">
+                          <div className="notification-title">{notification.title}</div>
+                          <div className="notification-message">{notification.message}</div>
+                          <div className="notification-time">
+                            {new Date(notification.date).toLocaleString()}
+                          </div>
+                        </div>
+                        {!notification.read && <div className="notification-unread-indicator"></div>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="dashboard-card-actions">
+                  <button className="btn btn-outline" onClick={() => navigate('/admin/notifications')}>
+                    <i className="bi bi-arrow-right"></i> View All Notifications
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="dashboard-card">
+              <div className="dashboard-card-header">
+                <h2 className="dashboard-card-title">
+                  <i className="bi bi-graph-up"></i> System Health
+                </h2>
+              </div>
+              <div className="dashboard-card-body">
+                <div className="health-status">
+                  <div className="health-item">
+                    <span className="health-label">Server Status</span>
+                    <span className="health-value status-good">Online</span>
+                  </div>
+                  <div className="health-item">
+                    <span className="health-label">Database</span>
+                    <span className="health-value status-good">Healthy</span>
+                  </div>
+                  <div className="health-item">
+                    <span className="health-label">Last Backup</span>
+                    <span className="health-value">2 hours ago</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

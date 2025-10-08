@@ -1,25 +1,9 @@
 import React from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
-
-import {
-  HeaderNavigation,
-  ALIGN,
-  StyledNavigationList,
-  StyledNavigationItem,
-} from 'baseui/header-navigation';
-import { Button } from 'baseui/button';
-import { Block } from 'baseui/block';
-import { Avatar } from 'baseui/avatar';
-import { StatefulPopover } from 'baseui/popover';
-import { StatefulMenu } from 'baseui/menu';
-import { ChevronDown } from 'baseui/icon'; 
-import { StyledLink } from 'baseui/link';
 import { User, Role } from '../../types/index';
 
 import icon from '../../images/icon.png';
 import data from '../../data.json';
-
-import '../../main.css';
 
 interface LayoutProps {
   user: User | null;
@@ -28,7 +12,7 @@ interface LayoutProps {
 
 // Theme toggle helpers
 const isDarkTheme = () => document.body.classList.contains('dark-theme');
-const getThemeIcon = () => (isDarkTheme() ? '🌙' : '☀️');
+const getThemeIcon = () => (isDarkTheme() ? 'bi bi-sun' : 'bi bi-moon');
 const toggleTheme = () => {
   document.body.classList.toggle('dark-theme');
   // Force update to re-render icon
@@ -59,101 +43,81 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout }) => {
     return (
       <>
         {navItems.map((item, index) => (
-          <StyledNavigationItem key={index}>
-            <StyledLink onClick={() => navigate(item.path)}>
-              {item.name}
-            </StyledLink>
-          </StyledNavigationItem>
+          <button
+            key={index}
+            className="nav-link"
+            onClick={() => navigate(item.path)}
+          >
+            {item.name}
+          </button>
         ))}
       </>
     );
   };
 
   return (
-    <Block>
-      <HeaderNavigation>
+    <div className="layout-container">
+      <nav className="navbar">
+        <div className="navbar-container">
 
-        {/* Render the logo and title */}
-        <StyledNavigationList $align={ALIGN.left}>
-          <StyledNavigationItem>
-            <Block display="flex" alignItems="center">
-              <Block marginRight="0.5rem" display="flex" alignItems="center">
-                <img src={icon} width={30} />
-              </Block>
-              <StyledLink onClick={() => navigate('/')}>
-                {data.title}
-              </StyledLink>
-            </Block>
-          </StyledNavigationItem>
-        </StyledNavigationList>
+          {/* Logo and Title */}
+          <div className="navbar-brand">
+            <div className="navbar-logo">
+              <img src={icon} alt="Logo" width={32} height={32} />
+            </div>
+            <button className="navbar-title" onClick={() => navigate('/')}>
+              {data.title}
+            </button>
+          </div>
 
-        {/* Render navigation items based on user role */}
-        <StyledNavigationList $align={ALIGN.center}>
-          {renderNavItems()}
-        </StyledNavigationList>
+          {/* Navigation Links */}
+          <div className="navbar-nav">
+            {renderNavItems()}
+          </div>
 
-        {/* Render user profile and logout */}
-        <StyledNavigationList $align={ALIGN.right}>
-          
-          {/* Theme toggle button */}
-          <StyledNavigationItem>
-            <Button onClick={toggleTheme} className='theme-change-btn'>
-              {getThemeIcon()}
-            </Button>
+          {/* User Actions */}
+          <div className="navbar-actions">
 
-          </StyledNavigationItem>
-          <StyledNavigationItem>
-            <StatefulPopover
-              content={({ close }) => (
-                <StatefulMenu
-                  items={[
-                    {
-                      label: 'Log out',
-                      onClick: () => {
-                        onLogout();
-                        close();
-                        navigate('/login');
-                      },
-                    },
-                  ]}
-                  onItemSelect={({ item }) => {
-                    if (item.label === 'Log out') {
-                      onLogout();
-                      navigate('/login');
-                    }
-                    close();
+            {/* Theme Toggle */}
+            <button className="theme-toggle-btn" onClick={toggleTheme} title="Toggle theme">
+              <i className={getThemeIcon()}></i>
+            </button>
+
+            {/* User Profile Dropdown */}
+            <div className="user-profile-dropdown">
+              <button className="user-profile-btn">
+                <div className="user-avatar">
+                  <span className="user-initials">
+                    {user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                  </span>
+                </div>
+                <span className="user-name">{user.name}</span>
+                <i className="bi bi-chevron-down dropdown-arrow"></i>
+              </button>
+
+              <div className="dropdown-menu">
+                <button
+                  className="dropdown-item logout-btn"
+                  onClick={() => {
+                    onLogout();
+                    navigate('/login');
                   }}
-                />
-              )}
-            >
-              <Button
-                kind="tertiary"
-                endEnhancer={() => <ChevronDown size={24} />}
-                overrides={{
-                  BaseButton: {
-                    style: {
-                      paddingLeft: '8px',
-                      paddingRight: '8px',
-                    },
-                  },
-                }}
-              >
-                <Block display="flex" alignItems="center">
-                  <Avatar name={user.name} size="scale800" src="" />
-                  <Block marginLeft="0.5rem">{user.name}</Block>
-                </Block>
-              </Button>
-            </StatefulPopover>
-          </StyledNavigationItem>
-        </StyledNavigationList>
+                >
+                  <i className="bi bi-box-arrow-right"></i>
+                  Log out
+                </button>
+              </div>
+            </div>
 
-      </HeaderNavigation>
-      
-      <Block padding="2rem">
+          </div>
+
+        </div>
+      </nav>
+
+      <main className="main-content">
         <Outlet />
-      </Block>
-      
-    </Block>
+      </main>
+    </div>
   );
 };
 

@@ -1,14 +1,5 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { HeadingLarge, HeadingMedium } from 'baseui/typography';
-import { Card, StyledBody } from 'baseui/card';
-import { Grid, Cell } from 'baseui/layout-grid';
-import { Block } from 'baseui/block';
-import { Button } from 'baseui/button';
-import { FormControl } from 'baseui/form-control';
-import { Input } from 'baseui/input';
-import { Textarea } from 'baseui/textarea';
-import { toaster } from 'baseui/toast';
 import { MonthlyInvestigation } from '../../types';
 
 const NurseMonthlyInvestigation: React.FC = () => {
@@ -49,262 +40,263 @@ const NurseMonthlyInvestigation: React.FC = () => {
     e.preventDefault();
     
     if (!investigation.date) {
-      toaster.negative('Please fill in all required fields', {});
+      alert('Please fill in all required fields');
       return;
     }
 
     console.log('Saving monthly investigation:', investigation);
-    toaster.positive('Monthly investigation saved successfully', {});
+    alert('Monthly investigation saved successfully');
   };
 
   return (
-    <Block>
-      <HeadingLarge>New Monthly Investigation</HeadingLarge>
-      <HeadingMedium>Patient ID: {id}</HeadingMedium>
+    <div style={{ padding: '2rem' }}>
+      <h1>New Monthly Investigation</h1>
+      <h2>Patient ID: {id}</h2>
       
-      <form onSubmit={handleSubmit}>
-        <Grid gridMargins={[16, 32]} gridGutters={[16, 32]} gridMaxWidth={1200}>
-          <Cell span={[4, 8, 6]}>
-            <Card>
-              <StyledBody>
-                <HeadingMedium>Investigation Details</HeadingMedium>
-                
-                <FormControl label="Date *">
-                  <Input
-                    value={investigation.date}
-                    onChange={e => handleInputChange('date', e.currentTarget.value)}
-                    type="date"
-                  />
-                </FormControl>
-                
-                <HeadingMedium marginTop="24px">Complete Blood Count</HeadingMedium>
-                
-                <Block display="flex" justifyContent="space-between">
-                  <Block width="48%">
-                    <FormControl label="Hemoglobin (g/dL)">
-                      <Input
-                        value={investigation.hemoglobin || ''}
-                        onChange={e => handleInputChange('hemoglobin', parseFloat(e.currentTarget.value) || 0)}
-                        type="number"
-                        step={0.1}
-                      />
-                    </FormControl>
-                  </Block>
-                  <Block width="48%">
-                    <FormControl label="Hematocrit (%)">
-                      <Input
-                        value={investigation.hematocrit || ''}
-                        onChange={e => handleInputChange('hematocrit', parseFloat(e.currentTarget.value) || 0)}
-                        type="number"
-                        step={0.1}
-                      />
-                    </FormControl>
-                  </Block>
-                </Block>
-                
-                <Block display="flex" justifyContent="space-between">
-                  <Block width="48%">
-                    <FormControl label="White Blood Cell Count (K/μL)">
-                      <Input
-                        value={investigation.whiteBloodCellCount || ''}
-                        onChange={e => handleInputChange('whiteBloodCellCount', parseFloat(e.currentTarget.value) || 0)}
-                        type="number"
-                        step={0.1}
-                      />
-                    </FormControl>
-                  </Block>
-                  <Block width="48%">
-                    <FormControl label="Platelet Count (K/μL)">
-                      <Input
-                        value={investigation.plateletCount || ''}
-                        onChange={e => handleInputChange('plateletCount', parseFloat(e.currentTarget.value) || 0)}
-                        type="number"
-                      />
-                    </FormControl>
-                  </Block>
-                </Block>
-                
-                <HeadingMedium marginTop="24px">Electrolytes</HeadingMedium>
-                
-                <Block display="flex" justifyContent="space-between">
-                  <Block width="48%">
-                    <FormControl label="Sodium (mEq/L)">
-                      <Input
-                        value={investigation.sodium || ''}
-                        onChange={e => handleInputChange('sodium', parseFloat(e.currentTarget.value) || 0)}
-                        type="number"
-                      />
-                    </FormControl>
-                  </Block>
-                  <Block width="48%">
-                    <FormControl label="Potassium (mEq/L)">
-                      <Input
-                        value={investigation.potassium || ''}
-                        onChange={e => handleInputChange('potassium', parseFloat(e.currentTarget.value) || 0)}
-                        type="number"
-                        step={0.1}
-                      />
-                    </FormControl>
-                  </Block>
-                </Block>
-                
-                <Block display="flex" justifyContent="space-between">
-                  <Block width="48%">
-                    <FormControl label="Chloride (mEq/L)">
-                      <Input
-                        value={investigation.chloride || ''}
-                        onChange={e => handleInputChange('chloride', parseFloat(e.currentTarget.value) || 0)}
-                        type="number"
-                      />
-                    </FormControl>
-                  </Block>
-                  <Block width="48%">
-                    <FormControl label="Bicarbonate (mEq/L)">
-                      <Input
-                        value={investigation.bicarbonate || ''}
-                        onChange={e => handleInputChange('bicarbonate', parseFloat(e.currentTarget.value) || 0)}
-                        type="number"
-                      />
-                    </FormControl>
-                  </Block>
-                </Block>
-              </StyledBody>
-            </Card>
-          </Cell>
+      <form onSubmit={handleSubmit} style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem' }}>
+          <div style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '1rem' }}>
+            <h3>Investigation Details</h3>
+            
+            <div style={{ marginBottom: '1rem' }}>
+              <label>Date *</label>
+              <input
+                value={investigation.date}
+                onChange={(e) => handleInputChange('date', e.target.value)}
+                type="date"
+                style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+              />
+            </div>
+            
+            <h3 style={{ marginTop: '24px' }}>Complete Blood Count</h3>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
+              <div style={{ flex: 1 }}>
+                <label>Hemoglobin (g/dL)</label>
+                <input
+                  value={investigation.hemoglobin || ''}
+                  onChange={(e) => handleInputChange('hemoglobin', parseFloat(e.target.value) || 0)}
+                  type="number"
+                  step={0.1}
+                  style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label>Hematocrit (%)</label>
+                <input
+                  value={investigation.hematocrit || ''}
+                  onChange={(e) => handleInputChange('hematocrit', parseFloat(e.target.value) || 0)}
+                  type="number"
+                  step={0.1}
+                  style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+                />
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
+              <div style={{ flex: 1 }}>
+                <label>White Blood Cell Count (K/μL)</label>
+                <input
+                  value={investigation.whiteBloodCellCount || ''}
+                  onChange={(e) => handleInputChange('whiteBloodCellCount', parseFloat(e.target.value) || 0)}
+                  type="number"
+                  step={0.1}
+                  style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label>Platelet Count (K/μL)</label>
+                <input
+                  value={investigation.plateletCount || ''}
+                  onChange={(e) => handleInputChange('plateletCount', parseFloat(e.target.value) || 0)}
+                  type="number"
+                  style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+                />
+              </div>
+            </div>
+            
+            <h3 style={{ marginTop: '24px' }}>Electrolytes</h3>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
+              <div style={{ flex: 1 }}>
+                <label>Sodium (mEq/L)</label>
+                <input
+                  value={investigation.sodium || ''}
+                  onChange={(e) => handleInputChange('sodium', parseFloat(e.target.value) || 0)}
+                  type="number"
+                  style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label>Potassium (mEq/L)</label>
+                <input
+                  value={investigation.potassium || ''}
+                  onChange={(e) => handleInputChange('potassium', parseFloat(e.target.value) || 0)}
+                  type="number"
+                  step={0.1}
+                  style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+                />
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
+              <div style={{ flex: 1 }}>
+                <label>Chloride (mEq/L)</label>
+                <input
+                  value={investigation.chloride || ''}
+                  onChange={(e) => handleInputChange('chloride', parseFloat(e.target.value) || 0)}
+                  type="number"
+                  style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label>Bicarbonate (mEq/L)</label>
+                <input
+                  value={investigation.bicarbonate || ''}
+                  onChange={(e) => handleInputChange('bicarbonate', parseFloat(e.target.value) || 0)}
+                  type="number"
+                  style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+                />
+              </div>
+            </div>
+          </div>
           
-          <Cell span={[4, 8, 6]}>
-            <Block marginBottom="16px">
-              <Card>
-                <StyledBody>
-                  <HeadingMedium>Renal Function</HeadingMedium>
-                  
-                  <Block display="flex" justifyContent="space-between">
-                    <Block width="48%">
-                      <FormControl label="BUN (mg/dL)">
-                        <Input
-                          value={investigation.bun || ''}
-                          onChange={e => handleInputChange('bun', parseFloat(e.currentTarget.value) || 0)}
-                          type="number"
-                        />
-                      </FormControl>
-                    </Block>
-                    <Block width="48%">
-                      <FormControl label="Creatinine (mg/dL)">
-                        <Input
-                          value={investigation.creatinine || ''}
-                          onChange={e => handleInputChange('creatinine', parseFloat(e.currentTarget.value) || 0)}
-                          type="number"
-                          step={0.1}
-                        />
-                      </FormControl>
-                    </Block>
-                  </Block>
-                  
-                  <FormControl label="Glucose (mg/dL)">
-                    <Input
-                      value={investigation.glucose || ''}
-                      onChange={e => handleInputChange('glucose', parseFloat(e.currentTarget.value) || 0)}
-                      type="number"
-                    />
-                  </FormControl>
-                  
-                  <HeadingMedium marginTop="24px">Other Parameters</HeadingMedium>
-                  
-                  <Block display="flex" justifyContent="space-between">
-                    <Block width="48%">
-                      <FormControl label="Calcium (mg/dL)">
-                        <Input
-                          value={investigation.calcium || ''}
-                          onChange={e => handleInputChange('calcium', parseFloat(e.currentTarget.value) || 0)}
-                          type="number"
-                          step={0.1}
-                        />
-                      </FormControl>
-                    </Block>
-                    <Block width="48%">
-                      <FormControl label="Phosphorus (mg/dL)">
-                        <Input
-                          value={investigation.phosphorus || ''}
-                          onChange={e => handleInputChange('phosphorus', parseFloat(e.currentTarget.value) || 0)}
-                          type="number"
-                          step={0.1}
-                        />
-                      </FormControl>
-                    </Block>
-                  </Block>
-                  
-                  <Block display="flex" justifyContent="space-between">
-                    <Block width="48%">
-                      <FormControl label="Albumin (g/dL)">
-                        <Input
-                          value={investigation.albumin || ''}
-                          onChange={e => handleInputChange('albumin', parseFloat(e.currentTarget.value) || 0)}
-                          type="number"
-                          step={0.1}
-                        />
-                      </FormControl>
-                    </Block>
-                    <Block width="48%">
-                      <FormControl label="Total Protein (g/dL)">
-                        <Input
-                          value={investigation.totalProtein || ''}
-                          onChange={e => handleInputChange('totalProtein', parseFloat(e.currentTarget.value) || 0)}
-                          type="number"
-                          step={0.1}
-                        />
-                      </FormControl>
-                    </Block>
-                  </Block>
-                  
-                  <HeadingMedium marginTop="24px">Liver Function</HeadingMedium>
-                  
-                  <Block display="flex" justifyContent="space-between">
-                    <Block width="48%">
-                      <FormControl label="ALT (U/L)">
-                        <Input
-                          value={investigation.alt || ''}
-                          onChange={e => handleInputChange('alt', parseFloat(e.currentTarget.value) || 0)}
-                          type="number"
-                        />
-                      </FormControl>
-                    </Block>
-                    <Block width="48%">
-                      <FormControl label="AST (U/L)">
-                        <Input
-                          value={investigation.ast || ''}
-                          onChange={e => handleInputChange('ast', parseFloat(e.currentTarget.value) || 0)}
-                          type="number"
-                        />
-                      </FormControl>
-                    </Block>
-                  </Block>
-                  
-                  <FormControl label="Alkaline Phosphatase (U/L)">
-                    <Input
-                      value={investigation.alkalinePhosphatase || ''}
-                      onChange={e => handleInputChange('alkalinePhosphatase', parseFloat(e.currentTarget.value) || 0)}
-                      type="number"
-                    />
-                  </FormControl>
-                  
-                  <FormControl label="Notes" caption="Any additional observations">
-                    <Textarea
-                      value={investigation.notes}
-                      onChange={e => handleInputChange('notes', e.currentTarget.value)}
-                      placeholder="Enter any additional notes about the investigation"
-                    />
-                  </FormControl>
-                  
-                  <Block display="flex" justifyContent="flex-end" marginTop="32px">
-                    <Button type="submit">Save Investigation</Button>
-                  </Block>
-                </StyledBody>
-              </Card>
-            </Block>
-          </Cell>
-        </Grid>
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '1rem' }}>
+              <h3>Renal Function</h3>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
+                <div style={{ flex: 1 }}>
+                  <label>BUN (mg/dL)</label>
+                  <input
+                    value={investigation.bun || ''}
+                    onChange={(e) => handleInputChange('bun', parseFloat(e.target.value) || 0)}
+                    type="number"
+                    style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label>Creatinine (mg/dL)</label>
+                  <input
+                    value={investigation.creatinine || ''}
+                    onChange={(e) => handleInputChange('creatinine', parseFloat(e.target.value) || 0)}
+                    type="number"
+                    step={0.1}
+                    style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+                  />
+                </div>
+              </div>
+              
+              <div style={{ marginBottom: '1rem' }}>
+                <label>Glucose (mg/dL)</label>
+                <input
+                  value={investigation.glucose || ''}
+                  onChange={(e) => handleInputChange('glucose', parseFloat(e.target.value) || 0)}
+                  type="number"
+                  style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+                />
+              </div>
+              
+              <h3 style={{ marginTop: '24px' }}>Other Parameters</h3>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
+                <div style={{ flex: 1 }}>
+                  <label>Calcium (mg/dL)</label>
+                  <input
+                    value={investigation.calcium || ''}
+                    onChange={(e) => handleInputChange('calcium', parseFloat(e.target.value) || 0)}
+                    type="number"
+                    step={0.1}
+                    style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label>Phosphorus (mg/dL)</label>
+                  <input
+                    value={investigation.phosphorus || ''}
+                    onChange={(e) => handleInputChange('phosphorus', parseFloat(e.target.value) || 0)}
+                    type="number"
+                    step={0.1}
+                    style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+                  />
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
+                <div style={{ flex: 1 }}>
+                  <label>Albumin (g/dL)</label>
+                  <input
+                    value={investigation.albumin || ''}
+                    onChange={(e) => handleInputChange('albumin', parseFloat(e.target.value) || 0)}
+                    type="number"
+                    step={0.1}
+                    style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label>Total Protein (g/dL)</label>
+                  <input
+                    value={investigation.totalProtein || ''}
+                    onChange={(e) => handleInputChange('totalProtein', parseFloat(e.target.value) || 0)}
+                    type="number"
+                    step={0.1}
+                    style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+                  />
+                </div>
+              </div>
+              
+              <h3 style={{ marginTop: '24px' }}>Liver Function</h3>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
+                <div style={{ flex: 1 }}>
+                  <label>ALT (U/L)</label>
+                  <input
+                    value={investigation.alt || ''}
+                    onChange={(e) => handleInputChange('alt', parseFloat(e.target.value) || 0)}
+                    type="number"
+                    style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label>AST (U/L)</label>
+                  <input
+                    value={investigation.ast || ''}
+                    onChange={(e) => handleInputChange('ast', parseFloat(e.target.value) || 0)}
+                    type="number"
+                    style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+                  />
+                </div>
+              </div>
+              
+              <div style={{ marginBottom: '1rem' }}>
+                <label>Alkaline Phosphatase (U/L)</label>
+                <input
+                  value={investigation.alkalinePhosphatase || ''}
+                  onChange={(e) => handleInputChange('alkalinePhosphatase', parseFloat(e.target.value) || 0)}
+                  type="number"
+                  style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+                />
+              </div>
+              
+              <div style={{ marginBottom: '1rem' }}>
+                <label>Notes</label>
+                <textarea
+                  value={investigation.notes}
+                  onChange={(e) => handleInputChange('notes', e.target.value)}
+                  placeholder="Enter any additional notes about the investigation"
+                  rows={4}
+                  style={{ width: '100%', padding: '8px', marginTop: '4px', minHeight: '100px' }}
+                />
+              </div>
+              
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '32px' }}>
+                <button type="submit" style={{ padding: '8px 16px' }}>Save Investigation</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </form>
-    </Block>
+    </div>
   );
 };
 

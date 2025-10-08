@@ -1,15 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { HeadingLarge, HeadingMedium } from 'baseui/typography';
-import { Card, StyledBody } from 'baseui/card';
-import { Grid, Cell } from 'baseui/layout-grid';
-import { Block } from 'baseui/block';
-import { Button } from 'baseui/button';
-import { FormControl } from 'baseui/form-control';
-import { Input } from 'baseui/input';
-import { Textarea } from 'baseui/textarea';
-import { Checkbox } from 'baseui/checkbox';
-import { toaster } from 'baseui/toast';
 import { ClinicalDecision, AIPrediction } from '../../types';
 
 // Mock AI predictions
@@ -107,158 +97,164 @@ const DoctorClinicalDecisions: React.FC = () => {
 
     // Validate form
     if (!decision.notes || !decision.prescription || !decision.followUpDate) {
-      toaster.negative('Please fill in all required fields', {});
+      alert('Please fill in all required fields');
       return;
     }
 
     if ((decision.aiSuggestions?.length ?? 0) > 0 && !decision.aiSuggestionsAcknowledged) {
-      toaster.negative('Please acknowledge AI suggestions', {});
+      alert('Please acknowledge AI suggestions');
       return;
     }
 
     if (decision.aiSuggestionsOverridden && !decision.aiOverrideReason) {
-      toaster.negative('Please provide a reason for overriding AI suggestions', {});
+      alert('Please provide a reason for overriding AI suggestions');
       return;
     }
 
     // In a real app, this would make an API call to save the decision
     console.log('Saving clinical decision:', decision);
-    toaster.positive('Clinical decision saved successfully', {});
+    alert('Clinical decision saved successfully');
 
     // Reset form or redirect
     // For demo, we'll just show a success message
   };
 
   return (
-    <Block>
-      <HeadingLarge>Record Clinical Decision</HeadingLarge>
-      <HeadingMedium>Patient ID: {id}</HeadingMedium>
+    <div>
+      <h1>Record Clinical Decision</h1>
+      <h2>Patient ID: {id}</h2>
 
-      <form onSubmit={handleSubmit}>
-        <Grid gridMargins={[16, 32]} gridGutters={[16, 32]} gridMaxWidth={1200}>
-          <Cell span={[4, 8, 6]}>
-            <Block marginBottom="16px">
-              <Card>
-                <StyledBody>
-                  <HeadingMedium>AI Predictions & Suggestions</HeadingMedium>
+      <form onSubmit={handleSubmit} style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ marginBottom: '16px' }}>
+          <div style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '16px' }}>
+            <h3>AI Predictions & Suggestions</h3>
 
-                  {aiPredictions.length > 0 ? (
-                    aiPredictions.map(prediction => (
-                      <Block
-                        key={prediction.id}
-                        marginBottom="16px"
-                        padding="16px"
-                        backgroundColor={
-                          prediction.confidence > 0.8
-                            ? 'rgba(255, 0, 0, 0.1)'
-                            : prediction.confidence > 0.6
-                            ? 'rgba(255, 165, 0, 0.1)'
-                            : 'rgba(0, 0, 0, 0.03)'
-                        }
-                      >
-                        <Block display="flex" justifyContent="space-between" alignItems="center">
-                          <Block font="font500">{prediction.predictionType}</Block>
-                          <Block font="font400">
-                            Confidence: {(prediction.confidence * 100).toFixed(0)}%
-                          </Block>
-                        </Block>
+            {aiPredictions.length > 0 ? (
+              aiPredictions.map(prediction => (
+                <div
+                  key={prediction.id}
+                  style={{
+                    marginBottom: '16px',
+                    padding: '16px',
+                    backgroundColor:
+                      prediction.confidence > 0.8
+                        ? 'rgba(255, 0, 0, 0.1)'
+                        : prediction.confidence > 0.6
+                        ? 'rgba(255, 165, 0, 0.1)'
+                        : 'rgba(0, 0, 0, 0.03)',
+                    borderRadius: '4px'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <strong>{prediction.predictionType}</strong>
+                    <span>Confidence: {(prediction.confidence * 100).toFixed(0)}%</span>
+                  </div>
 
-                        <Block font="font400" marginTop="8px">
-                          {prediction.prediction}
-                        </Block>
+                  <div style={{ marginTop: '8px' }}>
+                    {prediction.prediction}
+                  </div>
 
-                        <Block font="font500" marginTop="8px">
-                          Suggested Action: {prediction.suggestedAction}
-                        </Block>
-                      </Block>
-                    ))
-                  ) : (
-                    <Block>No AI predictions available</Block>
-                  )}
+                  <div style={{ marginTop: '8px', fontWeight: 'bold' }}>
+                    Suggested Action: {prediction.suggestedAction}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div>No AI predictions available</div>
+            )}
 
-                  {(decision.aiSuggestions?.length ?? 0) > 0 && (
-                    <Block marginTop="16px">
-                      <Checkbox
-                        checked={acknowledgedAI}
-                        onChange={handleAcknowledgeChange}
-                        labelPlacement="right"
-                      >
-                        I acknowledge the AI suggestions
-                      </Checkbox>
-
-                      <Checkbox
-                        checked={overrideAI}
-                        onChange={handleOverrideChange}
-                        labelPlacement="right"
-                      >
-                        I want to override the AI suggestions
-                      </Checkbox>
-
-                      {overrideAI && (
-                        <FormControl label="Reason for Override *">
-                          <Textarea
-                            value={decision.aiOverrideReason}
-                            onChange={e => handleInputChange('aiOverrideReason', e.currentTarget.value)}
-                            placeholder="Explain why you are overriding the AI suggestions"
-                            required={overrideAI}
-                          />
-                        </FormControl>
-                      )}
-                    </Block>
-                  )}
-                </StyledBody>
-              </Card>
-            </Block>
-
-            <Card>
-              <StyledBody>
-                <HeadingMedium>Clinical Decision</HeadingMedium>
-
-                <FormControl label="Date *">
-                  <Input
-                    value={decision.date}
-                    onChange={e => handleInputChange('date', e.currentTarget.value)}
-                    type="date"
-                    required
+            {(decision.aiSuggestions?.length ?? 0) > 0 && (
+              <div style={{ marginTop: '16px' }}>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={acknowledgedAI}
+                    onChange={handleAcknowledgeChange}
                   />
-                </FormControl>
+                  I acknowledge the AI suggestions
+                </label>
 
-                <FormControl label="Clinical Notes *">
-                  <Textarea
-                    value={decision.notes}
-                    onChange={e => handleInputChange('notes', e.currentTarget.value)}
-                    placeholder="Enter your clinical assessment and notes"
-                    required
+                <br />
+
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={overrideAI}
+                    onChange={handleOverrideChange}
                   />
-                </FormControl>
+                  I want to override the AI suggestions
+                </label>
 
-                <FormControl label="Prescription *">
-                  <Textarea
-                    value={decision.prescription}
-                    onChange={e => handleInputChange('prescription', e.currentTarget.value)}
-                    placeholder="Enter medication prescriptions and treatment plan"
-                    required
-                  />
-                </FormControl>
+                {overrideAI && (
+                  <div style={{ marginTop: '8px' }}>
+                    <label>Reason for Override *</label>
+                    <textarea
+                      value={decision.aiOverrideReason}
+                      onChange={(e) => handleInputChange('aiOverrideReason', e.target.value)}
+                      placeholder="Explain why you are overriding the AI suggestions"
+                      required={overrideAI}
+                      style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
 
-                <FormControl label="Follow-up Date *">
-                  <Input
-                    value={decision.followUpDate}
-                    onChange={e => handleInputChange('followUpDate', e.currentTarget.value)}
-                    type="date"
-                    required
-                  />
-                </FormControl>
+        <div style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '16px' }}>
+          <h3>Clinical Decision</h3>
 
-                <Block display="flex" justifyContent="flex-end" marginTop="32px">
-                  <Button type="submit">Save Decision</Button>
-                </Block>
-              </StyledBody>
-            </Card>
-          </Cell>
-        </Grid>
+          <div style={{ marginBottom: '16px' }}>
+            <label>Date *</label>
+            <input
+              value={decision.date}
+              onChange={(e) => handleInputChange('date', e.target.value)}
+              type="date"
+              required
+              style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+            />
+          </div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <label>Clinical Notes *</label>
+            <textarea
+              value={decision.notes}
+              onChange={(e) => handleInputChange('notes', e.target.value)}
+              placeholder="Enter your clinical assessment and notes"
+              required
+              style={{ width: '100%', padding: '8px', marginTop: '4px', minHeight: '100px' }}
+            />
+          </div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <label>Prescription *</label>
+            <textarea
+              value={decision.prescription}
+              onChange={(e) => handleInputChange('prescription', e.target.value)}
+              placeholder="Enter medication prescriptions and treatment plan"
+              required
+              style={{ width: '100%', padding: '8px', marginTop: '4px', minHeight: '100px' }}
+            />
+          </div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <label>Follow-up Date *</label>
+            <input
+              value={decision.followUpDate}
+              onChange={(e) => handleInputChange('followUpDate', e.target.value)}
+              type="date"
+              required
+              style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '32px' }}>
+            <button type="submit" style={{ padding: '8px 16px' }}>Save Decision</button>
+          </div>
+        </div>
       </form>
-    </Block>
+    </div>
   );
 };
 

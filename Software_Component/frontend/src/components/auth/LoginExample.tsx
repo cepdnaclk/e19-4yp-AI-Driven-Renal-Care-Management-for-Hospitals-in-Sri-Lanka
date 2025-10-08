@@ -1,10 +1,4 @@
 import React, { useState } from 'react';
-import { Button } from 'baseui/button';
-import { Input } from 'baseui/input';
-import { FormControl } from 'baseui/form-control';
-import { Card, StyledBody } from 'baseui/card';
-import { Block } from 'baseui/block';
-import { HeadingMedium } from 'baseui/typography';
 import { useAuth } from '../../hooks/useAuth';
 
 const LoginExample: React.FC = () => {
@@ -61,67 +55,64 @@ const LoginExample: React.FC = () => {
 
   if (isAuthenticated) {
     return (
-      <Card>
-        <StyledBody>
-          <HeadingMedium>Authenticated User</HeadingMedium>
-          <Block marginBottom="16px">
-            <strong>Status:</strong> ✅ Logged In
-          </Block>
-          <Block marginBottom="16px">
-            <strong>Token:</strong> {token ? `${token.substring(0, 20)}...` : 'None'}
-          </Block>
-          <Button onClick={handleLogout} kind="secondary">
-            Logout
-          </Button>
-        </StyledBody>
-      </Card>
+      <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '8px', maxWidth: '400px', margin: '20px auto' }}>
+        <h3>Authenticated User</h3>
+        <div style={{ marginBottom: '16px' }}>
+          <strong>Status:</strong> ✅ Logged In
+        </div>
+        <div style={{ marginBottom: '16px' }}>
+          <strong>Token:</strong> {token ? `${token.substring(0, 20)}...` : 'None'}
+        </div>
+        <button onClick={handleLogout} style={{ backgroundColor: '#f0f0f0', border: '1px solid #ccc', padding: '8px 16px', borderRadius: '4px' }}>
+          Logout
+        </button>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <StyledBody>
-        <HeadingMedium>Login</HeadingMedium>
+    <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '8px', maxWidth: '400px', margin: '20px auto' }}>
+      <h3>Login</h3>
+      
+      <div style={{ marginBottom: '16px' }}>
+        <label style={{ display: 'block', marginBottom: '8px' }}>Email</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Enter your email"
+          style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+        />
+      </div>
+
+      <div style={{ marginBottom: '16px' }}>
+        <label style={{ display: 'block', marginBottom: '8px' }}>Password</label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Enter your password"
+          style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+        />
+      </div>
+
+      <div style={{ display: 'flex', gap: '16px' }}>
+        <button 
+          onClick={handleLogin} 
+          disabled={loading || !email || !password}
+          style={{ padding: '8px 16px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: loading || !email || !password ? '#f0f0f0' : '#007bff', color: 'white' }}
+        >
+          {loading ? 'Logging in...' : 'Login'}
+        </button>
         
-        <Block marginBottom="16px">
-          <FormControl label="Email">
-            <Input
-              value={email}
-              onChange={e => setEmail(e.currentTarget.value)}
-              placeholder="Enter your email"
-              type="email"
-            />
-          </FormControl>
-        </Block>
-
-        <Block marginBottom="16px">
-          <FormControl label="Password">
-            <Input
-              value={password}
-              onChange={e => setPassword(e.currentTarget.value)}
-              placeholder="Enter your password"
-              type="password"
-            />
-          </FormControl>
-        </Block>
-
-        <Block display="flex" gridGap="16px">
-          <Button 
-            onClick={handleLogin} 
-            disabled={loading || !email || !password}
-          >
-            {loading ? 'Logging in...' : 'Login'}
-          </Button>
-          
-          <Button 
-            onClick={handleManualTokenSet} 
-            kind="secondary"
-          >
-            Set Sample Token
-          </Button>
-        </Block>
-      </StyledBody>
-    </Card>
+        <button 
+          onClick={handleManualTokenSet} 
+          style={{ padding: '8px 16px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#f0f0f0' }}
+        >
+          Set Sample Token
+        </button>
+      </div>
+    </div>
   );
 };
 

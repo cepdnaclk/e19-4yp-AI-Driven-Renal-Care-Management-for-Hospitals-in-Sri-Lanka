@@ -1,17 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { HeadingLarge, HeadingMedium } from 'baseui/typography';
-import { Card, StyledBody } from 'baseui/card';
-import { Grid, Cell } from 'baseui/layout-grid';
-import { Block } from 'baseui/block';
-import { Button } from 'baseui/button';
-import { Modal, ModalHeader, ModalBody, ModalFooter, ModalButton } from 'baseui/modal';
-import { FormControl } from 'baseui/form-control';
-import { Input } from 'baseui/input';
-import { Select } from 'baseui/select';
-import { Table } from 'baseui/table-semantic';
-import { toaster } from 'baseui/toast';
 import { User, Role } from '../../types';
 import apiClient from '../../services/apiConfig';
+import { toast } from '../../utils/notify';
 
 const AdminUserManagement: React.FC = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -77,14 +67,14 @@ const AdminUserManagement: React.FC = () => {
       setUsers(response.data.users);
     }
     catch (error: any) {
-      toaster.negative('Failed to fetch users', { autoHideDuration: 3000 });
+      toast.error('Failed to fetch users');
     }
   }
 
   // 2. Function to handle adding a new user
   const handleAddUser = async () => {
     if (!newUser.name || !newUser.email || !newUser.password || newUser.role.length === 0) {
-      toaster.negative('Please fill in all fields', { autoHideDuration: 3000 })
+      toast.error('Please fill in all fields');
       return 0
     }
 
@@ -99,7 +89,7 @@ const AdminUserManagement: React.FC = () => {
         }
       )
 
-      toaster.positive('User added successfully', { autoHideDuration: 3000 })
+      toast.success('User added successfully');
 
       // Reset form
       setNewUser({
@@ -121,17 +111,17 @@ const AdminUserManagement: React.FC = () => {
 
       if (error.response && error.response.data.errors) {
         error.response.data.errors.forEach((err: any) => {
-          toaster.negative(err.msg, { autoHideDuration: 3000 });
+          toast.error(err.msg);
         })
       }
-      toaster.negative('Failed to add user', { autoHideDuration: 3000 })
+      toast.error('Failed to add user');
     }
   }
 
   // 3. Function to update existing user
   const handleEditUser = async () => {
     if (!currentUser.name || !currentUser.email || !currentUser.role || currentUser.role.length === 0) {
-      toaster.negative('Please fill in all required fields', { autoHideDuration: 3000 })
+      toast.error('Please fill in all required fields');
       return 0
     }
 
@@ -145,7 +135,7 @@ const AdminUserManagement: React.FC = () => {
         }
       )
 
-      toaster.positive('User Updated successfully', { autoHideDuration: 3000 });
+      toast.success('User Updated successfully');
 
       // Take the updated users list
       fetchAllUsers()
@@ -155,14 +145,14 @@ const AdminUserManagement: React.FC = () => {
     }
 
     catch (error) {
-      toaster.negative('Failed to update user', { autoHideDuration: 3000 })
+      toast.error('Failed to update user');
     }
   }
 
   // 4. Function to delete existing user
   const handleDeleteUser = async () => {
     if (!currentUser || !currentUser.id) {
-      toaster.negative('Invalid user data', { autoHideDuration: 3000 })
+      toast.error('Invalid user data');
       return 0
     }
 
@@ -171,7 +161,7 @@ const AdminUserManagement: React.FC = () => {
     try {
       const deleteData = await apiClient.delete(`/users/${currentUser.id}`)
 
-      toaster.positive('User Deleted successfully', { autoHideDuration: 3000 })
+      toast.success('User Deleted successfully');
 
       // Take the users list
       fetchAllUsers()
@@ -181,203 +171,304 @@ const AdminUserManagement: React.FC = () => {
     }
 
     catch (error) {
-      toaster.negative('Failed to Delete user', { autoHideDuration: 3000 })
+      toast.error('Failed to Delete user');
     }
   }
 
   return (
-    <Block>
-      <HeadingLarge>User Management</HeadingLarge>
+    <div className="general-container">
+      <div className="page-header">
+        <h1 className="general-h1">
+          <i className="bi bi-people-fill"></i> User Management
+        </h1>
+        <p className="page-subtitle">Manage system users, roles, and permissions</p>
+      </div>
 
-      <Grid gridMargins={[16, 32]} gridGutters={[16, 32]} gridMaxWidth={1200}>
-        <Cell span={12}>
-          <Card>
-            <StyledBody>
-              <Block display="flex" justifyContent="space-between" alignItems="center" marginBottom="16px">
-                <HeadingMedium marginTop="0" marginBottom="0">
-                  All Users
-                </HeadingMedium>
-                <Button onClick={() => setIsAddModalOpen(true)}>Add New User</Button>
-              </Block>
-
-              <Table
-                columns={['ID', 'Name', 'Email', 'Role', 'Last Active', 'Actions']}
-                data={users.map(user => [
-                  user.id,
-                  user.name,
-                  user.email,
-                  getRoleLabel(user.role),
-                  user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never',
-                  <Block
-                    key={`actions-${user.id}`}
-                    display="flex"
-                    overrides={{
-                      Block: {
-                        style: {
-                          gap: '8px',
-                        },
-                      },
-                    }}
-                  >
-                    <Button
-                      size="compact"
-                      kind="secondary"
-                      onClick={() => openEditModal(user)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      size="compact"
-                      kind="tertiary"
-                      onClick={() => openDeleteModal(user)}
-                    >
-                      Delete
-                    </Button>
-                  </Block>
-                ])}
-                emptyMessage="No users found"
-              />
-            </StyledBody>
-          </Card>
-        </Cell>
-      </Grid>
+      <div className="dashboard-content">
+        <div className="dashboard-main">
+          <div className="dashboard-card">
+            <div className="dashboard-card-header">
+              <h2 className="dashboard-card-title">
+                <i className="bi bi-table"></i> All Users
+              </h2>
+              <button className="btn btn-green" onClick={() => setIsAddModalOpen(true)}>
+                <i className="bi bi-plus-circle"></i> Add New User
+              </button>
+            </div>
+            <div className="dashboard-card-body">
+              {users.length === 0 ? (
+                <div className="no-data-message">
+                  <i className="bi bi-person-x"></i>
+                  <p>No users found</p>
+                  <span>Start by adding your first user</span>
+                </div>
+              ) : (
+                <div className="table-responsive">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Last Active</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {users.map((user, index) => (
+                        <tr key={user.id} className={index % 2 === 0 ? 'even-row' : 'odd-row'}>
+                          <td>{user.id}</td>
+                          <td>
+                            <div className="user-cell">
+                              <div className="user-avatar">
+                                {user.name.charAt(0).toUpperCase()}
+                              </div>
+                              <span>{user.name}</span>
+                            </div>
+                          </td>
+                          <td>{user.email}</td>
+                          <td>
+                            <span className={`role-badge role-${user.role.toLowerCase()}`}>
+                              {getRoleLabel(user.role)}
+                            </span>
+                          </td>
+                          <td>
+                            {user.lastLogin ? (
+                              <span className="last-active">
+                                <i className="bi bi-clock"></i>
+                                {new Date(user.lastLogin).toLocaleString()}
+                              </span>
+                            ) : (
+                              <span className="never-active">Never</span>
+                            )}
+                          </td>
+                          <td>
+                            <div className="action-buttons">
+                              <button
+                                className="btn btn-sm btn-secondary"
+                                onClick={() => openEditModal(user)}
+                                title="Edit user"
+                              >
+                                <i className="bi bi-pencil"></i>
+                              </button>
+                              <button
+                                className="btn btn-sm btn-danger"
+                                onClick={() => openDeleteModal(user)}
+                                title="Delete user"
+                              >
+                                <i className="bi bi-trash"></i>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Add User Modal */}
-      <Modal
-        isOpen={isAddModalOpen}
-        onClose={closeAddUserModal}
-        closeable
-        animate
-        autoFocus
-      >
-        <ModalHeader>Add New User</ModalHeader>
-        <ModalBody>
-          <FormControl label="Name*">
-            <Input
-              value={newUser.name}
-              onChange={e => setNewUser({ ...newUser, name: e.currentTarget.value })}
-              placeholder="Enter user's full name"
-            />
-          </FormControl>
+      {isAddModalOpen && (
+        <div className="modal-overlay" onClick={closeAddUserModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>
+                <i className="bi bi-person-plus"></i> Add New User
+              </h3>
+              <button className="modal-close" onClick={closeAddUserModal}>
+                <i className="bi bi-x"></i>
+              </button>
+            </div>
+            <div className="modal-body">
+              <form className="user-form">
+                <div className="form-group">
+                  <label className="form-label">
+                    <i className="bi bi-person"></i> Name *
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={newUser.name}
+                    onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                    placeholder="Enter user's full name"
+                    required
+                  />
+                </div>
 
-          <FormControl label="Email*">
-            <Input
-              value={newUser.email}
-              onChange={e => setNewUser({ ...newUser, email: e.currentTarget.value })}
-              placeholder="Enter user's email"
-              type="email"
-            />
-          </FormControl>
+                <div className="form-group">
+                  <label className="form-label">
+                    <i className="bi bi-envelope"></i> Email *
+                  </label>
+                  <input
+                    type="email"
+                    className="form-input"
+                    value={newUser.email}
+                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                    placeholder="Enter user's email"
+                    required
+                  />
+                </div>
 
-          <FormControl label="Password* (Password must be at least 6 characters)">
-            <Input
-              value={newUser.password}
-              onChange={e => setNewUser({ ...newUser, password: e.currentTarget.value })}
-              placeholder="Enter password"
-              type="password"
-            />
-          </FormControl>
+                <div className="form-group">
+                  <label className="form-label">
+                    <i className="bi bi-lock"></i> Password *
+                  </label>
+                  <input
+                    type="password"
+                    className="form-input"
+                    value={newUser.password}
+                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                    placeholder="Enter password (min 6 characters)"
+                    minLength={6}
+                    required
+                  />
+                  <small className="form-help">Password must be at least 6 characters long</small>
+                </div>
 
-          <FormControl label="Role*">
-            <Select
-              options={[
-                { id: Role.NURSE, label: 'Nurse' },
-                { id: Role.DOCTOR, label: 'Doctor' }
-              ]}
-              value={newUser.role}
-              placeholder="Select user role"
-              onChange={params => {
-                const roles = params.value.map(item => ({
-                  id: item.id as Role,
-                  label: item.label as string,
-                }));
-                setNewUser({ ...newUser, role: roles });
-              }}
-            />
-          </FormControl>
-
-        </ModalBody>
-        <ModalFooter>
-          <ModalButton kind="tertiary" onClick={closeAddUserModal}>
-            Cancel
-          </ModalButton>
-          <ModalButton onClick={handleAddUser}>Add User</ModalButton>
-        </ModalFooter>
-      </Modal>
+                <div className="form-group">
+                  <label className="form-label">
+                    <i className="bi bi-shield-check"></i> Role *
+                  </label>
+                  <select
+                    className="form-select"
+                    value={newUser.role[0]?.id || ''}
+                    onChange={(e) => {
+                      const selectedRole = e.target.value as Role;
+                      setNewUser({ ...newUser, role: [{ id: selectedRole, label: getRoleLabel(selectedRole) }] });
+                    }}
+                    required
+                  >
+                    <option value="">Select a role</option>
+                    <option value={Role.NURSE}>Nurse</option>
+                    <option value={Role.DOCTOR}>Doctor</option>
+                  </select>
+                </div>
+              </form>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={closeAddUserModal}>
+                Cancel
+              </button>
+              <button className="btn btn-primary" onClick={handleAddUser}>
+                <i className="bi bi-check"></i> Add User
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Edit User Modal */}
-      {currentUser && (
-        <Modal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          closeable
-          animate
-          autoFocus
-        >
-          <ModalHeader>Edit User</ModalHeader>
-          <ModalBody>
-            <FormControl label="Name *">
-              <Input
-                value={currentUser.name}
-                onChange={e => setCurrentUser({ ...currentUser, name: e.currentTarget.value })}
-                placeholder="Enter user's full name"
-              />
-            </FormControl>
+      {currentUser && isEditModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsEditModalOpen(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>
+                <i className="bi bi-pencil-square"></i> Edit User
+              </h3>
+              <button className="modal-close" onClick={() => setIsEditModalOpen(false)}>
+                <i className="bi bi-x"></i>
+              </button>
+            </div>
+            <div className="modal-body">
+              <form className="user-form">
+                <div className="form-group">
+                  <label className="form-label">
+                    <i className="bi bi-person"></i> Name *
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={currentUser.name}
+                    onChange={(e) => setCurrentUser({ ...currentUser, name: e.target.value })}
+                    placeholder="Enter user's full name"
+                    required
+                  />
+                </div>
 
-            <FormControl label="Email *">
-              <Input
-                value={currentUser.email}
-                onChange={e => setCurrentUser({ ...currentUser, email: e.currentTarget.value })}
-                placeholder="Enter user's email"
-                type="email"
-              />
-            </FormControl>
+                <div className="form-group">
+                  <label className="form-label">
+                    <i className="bi bi-envelope"></i> Email *
+                  </label>
+                  <input
+                    type="email"
+                    className="form-input"
+                    value={currentUser.email}
+                    onChange={(e) => setCurrentUser({ ...currentUser, email: e.target.value })}
+                    placeholder="Enter user's email"
+                    required
+                  />
+                </div>
 
-            <FormControl label="Role *">
-              <Select
-                options={[
-                  { id: Role.NURSE, label: 'Nurse' },
-                  { id: Role.DOCTOR, label: 'Doctor' }
-                ]}
-                value={currentUser.role}
-                placeholder="Select user role"
-                onChange={params => setCurrentUser({ ...currentUser, role: [...params.value] })}
-              />
-            </FormControl>
-          </ModalBody>
-          <ModalFooter>
-            <ModalButton kind="tertiary" onClick={() => setIsEditModalOpen(false)}>
-              Cancel
-            </ModalButton>
-            <ModalButton onClick={handleEditUser}>Save Changes</ModalButton>
-          </ModalFooter>
-        </Modal>
+                <div className="form-group">
+                  <label className="form-label">
+                    <i className="bi bi-shield-check"></i> Role *
+                  </label>
+                  <select
+                    className="form-select"
+                    value={currentUser.role[0]?.id || ''}
+                    onChange={(e) => {
+                      const selectedRole = e.target.value as Role;
+                      setCurrentUser({ ...currentUser, role: [{ id: selectedRole, label: getRoleLabel(selectedRole) }] });
+                    }}
+                    required
+                  >
+                    <option value="">Select a role</option>
+                    <option value={Role.NURSE}>Nurse</option>
+                    <option value={Role.DOCTOR}>Doctor</option>
+                  </select>
+                </div>
+              </form>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setIsEditModalOpen(false)}>
+                Cancel
+              </button>
+              <button className="btn btn-primary" onClick={handleEditUser}>
+                <i className="bi bi-check"></i> Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Delete User Modal */}
-      {currentUser && (
-        <Modal
-          isOpen={isDeleteModalOpen}
-          onClose={() => setIsDeleteModalOpen(false)}
-          closeable
-          animate
-          autoFocus
-        >
-          <ModalHeader>Delete User</ModalHeader>
-          <ModalBody>
-            <Block>
-              Are you sure you want to delete the user <strong>{currentUser.name}</strong>? This action cannot be undone.
-            </Block>
-          </ModalBody>
-          <ModalFooter>
-            <ModalButton kind="tertiary" onClick={() => setIsDeleteModalOpen(false)}>
-              Cancel
-            </ModalButton>
-            <ModalButton kind="negative" onClick={handleDeleteUser}>Delete</ModalButton>
-          </ModalFooter>
-        </Modal>
+      {currentUser && isDeleteModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsDeleteModalOpen(false)}>
+          <div className="modal-content modal-danger" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>
+                <i className="bi bi-exclamation-triangle"></i> Delete User
+              </h3>
+              <button className="modal-close" onClick={() => setIsDeleteModalOpen(false)}>
+                <i className="bi bi-x"></i>
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="delete-confirmation">
+                <div className="delete-icon">
+                  <i className="bi bi-person-x"></i>
+                </div>
+                <p>Are you sure you want to delete the user <strong>{currentUser.name}</strong>?</p>
+                <p className="delete-warning">This action cannot be undone and will permanently remove the user from the system.</p>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>
+                Cancel
+              </button>
+              <button className="btn btn-danger" onClick={handleDeleteUser}>
+                <i className="bi bi-trash"></i> Delete User
+              </button>
+            </div>
+          </div>
+        </div>
       )}
-    </Block>
+    </div>
   );
 };
 
