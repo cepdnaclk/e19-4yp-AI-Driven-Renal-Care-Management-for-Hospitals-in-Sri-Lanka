@@ -145,7 +145,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({ role }) => {
                                 {filteredPatients.length === 0 ? (
                                     <tr>
                                         <td colSpan={patientTableConfig[role].length + 1} id="no-data-message">
-                                            <p>{lang.patient_search.no_patient_data}</p>
+                                            <p>{lang.not_available}</p>
                                             <span>{lang.table.no_search_data}</span>
                                         </td>
                                     </tr>
