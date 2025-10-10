@@ -51,7 +51,7 @@
     --dark-accent: #64b5f6;
 
     /* Ensure all text is white in dark theme */
-    color: var(--color-text);
+    /* color: var(--color-text); */
 }
 
 
@@ -114,6 +114,19 @@
 
 .margin-bottom-10{
     margin-bottom: 10px;
+}
+
+.margin-top-bottom-20{
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.margin-top-20{
+    margin-top: 20px;
+}
+
+.margin-bottom-20{
+    margin-bottom: 20px;
 }
 
 .padding-top-bottom-10{
@@ -522,12 +535,6 @@
 
 .patient-row:last-child {
     border-bottom: none;
-}
-
-.patient-actions {
-    margin-top: 24px;
-    display: flex;
-    gap: 12px;
 }
 
 /* ===== PATIENT SEARCH PAGE ===== */
