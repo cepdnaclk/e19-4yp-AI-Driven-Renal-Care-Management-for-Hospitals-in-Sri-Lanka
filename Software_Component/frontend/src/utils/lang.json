@@ -2,9 +2,34 @@
     "patient_search": {
         "title": "Patient Search",
         "add_new_patient": "Add New Patient",
-        "no_patients_found": "No patients found.",
-        "searchbar_placeholder": "Search by Patient ID / Name / Doctor Name",
-        "no_patient_data": "No Patients Found!"
+        "searchbar_placeholder": "Search by Patient ID / Name / Doctor Name"   
+    },
+    "patient_personal_info": {
+        "personal_info": "Personal Information",
+        "id": "Patient ID",
+        "age": "Age",
+        "gender": "Gender",
+        "blood_type": "Blood Type",
+        "contact": "Contact",
+        "emergency_contact": "Emergency Contact",
+        "assigned_doctor": "Assigned Doctor",
+        "registration_date": "Registration Date",
+        "address": "Address"
+    },
+    "patient_medical_status": {
+        "medical_history": "Medical History",
+        "dialysis_info": "Dialysis Information",
+        "type": "Type",
+        "frequency": "Frequency",
+        "vascular_access": "Vascular Access",
+        "dry_weight": "Dry Weight",
+        "target_ufr": "Target UFR",
+        "medical_problems": "Medical Problems",
+        "diagnosed": "Diagnosed",
+        "status": "Status",
+        "current_medications": "Current Medications",
+        "renal_diagnosis": "Renal Diagnosis",
+        "allergies": "Allergies"
     },
     "toasts": {
         "patient_search": {
@@ -30,7 +55,26 @@
         "reset": "Reset",
         "load_more": "Load More"
     },
+    "units": {
+        "kg": "kg",
+        "lbs": "lbs",
+        "cm": "cm",
+        "inches": "inches",
+        "mmol_L": "mmol/L",
+        "mEq_L": "mEq/L",
+        "g_L": "g/L",
+        "bpm": "bpm",
+        "mmHg": "mmHg",
+        "L": "L",
+        "mL": "mL",
+        "mL_min": "mL/min",
+        "mL_min_1_73m2": "mL/min/1.73m²",
+        "percent": "%"
+    },
     "error": "Error:",
     "loading": "Loading...",
-    "restricted": "Restricted Access!"
+    "restricted": "Restricted Access!",
+    "not_available": "N/A",
+    "no_patient_data": "No Patients Found!",
+    "not_assigned": "Not Assigned"
 }
