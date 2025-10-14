@@ -11,12 +11,12 @@ require('dotenv').config();
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/users');
+const userRoutes = require('./routes/userRoutes');
 const patientRoutes = require('./routes/patientRoutes');
 const dialysisSessionRoutes = require('./routes/dialysisSessionRoutes');
 const monthlyInvestigationRoutes = require('./routes/monthlyInvestigationRoutes');
 const clinicalDecisionRoutes = require('./routes/clinicalDecisions');
-const notificationRoutes = require('./routes/notifications');
+const notificationRoutes = require('./routes/notificationRoutes');
 const aiPredictionRoutes = require('./routes/aiPredictionRoutes');
 const trendsRoutes = require('./routes/trends');
 
@@ -27,6 +27,7 @@ const auth = require('./middleware/auth');
 // Import utilities
 const { connectDB } = require('./config/database');
 const { initializeSocket } = require('./config/socket');
+const ScheduledNotificationService = require('./services/scheduledNotificationService');
 
 const app = express();
 
@@ -38,6 +39,9 @@ const io = initializeSocket(server);
 
 // Connect to MongoDB
 connectDB();
+
+// Initialize scheduled notifications
+ScheduledNotificationService.initializeScheduledNotifications();
 
 // Rate limiting
 const limiter = rateLimit({

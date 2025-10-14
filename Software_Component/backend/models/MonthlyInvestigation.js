@@ -200,7 +200,7 @@ monthlyInvestigationSchema.index({ 'laboratoryInfo.requestedBy': 1 });
 monthlyInvestigationSchema.index({ status: 1 });
 monthlyInvestigationSchema.index({ patient: 1, date: -1 });
 
-// Generate investigation ID
+// Generate investigation ID and create notifications for critical values
 monthlyInvestigationSchema.pre('save', async function(next) {
   if (!this.investigationId) {
     try {
@@ -212,6 +212,118 @@ monthlyInvestigationSchema.pre('save', async function(next) {
     }
   }
   next();
+});
+
+// Post-save middleware to create notifications for critical lab values
+monthlyInvestigationSchema.post('save', async function(doc) {
+  try {
+    const notificationService = require('../services/notificationService');
+    const Patient = require('./Patient');
+    const User = require('./User');
+    
+    // Get patient information
+    const patient = await Patient.findById(doc.patient).populate('assignedDoctor');
+    if (!patient) return;
+
+    // Check for critical lab values and create notifications
+    const criticalValues = [];
+    
+    // Hemoglobin - Critical if < 7.0 or > 18.0
+    if (doc.hb && (doc.hb < 7.0 || doc.hb > 18.0)) {
+      criticalValues.push({
+        parameter: 'Hemoglobin',
+        value: `${doc.hb} g/dL`,
+        normalRange: '12.0-15.5 g/dL',
+        flag: 'CRITICAL'
+      });
+    }
+
+    // Serum Creatinine Pre-HD - Critical if > 1200 µmol/L
+    if (doc.scrPreHD && doc.scrPreHD > 1200) {
+      criticalValues.push({
+        parameter: 'Serum Creatinine Pre-HD',
+        value: `${doc.scrPreHD} µmol/L`,
+        normalRange: '60-120 µmol/L',
+        flag: 'CRITICAL'
+      });
+    }
+
+    // Serum Potassium - Critical if < 2.5 or > 6.5
+    if (doc.serumKPreHD && (doc.serumKPreHD < 2.5 || doc.serumKPreHD > 6.5)) {
+      criticalValues.push({
+        parameter: 'Serum Potassium Pre-HD',
+        value: `${doc.serumKPreHD} mmol/L`,
+        normalRange: '3.5-5.0 mmol/L',
+        flag: 'CRITICAL'
+      });
+    }
+
+    // Serum Phosphate - Critical if > 2.5
+    if (doc.sPhosphate && doc.sPhosphate > 2.5) {
+      criticalValues.push({
+        parameter: 'Serum Phosphate',
+        value: `${doc.sPhosphate} mmol/L`,
+        normalRange: '0.8-1.5 mmol/L',
+        flag: 'CRITICAL'
+      });
+    }
+
+    // Create notifications for critical values
+    for (const criticalValue of criticalValues) {
+      // Notify assigned doctor
+      if (patient.assignedDoctor) {
+        await notificationService.createNotification({
+          title: `Critical Lab Result: ${criticalValue.parameter}`,
+          message: `Patient ${patient.name} has critical ${criticalValue.parameter} level: ${criticalValue.value}. Immediate attention required.`,
+          type: 'CRITICAL',
+          priority: 'URGENT',
+          category: 'LAB_RESULT',
+          recipient: patient.assignedDoctor._id,
+          relatedEntity: {
+            entityType: 'Patient',
+            entityId: patient._id
+          },
+          data: {
+            actionRequired: true,
+            labValue: criticalValue,
+            actionUrl: `/patients/${patient._id}/investigations`
+          },
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+        });
+      }
+
+      // Notify all active doctors and nurses for critical values
+      const medicalStaff = await User.find({
+        role: { $in: ['doctor', 'nurse'] },
+        isActive: true
+      });
+
+      for (const staff of medicalStaff) {
+        if (staff._id.toString() !== patient.assignedDoctor?._id.toString()) {
+          await notificationService.createNotification({
+            title: `Critical Lab Alert: ${patient.name}`,
+            message: `Critical ${criticalValue.parameter}: ${criticalValue.value}. Patient requires immediate medical attention.`,
+            type: 'CRITICAL',
+            priority: 'URGENT',
+            category: 'PATIENT_ALERT',
+            recipient: staff._id,
+            relatedEntity: {
+              entityType: 'Patient',
+              entityId: patient._id
+            },
+            data: {
+              actionRequired: true,
+              labValue: criticalValue
+            },
+            expiresAt: new Date(Date.now() + 12 * 60 * 60 * 1000) // 12 hours
+          });
+        }
+      }
+    }
+
+  } catch (error) {
+    console.error('Error creating lab result notifications:', error);
+  }
 });
 
 module.exports = mongoose.model('MonthlyInvestigation', monthlyInvestigationSchema);

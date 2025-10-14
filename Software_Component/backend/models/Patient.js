@@ -210,4 +210,144 @@ patientSchema.pre('save', function(next) {
   next();
 });
 
+// Post-save middleware to create notifications for patient status changes
+patientSchema.post('save', async function(doc) {
+  try {
+    const notificationService = require('../services/notificationService');
+    const User = require('./User');
+
+    // Only create notifications if this is an existing patient being updated
+    if (doc.isNew) return;
+
+    // Get the original document to compare changes
+    const originalDoc = doc.$__original;
+    if (!originalDoc) return;
+
+    // Check for status changes
+    if (originalDoc.status !== doc.status) {
+      let notificationMessage = '';
+      let notificationType = 'INFO';
+      let notificationPriority = 'MEDIUM';
+
+      switch (doc.status) {
+        case 'INACTIVE':
+          notificationMessage = `Patient ${doc.name} has been marked as INACTIVE.`;
+          notificationType = 'WARNING';
+          notificationPriority = 'HIGH';
+          break;
+        case 'TRANSFERRED':
+          notificationMessage = `Patient ${doc.name} has been TRANSFERRED to another facility.`;
+          notificationType = 'INFO';
+          notificationPriority = 'MEDIUM';
+          break;
+        case 'DECEASED':
+          notificationMessage = `Patient ${doc.name} status updated to DECEASED.`;
+          notificationType = 'INFO';
+          notificationPriority = 'HIGH';
+          break;
+        case 'ACTIVE':
+          notificationMessage = `Patient ${doc.name} has been reactivated.`;
+          notificationType = 'SUCCESS';
+          notificationPriority = 'MEDIUM';
+          break;
+      }
+
+      if (notificationMessage) {
+        // Notify assigned doctor
+        if (doc.assignedDoctor) {
+          await notificationService.createNotification({
+            title: 'Patient Status Change',
+            message: notificationMessage,
+            type: notificationType,
+            priority: notificationPriority,
+            category: 'PATIENT_ALERT',
+            recipient: doc.assignedDoctor,
+            relatedEntity: {
+              entityType: 'Patient',
+              entityId: doc._id
+            },
+            data: {
+              actionRequired: doc.status === 'INACTIVE' || doc.status === 'DECEASED',
+              actionUrl: `/patients/${doc._id}`
+            }
+          });
+        }
+
+        // For critical status changes, notify relevant staff
+        if (doc.status === 'INACTIVE' || doc.status === 'DECEASED') {
+          const relevantStaff = await User.find({
+            role: { $in: ['doctor', 'nurse'] },
+            isActive: true
+          }).limit(5); // Limit to avoid spam
+
+          for (const staff of relevantStaff) {
+            if (staff._id.toString() !== doc.assignedDoctor?.toString()) {
+              await notificationService.createNotification({
+                title: `Patient Status Update: ${doc.name}`,
+                message: notificationMessage + ' Please review patient records and update care plans accordingly.',
+                type: notificationType,
+                priority: notificationPriority,
+                category: 'PATIENT_ALERT',
+                recipient: staff._id,
+                relatedEntity: {
+                  entityType: 'Patient',
+                  entityId: doc._id
+                },
+                data: {
+                  actionRequired: false
+                }
+              });
+            }
+          }
+        }
+      }
+    }
+
+    // Check for doctor assignment changes
+    if (originalDoc.assignedDoctor?.toString() !== doc.assignedDoctor?.toString()) {
+      // Notify new assigned doctor
+      if (doc.assignedDoctor) {
+        await notificationService.createNotification({
+          title: 'New Patient Assignment',
+          message: `You have been assigned as the primary doctor for patient ${doc.name}.`,
+          type: 'INFO',
+          priority: 'MEDIUM',
+          category: 'PATIENT_ALERT',
+          recipient: doc.assignedDoctor,
+          relatedEntity: {
+            entityType: 'Patient',
+            entityId: doc._id
+          },
+          data: {
+            actionRequired: true,
+            actionUrl: `/patients/${doc._id}`
+          }
+        });
+      }
+
+      // Notify previous assigned doctor
+      if (originalDoc.assignedDoctor) {
+        await notificationService.createNotification({
+          title: 'Patient Assignment Change',
+          message: `Patient ${doc.name} has been reassigned to another doctor. Please ensure proper handover.`,
+          type: 'INFO',
+          priority: 'MEDIUM',
+          category: 'PATIENT_ALERT',
+          recipient: originalDoc.assignedDoctor,
+          relatedEntity: {
+            entityType: 'Patient',
+            entityId: doc._id
+          },
+          data: {
+            actionRequired: true
+          }
+        });
+      }
+    }
+
+  } catch (error) {
+    console.error('Error creating patient status change notifications:', error);
+  }
+});
+
 module.exports = mongoose.model('Patient', patientSchema);

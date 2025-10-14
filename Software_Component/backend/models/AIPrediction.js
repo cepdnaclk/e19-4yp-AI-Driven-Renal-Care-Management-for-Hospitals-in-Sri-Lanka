@@ -579,4 +579,86 @@ aiPredictionSchema.pre('save', function(next) {
   next();
 });
 
+// Post-save middleware to create notifications for high-risk AI predictions
+aiPredictionSchema.post('save', async function(doc) {
+  try {
+    const notificationService = require('../services/notificationService');
+    const Patient = require('./Patient');
+    const User = require('./User');
+    
+    // Only create notifications for new predictions or high-risk predictions
+    if (!doc.isNew && doc.prediction.severity !== 'HIGH' && doc.prediction.severity !== 'CRITICAL') {
+      return;
+    }
+
+    // Get patient information
+    const patient = await Patient.findById(doc.patient).populate('assignedDoctor');
+    if (!patient) return;
+
+    // Determine notification priority based on prediction severity and probability
+    let notificationType = 'INFO';
+    let notificationPriority = 'MEDIUM';
+    
+    if (doc.prediction.severity === 'HIGH' || doc.prediction.probability > 80) {
+      notificationType = 'WARNING';
+      notificationPriority = 'HIGH';
+    }
+    
+    if (doc.prediction.severity === 'CRITICAL' || doc.prediction.probability > 90) {
+      notificationType = 'CRITICAL';
+      notificationPriority = 'URGENT';
+    }
+
+    // Create notification for assigned doctor
+    if (patient.assignedDoctor) {
+      await notificationService.createNotification({
+        title: `AI Prediction: ${doc.predictionType.replace('_', ' ')}`,
+        message: `${doc.prediction.outcome} (${doc.prediction.probability}% probability, ${doc.prediction.confidence}% confidence)`,
+        type: notificationType,
+        priority: notificationPriority,
+        category: 'AI_PREDICTION',
+        recipient: patient.assignedDoctor._id,
+        relatedEntity: {
+          entityType: 'Patient',
+          entityId: patient._id
+        },
+        data: {
+          actionRequired: doc.prediction.severity === 'HIGH' || doc.prediction.severity === 'CRITICAL',
+          actionUrl: `/patients/${patient._id}/predictions/${doc._id}`
+        }
+      });
+    }
+
+    // For critical predictions, also notify nurses
+    if (doc.prediction.severity === 'CRITICAL' || doc.prediction.probability > 90) {
+      const nurses = await User.find({
+        role: 'nurse',
+        isActive: true
+      });
+
+      for (const nurse of nurses) {
+        await notificationService.createNotification({
+          title: `Critical AI Alert: ${patient.name}`,
+          message: `High-risk prediction for ${doc.predictionType.replace('_', ' ')}: ${doc.prediction.outcome}`,
+          type: 'CRITICAL',
+          priority: 'URGENT',
+          category: 'AI_PREDICTION',
+          recipient: nurse._id,
+          relatedEntity: {
+            entityType: 'Patient',
+            entityId: patient._id
+          },
+          data: {
+            actionRequired: true
+          },
+          expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000) // 8 hours
+        });
+      }
+    }
+
+  } catch (error) {
+    console.error('Error creating AI prediction notifications:', error);
+  }
+});
+
 module.exports = mongoose.model('AIPrediction', aiPredictionSchema);

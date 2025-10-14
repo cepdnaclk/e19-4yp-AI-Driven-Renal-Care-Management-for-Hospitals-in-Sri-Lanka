@@ -156,4 +156,119 @@ dialysisSessionSchema.pre('save', async function(next) {
   next();
 });
 
+// Post-save middleware to create notifications for dialysis session issues
+dialysisSessionSchema.post('save', async function(doc) {
+  try {
+    const notificationService = require('../services/notificationService');
+    const Patient = require('./Patient');
+    const User = require('./User');
+    
+    // Get patient information
+    const patient = await Patient.findById(doc.patient).populate('assignedDoctor');
+    if (!patient) return;
+
+    // Check for session issues and create notifications
+    const sessionIssues = [];
+
+    // Session cancelled
+    if (doc.status === 'CANCELLED') {
+      sessionIssues.push({
+        type: 'CANCELLED_SESSION',
+        message: `Dialysis session for ${patient.name} has been cancelled.`,
+        priority: 'HIGH'
+      });
+    }
+
+    // Incomplete session (duration < 180 minutes)
+    if (doc.status === 'COMPLETED' && doc.hdDuration && doc.hdDuration < 180) {
+      sessionIssues.push({
+        type: 'INCOMPLETE_SESSION',
+        message: `Dialysis session for ${patient.name} completed in only ${doc.hdDuration} minutes (recommended: 240+ minutes).`,
+        priority: 'HIGH'
+      });
+    }
+
+    // Inadequate ultrafiltration (achieved < 80% of prescribed)
+    if (doc.status === 'COMPLETED' && doc.puf && doc.auf && (doc.auf / doc.puf) < 0.8) {
+      sessionIssues.push({
+        type: 'INADEQUATE_UF',
+        message: `Inadequate ultrafiltration for ${patient.name}: ${doc.auf}ml achieved vs ${doc.puf}ml prescribed (${Math.round((doc.auf / doc.puf) * 100)}%).`,
+        priority: 'MEDIUM'
+      });
+    }
+
+    // High blood pressure during session (systolic > 180 or diastolic > 110)
+    if (doc.bloodPressure && (doc.bloodPressure.systolic > 180 || doc.bloodPressure.diastolic > 110)) {
+      sessionIssues.push({
+        type: 'HIGH_BP',
+        message: `High blood pressure during dialysis for ${patient.name}: ${doc.bloodPressure.systolic}/${doc.bloodPressure.diastolic} mmHg.`,
+        priority: 'HIGH'
+      });
+    }
+
+    // Low blood pressure during session (systolic < 90)
+    if (doc.bloodPressure && doc.bloodPressure.systolic < 90) {
+      sessionIssues.push({
+        type: 'LOW_BP',
+        message: `Low blood pressure during dialysis for ${patient.name}: ${doc.bloodPressure.systolic}/${doc.bloodPressure.diastolic} mmHg.`,
+        priority: 'HIGH'
+      });
+    }
+
+    // High transmembrane pressure (TMP > 200)
+    if (doc.tmp && doc.tmp > 200) {
+      sessionIssues.push({
+        type: 'HIGH_TMP',
+        message: `High transmembrane pressure for ${patient.name}: ${doc.tmp} mmHg. Possible filter clotting.`,
+        priority: 'MEDIUM'
+      });
+    }
+
+    // Create notifications for each issue
+    for (const issue of sessionIssues) {
+      // Notify assigned doctor
+      if (patient.assignedDoctor) {
+        await notificationService.createNotification({
+          title: `Dialysis Session Alert: ${issue.type.replace('_', ' ')}`,
+          message: issue.message,
+          type: issue.priority === 'HIGH' ? 'WARNING' : 'INFO',
+          priority: issue.priority,
+          category: 'DIALYSIS_ALERT',
+          recipient: patient.assignedDoctor._id,
+          relatedEntity: {
+            entityType: 'Patient',
+            entityId: patient._id
+          },
+          data: {
+            actionRequired: issue.priority === 'HIGH',
+            actionUrl: `/patients/${patient._id}/sessions/${doc._id}`
+          }
+        });
+      }
+
+      // Notify the nurse who conducted the session
+      if (doc.nurse) {
+        await notificationService.createNotification({
+          title: `Session Issue: ${patient.name}`,
+          message: issue.message + ' Please review and take appropriate action.',
+          type: issue.priority === 'HIGH' ? 'WARNING' : 'INFO',
+          priority: issue.priority,
+          category: 'DIALYSIS_ALERT',
+          recipient: doc.nurse,
+          relatedEntity: {
+            entityType: 'Patient',
+            entityId: patient._id
+          },
+          data: {
+            actionRequired: true
+          }
+        });
+      }
+    }
+
+  } catch (error) {
+    console.error('Error creating dialysis session notifications:', error);
+  }
+});
+
 module.exports = mongoose.model('DialysisSession', dialysisSessionSchema);

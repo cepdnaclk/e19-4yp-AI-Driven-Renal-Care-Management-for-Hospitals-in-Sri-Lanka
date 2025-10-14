@@ -414,4 +414,130 @@ clinicalDecisionSchema.pre('save', function(next) {
   next();
 });
 
+// Post-save middleware to create notifications for clinical decisions
+clinicalDecisionSchema.post('save', async function(doc) {
+  try {
+    const notificationService = require('../services/notificationService');
+    const Patient = require('./Patient');
+    const User = require('./User');
+
+    // Get patient information
+    const patient = await Patient.findById(doc.patient);
+    if (!patient) return;
+
+    // Check for status changes and create appropriate notifications
+    if (!doc.isNew) {
+      const originalDoc = doc.$__original;
+      
+      // Status changed to APPROVED
+      if (originalDoc?.status !== 'APPROVED' && doc.status === 'APPROVED') {
+        // Notify nurses about approved clinical decision
+        const nurses = await User.find({
+          role: 'nurse',
+          isActive: true
+        });
+
+        for (const nurse of nurses) {
+          await notificationService.createNotification({
+            title: 'Clinical Decision Approved',
+            message: `Clinical decision for ${patient.name} has been approved. Please review and implement the new care plan.`,
+            type: 'SUCCESS',
+            priority: 'MEDIUM',
+            category: 'PATIENT_ALERT',
+            recipient: nurse._id,
+            relatedEntity: {
+              entityType: 'Patient',
+              entityId: patient._id
+            },
+            data: {
+              actionRequired: true,
+              actionUrl: `/patients/${patient._id}/decisions/${doc._id}`
+            }
+          });
+        }
+      }
+
+      // Status changed to NEEDS_REVIEW
+      if (originalDoc?.status !== 'NEEDS_REVIEW' && doc.status === 'NEEDS_REVIEW') {
+        // Notify the doctor and other senior doctors
+        const doctors = await User.find({
+          role: 'doctor',
+          isActive: true
+        });
+
+        for (const doctor of doctors) {
+          await notificationService.createNotification({
+            title: 'Clinical Decision Needs Review',
+            message: `Clinical decision for ${patient.name} requires additional review and approval.`,
+            type: 'WARNING',
+            priority: 'HIGH',
+            category: 'PATIENT_ALERT',
+            recipient: doctor._id,
+            relatedEntity: {
+              entityType: 'Patient',
+              entityId: patient._id
+            },
+            data: {
+              actionRequired: true,
+              actionUrl: `/patients/${patient._id}/decisions/${doc._id}`
+            }
+          });
+        }
+      }
+    } else {
+      // New clinical decision created
+      if (doc.status === 'DRAFT') {
+        // Notify the creating doctor that the decision is saved as draft
+        await notificationService.createNotification({
+          title: 'Clinical Decision Saved',
+          message: `Clinical decision for ${patient.name} has been saved as draft. Remember to review and approve when ready.`,
+          type: 'INFO',
+          priority: 'LOW',
+          category: 'PATIENT_ALERT',
+          recipient: doc.doctor,
+          relatedEntity: {
+            entityType: 'Patient',
+            entityId: patient._id
+          },
+          data: {
+            actionRequired: true,
+            actionUrl: `/patients/${patient._id}/decisions/${doc._id}`
+          }
+        });
+      }
+    }
+
+    // Check for critical decisions that require immediate attention
+    if (doc.diagnosis?.primary && doc.diagnosis.primary.toLowerCase().includes('critical')) {
+      const medicalStaff = await User.find({
+        role: { $in: ['doctor', 'nurse'] },
+        isActive: true
+      });
+
+      for (const staff of medicalStaff) {
+        await notificationService.createNotification({
+          title: 'Critical Clinical Decision',
+          message: `Critical clinical decision created for ${patient.name}: ${doc.diagnosis.primary}`,
+          type: 'CRITICAL',
+          priority: 'URGENT',
+          category: 'PATIENT_ALERT',
+          recipient: staff._id,
+          relatedEntity: {
+            entityType: 'Patient',
+            entityId: patient._id
+          },
+          data: {
+            actionRequired: true,
+            actionUrl: `/patients/${patient._id}/decisions/${doc._id}`
+          },
+          expiresAt: new Date(Date.now() + 6 * 60 * 60 * 1000) // 6 hours
+        });
+      }
+    }
+
+  } catch (error) {
+    console.error('Error creating clinical decision notifications:', error);
+  }
+});
+
 module.exports = mongoose.model('ClinicalDecision', clinicalDecisionSchema);

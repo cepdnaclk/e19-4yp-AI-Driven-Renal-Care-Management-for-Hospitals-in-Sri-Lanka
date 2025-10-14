@@ -551,47 +551,148 @@ const seedDatabase = async () => {
     }
     console.log('Created AI predictions');
 
-    // Create notifications
+    // Create notifications with new simplified model
     const notifications = [];
     
-    [doctor1, doctor2].forEach(doctor => {
+    // Create notifications for doctors
+    [doctor1, doctor2].forEach((doctor, index) => {
+      // Patient alert notification
       notifications.push({
         title: 'Urgent Patient Review Required',
-        message: 'Patient showing concerning lab results',
+        message: `Patient ${createdPatients[index].name} showing concerning lab results. Hemoglobin level below 8.0 g/dL.`,
         type: 'WARNING',
         category: 'PATIENT_ALERT',
         priority: 'HIGH',
-        recipients: [{
-          user: doctor._id,
-          read: false
-        }]
+        recipient: doctor._id,
+        isRead: false,
+        relatedEntity: {
+          entityType: 'Patient',
+          entityId: createdPatients[index]._id
+        },
+        data: {
+          actionRequired: true,
+          labValue: {
+            parameter: 'Hemoglobin',
+            value: '7.8 g/dL',
+            normalRange: '12.0-15.5 g/dL',
+            flag: 'LOW'
+          }
+        },
+        createdBy: adminUser._id
       });
       
+      // AI prediction notification
       notifications.push({
-        title: 'AI Prediction Ready',
-        message: 'New AI prediction available for validation',
+        title: 'AI Prediction: High Hypotension Risk',
+        message: `New AI prediction available for patient ${createdPatients[index].name}. High risk of hypotension during next dialysis session.`,
         type: 'INFO',
         category: 'AI_PREDICTION',
         priority: 'MEDIUM',
-        recipients: [{
-          user: doctor._id,
-          read: false
-        }]
+        recipient: doctor._id,
+        isRead: Math.random() > 0.5, // Some read, some unread
+        relatedEntity: {
+          entityType: 'Patient',
+          entityId: createdPatients[index]._id
+        },
+        data: {
+          actionRequired: true,
+          actionUrl: `/patients/${createdPatients[index]._id}/predictions`
+        },
+        createdBy: adminUser._id
+      });
+
+      // Lab result notification
+      notifications.push({
+        title: 'New Lab Results Available',
+        message: `Monthly investigation results for patient ${createdPatients[index].name} are now available for review.`,
+        type: 'INFO',
+        category: 'LAB_RESULT',
+        priority: 'MEDIUM',
+        recipient: doctor._id,
+        isRead: false,
+        relatedEntity: {
+          entityType: 'Patient',
+          entityId: createdPatients[index]._id
+        },
+        data: {
+          actionRequired: false,
+          labValue: {
+            parameter: 'Multiple Parameters',
+            value: 'See full report',
+            normalRange: 'Various',
+            flag: 'NORMAL'
+          }
+        },
+        createdBy: adminUser._id
       });
     });
 
-    [nurse1, nurse2].forEach(nurse => {
+    // Create notifications for nurses
+    [nurse1, nurse2].forEach((nurse, index) => {
+      // Dialysis session reminder
       notifications.push({
-        title: 'Dialysis Session Reminder',
-        message: 'Upcoming dialysis session in 30 minutes',
-        type: 'REMINDER',
+        title: 'Dialysis Session Starting Soon',
+        message: `Patient ${createdPatients[index].name} has a dialysis session starting in 30 minutes. Please prepare the machine.`,
+        type: 'INFO',
         category: 'DIALYSIS_ALERT',
         priority: 'HIGH',
-        recipients: [{
-          user: nurse._id,
-          read: false
-        }]
+        recipient: nurse._id,
+        isRead: false,
+        relatedEntity: {
+          entityType: 'Patient',
+          entityId: createdPatients[index]._id
+        },
+        data: {
+          actionRequired: true,
+          appointmentDate: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes from now
+          appointmentType: 'Hemodialysis Session'
+        },
+        createdBy: adminUser._id,
+        expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000) // Expires in 2 hours
       });
+      
+      // Equipment maintenance alert
+      notifications.push({
+        title: 'Equipment Maintenance Required',
+        message: 'Dialysis machine #3 requires routine maintenance. Please schedule maintenance during off-hours.',
+        type: 'WARNING',
+        category: 'SYSTEM_ALERT',
+        priority: 'MEDIUM',
+        recipient: nurse._id,
+        isRead: Math.random() > 0.7, // Mostly unread
+        data: {
+          actionRequired: true
+        },
+        createdBy: adminUser._id
+      });
+    });
+
+    // Create system notifications for admin
+    notifications.push({
+      title: 'System Backup Completed',
+      message: 'Daily system backup has been completed successfully. All patient data has been securely backed up.',
+      type: 'SUCCESS',
+      category: 'SYSTEM_ALERT',
+      priority: 'LOW',
+      recipient: adminUser._id,
+      isRead: true,
+      readAt: new Date(),
+      createdBy: adminUser._id
+    });
+
+    notifications.push({
+      title: 'Monthly Report Generated',
+      message: 'The monthly patient care report has been generated and is ready for review.',
+      type: 'INFO',
+      category: 'SYSTEM_ALERT',
+      priority: 'MEDIUM',
+      recipient: adminUser._id,
+      isRead: false,
+      data: {
+        actionRequired: true,
+        actionUrl: '/reports/monthly'
+      },
+      createdBy: adminUser._id
     });
 
     // Create notifications individually to trigger pre-save hooks
