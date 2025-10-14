@@ -10,14 +10,14 @@ const { Server } = require('socket.io');
 require('dotenv').config();
 
 // Import routes
-const authRoutes = require('./routes/auth');
+const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/users');
-const patientRoutes = require('./routes/patients');
-const dialysisSessionRoutes = require('./routes/dialysisSessions');
-const monthlyInvestigationRoutes = require('./routes/monthlyInvestigations');
+const patientRoutes = require('./routes/patientRoutes');
+const dialysisSessionRoutes = require('./routes/dialysisSessionRoutes');
+const monthlyInvestigationRoutes = require('./routes/monthlyInvestigationRoutes');
 const clinicalDecisionRoutes = require('./routes/clinicalDecisions');
 const notificationRoutes = require('./routes/notifications');
-const aiPredictionRoutes = require('./routes/aiPredictions');
+const aiPredictionRoutes = require('./routes/aiPredictionRoutes');
 const trendsRoutes = require('./routes/trends');
 
 // Import middleware
