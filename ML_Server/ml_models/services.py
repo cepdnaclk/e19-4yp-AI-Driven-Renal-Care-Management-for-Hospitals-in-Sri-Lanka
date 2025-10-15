@@ -24,22 +24,46 @@ class MLModelManager:
         }
         
     def load_model(self, model_name: str):
-        """Load a specific ML model"""
+        """Load a specific ML model or ensemble bundle"""
         if model_name not in self.models:
             model_path = os.path.join(os.path.dirname(__file__), self.model_paths[model_name])
             if not os.path.exists(model_path):
                 raise FileNotFoundError(f"Model file not found: {model_path}")
             
             try:
-                loaded_model = joblib.load(model_path)
+                loaded_object = joblib.load(model_path)
             except Exception as e:
                 raise ValueError(f"Failed to load model from {model_path}: {str(e)}")
             
-            # Check if the loaded object has predict method
-            if not hasattr(loaded_model, 'predict'):
-                raise ValueError(f"Loaded object for {model_name} is not a valid ML model (type: {type(loaded_model)}). Expected an object with 'predict' method.")
+            # Handle different model formats
+            if hasattr(loaded_object, 'predict'):
+                # Single model object
+                self.models[model_name] = loaded_object
+            elif isinstance(loaded_object, dict):
+                # Ensemble model bundle (like your notebook approach)
+                if model_name == 'hb':
+                    # Strictly validate ensemble structure for Hb model
+                    required_keys = ['xgb', 'lgbm', 'weights', 'threshold']
+                    missing_keys = [key for key in required_keys if key not in loaded_object]
+                    if missing_keys:
+                        raise ValueError(f"Invalid ensemble model for {model_name}. Missing keys: {missing_keys}. Required: {required_keys}")
+                    
+                    # Validate models are proper ML models
+                    if not hasattr(loaded_object['xgb'], 'predict_proba'):
+                        raise ValueError(f"XGB model in ensemble does not have predict_proba method")
+                    if not hasattr(loaded_object['lgbm'], 'predict_proba'):
+                        raise ValueError(f"LGBM model in ensemble does not have predict_proba method")
+                    
+                    # Store the complete ensemble bundle
+                    self.models[model_name] = loaded_object
+                    logger.info(f"Loaded ensemble model for {model_name} with XGB + LGBM (weights: {loaded_object['weights']}, threshold: {loaded_object['threshold']})")
+                else:
+                    # For other models, allow dict but warn
+                    self.models[model_name] = loaded_object
+                    logger.warning(f"Loaded dict object for {model_name}: {list(loaded_object.keys())}")
+            else:
+                raise ValueError(f"Loaded object for {model_name} is not a valid ML model (type: {type(loaded_object)}). Expected an object with 'predict' method or ensemble dict.")
             
-            self.models[model_name] = loaded_model
             self.model_versions[model_name] = "1.0.0"  # Default version
             logger.info(f"Successfully loaded model: {model_name}")
         
@@ -196,25 +220,52 @@ class HbPredictor:
         
     def predict(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Predict if Hb will go to risk region next month
+        Predict if Hb will go to risk region next month using ensemble model
         """
         try:
-            # Load model
-            model = self.model_manager.load_model(self.model_name)
+            # Load model bundle
+            model_bundle = self.model_manager.load_model(self.model_name)
             
             # Prepare features
             features = self._prepare_features(input_data)
             
-            # Make classification prediction
-            prediction = model.predict([features])[0]
+            # Only use ensemble model - throw error if not available
+            if not isinstance(model_bundle, dict) or 'xgb' not in model_bundle:
+                raise ValueError(f"Ensemble model required for {self.model_name}. Expected dict with 'xgb', 'lgbm', 'weights', 'threshold' keys.")
             
-            # Get prediction probabilities
-            if hasattr(model, 'predict_proba'):
-                probabilities = model.predict_proba([features])[0]
-                confidence = max(probabilities)
-                risk_probability = probabilities[1] if len(probabilities) > 1 else probabilities[0]
-            else:
-                raise ValueError(f"Model {self.model_name} does not support probability predictions")
+            # Validate ensemble components
+            required_keys = ['xgb', 'lgbm', 'weights', 'threshold']
+            missing_keys = [key for key in required_keys if key not in model_bundle]
+            if missing_keys:
+                raise ValueError(f"Missing ensemble components: {missing_keys}. Ensemble model must contain: {required_keys}")
+            
+            # Extract ensemble components (exactly like your notebook)
+            xgb_model = model_bundle["xgb"]
+            lgbm_model = model_bundle["lgbm"]
+            w1, w2 = model_bundle["weights"]
+            threshold = model_bundle["threshold"]
+            
+            # Validate models have predict_proba method
+            if not hasattr(xgb_model, 'predict_proba'):
+                raise ValueError("XGB model in ensemble does not support predict_proba")
+            if not hasattr(lgbm_model, 'predict_proba'):
+                raise ValueError("LGBM model in ensemble does not support predict_proba")
+            
+            # Convert features to DataFrame for compatibility
+            import pandas as pd
+            feature_names = model_bundle.get("features", [f"feature_{i}" for i in range(len(features))])
+            X = pd.DataFrame([features], columns=feature_names)
+            
+            # Make ensemble prediction (exactly like your notebook)
+            xgb_probs = xgb_model.predict_proba(X)[:, 1]
+            lgbm_probs = lgbm_model.predict_proba(X)[:, 1]
+            probs_ensemble = w1 * xgb_probs + w2 * lgbm_probs
+            prediction = (probs_ensemble >= threshold).astype(int)[0]
+            
+            # Set probabilities
+            risk_probability = float(probs_ensemble[0])
+            probabilities = [1 - risk_probability, risk_probability]
+            confidence = max(probabilities)
             
             # Interpret prediction
             at_risk = bool(prediction)
