@@ -239,7 +239,7 @@ class HbPredictor:
             if missing_keys:
                 raise ValueError(f"Missing ensemble components: {missing_keys}. Ensemble model must contain: {required_keys}")
             
-            # Extract ensemble components (exactly like your notebook)
+            # Extract ensemble components
             xgb_model = model_bundle["xgb"]
             lgbm_model = model_bundle["lgbm"]
             w1, w2 = model_bundle["weights"]
@@ -256,7 +256,7 @@ class HbPredictor:
             feature_names = model_bundle.get("features", [f"feature_{i}" for i in range(len(features))])
             X = pd.DataFrame([features], columns=feature_names)
             
-            # Make ensemble prediction (exactly like your notebook)
+            # Make ensemble prediction 
             xgb_probs = xgb_model.predict_proba(X)[:, 1]
             lgbm_probs = lgbm_model.predict_proba(X)[:, 1]
             probs_ensemble = w1 * xgb_probs + w2 * lgbm_probs
@@ -305,25 +305,27 @@ class HbPredictor:
     
     def _prepare_features(self, input_data: Dict[str, Any]) -> List[float]:
         """Prepare features for the model based on actual feature columns"""
-        # Feature order based on model training:
-        # ['Albumin (g/L)', 'BU - post HD', 'BU - pre HD', 'S Ca (mmol/L)',
-        #  'SCR- post HD (µmol/L)', 'SCR- pre HD (µmol/L)',
-        #  'Serum K Post-HD (mmol/L)', 'Serum K Pre-HD (mmol/L)',
-        #  'Serum Na Pre-HD (mmol/L)', 'UA (mg/dL)', 'Hb_diff', 'Hb (g/dL)']
+        # New feature order based on updated model training:
+        # ['Albumin (g/L)', 'S Ca (mmol/L)', 'Serum Na Pre-HD (mmol/L)', 'UA (mg/dL)', 
+        #  'Hb_diff', 'Hb (g/dL)', 'Albumin_BU_Ratio', 'K_Diff', 'BU_Diff', 'SCR_Diff']
+        
+        # Calculate derived features
+        albumin_bu_ratio = input_data['albumin'] / (input_data['bu_pre_hd']+1) if input_data['bu_pre_hd'] != 0 else 0
+        k_diff = input_data['serum_k_pre_hd'] - input_data['serum_k_post_hd']
+        bu_diff = input_data['bu_pre_hd'] - input_data['bu_post_hd']
+        scr_diff = input_data['scr_pre_hd'] - input_data['scr_post_hd']
         
         features = [
             input_data['albumin'],                  # Albumin (g/L)
-            input_data['bu_post_hd'],              # BU - post HD
-            input_data['bu_pre_hd'],               # BU - pre HD
             input_data['s_ca'],                    # S Ca (mmol/L)
-            input_data['scr_post_hd'],             # SCR- post HD (µmol/L)
-            input_data['scr_pre_hd'],              # SCR- pre HD (µmol/L)
-            input_data['serum_k_post_hd'],         # Serum K Post-HD (mmol/L)
-            input_data['serum_k_pre_hd'],          # Serum K Pre-HD (mmol/L)
             input_data['serum_na_pre_hd'],         # Serum Na Pre-HD (mmol/L)
             input_data['ua'],                      # UA (mg/dL)
             input_data['hb_diff'],                 # Hb_diff
-            input_data['hb']                       # Hb (g/dL)
+            input_data['hb'],                      # Hb (g/dL)
+            albumin_bu_ratio,                      # Albumin_BU_Ratio (calculated)
+            k_diff,                                # K_Diff (calculated)
+            bu_diff,                               # BU_Diff (calculated)
+            scr_diff                               # SCR_Diff (calculated)
         ]
         return features
     

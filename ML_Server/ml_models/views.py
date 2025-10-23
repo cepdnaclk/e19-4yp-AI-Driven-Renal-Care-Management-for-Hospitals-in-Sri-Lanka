@@ -196,12 +196,17 @@ def models_info(request):
         },
         'hb': {
             'name': 'Hemoglobin Risk Prediction',
-            'description': 'Predicts if hemoglobin will go to risk region next month',
+            'description': 'Predicts if hemoglobin will go to risk region next month using ensemble model',
             'input_parameters': [
                 'albumin', 'bu_post_hd', 'bu_pre_hd', 's_ca',
                 'scr_post_hd', 'scr_pre_hd', 'serum_k_post_hd', 'serum_k_pre_hd',
                 'serum_na_pre_hd', 'ua', 'hb_diff', 'hb'
             ],
+            'calculated_features': [
+                'albumin_bu_ratio', 'k_diff', 'bu_diff', 'scr_diff'
+            ],
+            'feature_engineering': 'Server automatically calculates derived features from input parameters',
+            'model_type': 'Ensemble (XGBoost + LightGBM) with weighted averaging',
             'output': 'Binary classification: Hb at risk (True/False) with probability and clinical recommendations'
         }
     }

@@ -17,8 +17,10 @@ const predictHemoglobin = async (req, res) => {
       });
     }
 
+
     // Get patient data and latest monthly investigation
     const patientDataResult = await AIPredictionService.getPatientDataForHbPrediction(patientId);
+
     
     if (!patientDataResult.success) {
       return res.status(404).json({
@@ -44,7 +46,6 @@ const predictHemoglobin = async (req, res) => {
       success: true,
       message: 'Hemoglobin prediction completed successfully',
       patient: patientDataResult.patientInfo,
-      inputData: patientDataResult.predictionData,
       prediction: predictionResult,
       requestedBy: req.user.id,
       requestedAt: new Date().toISOString()
