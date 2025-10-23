@@ -14,18 +14,30 @@
 
 #### Table of Contents
 
-1. [Abstract](#abstract)
-2. [Problem Statement](#problem-statement)
-3. [Objectives](#objectives)
-4. [System Design](#system-design)
-5. [Methodology](#methodology)
-6. [Technologies Used](#technologies-used)
-7. [Ethics and Privacy](#ethics-and-privacy)
-8. [Results and Analysis](#results-and-analysis)
-9. [Documents](#documents)
-10. [Conclusion](#conclusion)
-11. [Publications](#publications)
-12. [Links](#links)
+- [AI-Driven Renal Care Management – Teaching Hospital Peradeniya](#ai-driven-renal-care-management--teaching-hospital-peradeniya)
+      - [Team](#team)
+      - [Supervisor](#supervisor)
+      - [Table of Contents](#table-of-contents)
+  - [Abstract](#abstract)
+  - [Problem Statement](#problem-statement)
+  - [Objectives](#objectives)
+    - [General Objective](#general-objective)
+    - [Specific Objectives](#specific-objectives)
+  - [System Design](#system-design)
+    - [🏗️ System Architecture](#️-system-architecture)
+    - [🎯 Use Case Diagram](#-use-case-diagram)
+    - [🧩 Workflow Diagram](#-workflow-diagram)
+  - [Methodology](#methodology)
+    - [Phase 1: Machine Learning Model](#phase-1-machine-learning-model)
+    - [Phase 2: AI Expert System](#phase-2-ai-expert-system)
+    - [Phase 3: Pilot Study](#phase-3-pilot-study)
+  - [Technologies Used](#technologies-used)
+  - [Ethics and Privacy](#ethics-and-privacy)
+  - [Results and Analysis](#results-and-analysis)
+  - [Documents](#documents)
+  - [Conclusion](#conclusion)
+  - [Publications](#publications)
+  - [Links](#links)
 
 ---
 
@@ -136,10 +148,6 @@ This AI-powered system seeks to transform renal care by enabling real-time, data
 ## Publications
 
 <!-- Uncomment and add links after uploading to repo -->
-<!-- 1. [Semester 7 report](./) -->
-<!-- 2. [Semester 7 slides](./) -->
-<!-- 3. [Semester 8 report](./) -->
-<!-- 4. [Semester 8 slides](./) -->
 <!-- 5. Author 1, Author 2 and Author 3 "Research paper title" (2025). [PDF](./). -->
 
 ---
