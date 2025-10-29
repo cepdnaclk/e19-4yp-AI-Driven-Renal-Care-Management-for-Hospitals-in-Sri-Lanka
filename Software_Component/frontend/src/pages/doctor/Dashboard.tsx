@@ -97,182 +97,249 @@ const DoctorDashboard: React.FC = () => {
     <div id="container">
       <div id="header">
         <h1>Doctor Dashboard</h1>
+        <p className="dashboard-subtitle">Welcome back! Here's your overview for today</p>
       </div>
 
-      <div className="dashboard-content" style={{ maxWidth: 1400, margin: '0 auto', padding: '0 20px' }}>
-        <div className="dashboard-grid-modern">
-          <div className="dashboard-main">
-            {/* Patients Requiring Review */}
-            <div className="dashboard-card">
-              <div className="dashboard-card-header">
-                <h2 className="dashboard-card-title">
-                  <i className="bi bi-person-check-fill"></i> Patients Requiring Review
-                </h2>
-              </div>
-              <div className="dashboard-card-body">
-                {patientsLoading ? (
-                  <div className="patient-search-loading">
-                    <div className="loading-spinner"></div>
-                    <span>Loading recent patients...</span>
+      <div id="sub_container">
+        <div className="dashboard-content">
+          <div className="dashboard-grid">
+            <div className="dashboard-main">
+              {/* Patients Requiring Review */}
+              <div className="dashboard-card">
+                <div className="dashboard-card-header">
+                  <h2 className="dashboard-card-title">
+                    <i className="bi bi-person-check-fill"></i> Patients Requiring Review
+                  </h2>
+                  <div className="dashboard-card-badge">
+                    {recentPatients.length} Pending
                   </div>
-                ) : patientsError ? (
-                  <div className="patient-search-error">
-                    <span>Error loading patients</span>
-                    <p>{patientsError}</p>
-                  </div>
-                ) : recentPatients.length > 0 ? (
-                  <div className="patients-review-list">
-                    {recentPatients.map(patient => (
-                      <div key={patient.id} className="patient-review-card">
-                        <div className="patient-review-info">
-                          <div className="patient-review-name">{patient.name}</div>
-                          <div className="patient-review-details">
-                            <span className="patient-id">ID: {patient.patientId || patient.id}</span>
-                            <span className="patient-date">Registered: 25/04/2025</span>
-                            <span className="patient-status">Recently added - requires review</span>
+                </div>
+                <div className="dashboard-card-body">
+                  {patientsLoading ? (
+                    <div id="table-data-loading">
+                      <span>🔄 Loading recent patients...</span>
+                    </div>
+                  ) : patientsError ? (
+                    <div id="table-data-error">
+                      <span>❌ Error loading patients</span>
+                      <p>{patientsError}</p>
+                    </div>
+                  ) : recentPatients.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      {recentPatients.map(patient => (
+                        <div key={patient.id} className="patient-card" onClick={() => handlePatientClick(patient.patientId || patient.id)}>
+                          <div className="patient-card-content">
+                            <div className="patient-name">
+                              <i className="bi bi-person-circle"></i>
+                              {patient.name}
+                            </div>
+                            <div className="patient-details">
+                              <span className="patient-detail">
+                                <i className="bi bi-upc-scan"></i> ID: {patient.patientId || patient.id}
+                              </span>
+                              <span className="patient-detail">
+                                <i className="bi bi-calendar-check"></i> Registered: 25/04/2025
+                              </span>
+                              <span className="patient-status">
+                                <i className="bi bi-exclamation-triangle-fill"></i> Recently added - requires review
+                              </span>
+                            </div>
                           </div>
+                          <button
+                            className="patient-action"
+                            onClick={(e) => { e.stopPropagation(); handlePatientClick(patient.patientId || patient.id); }}
+                          >
+                            <i className="bi bi-eye-fill"></i> Review
+                          </button>
                         </div>
-                        <button
-                          className="patient-action-btn"
-                          onClick={() => handlePatientClick(patient.patientId || patient.id)}
-                        >
-                          <i className="bi bi-eye-fill"></i> Review
-                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div id="no-data-message">
+                      <p>👤 No recent patients found</p>
+                      <span>Patients will appear here when registered</span>
+                    </div>
+                  )}
+                  <div className="card-actions">
+                    <button className="card-action-btn" onClick={() => navigate('/doctor/patients')}>
+                      <i className="bi bi-people-fill"></i> View All Patients
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="dashboard-card">
+                <div className="dashboard-card-header">
+                  <h2 className="dashboard-card-title">
+                    <i className="bi bi-lightning-charge-fill"></i> Quick Actions
+                  </h2>
+                  <div className="dashboard-card-badge">
+                    2 Available
+                  </div>
+                </div>
+                <div className="dashboard-card-body">
+                  <div className="quick-actions-grid">
+                    <div className="quick-action-card search" onClick={() => navigate('/doctor/patients')}>
+                      <div className="quick-action-icon">🔍</div>
+                      <h3 className="quick-action-title">Search Patients</h3>
+                      <p className="quick-action-description">Find and review patient records quickly</p>
+                      <button className="quick-action-btn">
+                        <i className="bi bi-arrow-right-circle-fill"></i> Search Now
+                      </button>
+                    </div>
+                    <div className="quick-action-card notifications" onClick={() => navigate('/doctor/notifications')}>
+                      <div className="quick-action-icon">🔔</div>
+                      <h3 className="quick-action-title">All Notifications</h3>
+                      <p className="quick-action-description">View all system notifications and alerts</p>
+                      <button className="quick-action-btn">
+                        <i className="bi bi-arrow-right-circle-fill"></i> View All
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="dashboard-sidebar">
+              {/* Quick Stats */}
+              <div className="dashboard-card">
+                <div className="dashboard-card-header">
+                  <h2 className="dashboard-card-title">
+                    <i className="bi bi-bar-chart-fill"></i> Quick Stats
+                  </h2>
+                </div>
+                <div className="dashboard-card-body">
+                  <div className="stats-grid">
+                    <div className="stat-card patients">
+                      <div className="stat-icon">👥</div>
+                      <div className="stat-content">
+                        <div className="stat-value">{recentPatients.length}</div>
+                        <div className="stat-label">Recent Patients</div>
                       </div>
-                    ))}
+                    </div>
+                    <div className="stat-card notifications">
+                      <div className="stat-icon">🔔</div>
+                      <div className="stat-content">
+                        <div className="stat-value">{notifications.length}</div>
+                        <div className="stat-label">New Notifications</div>
+                      </div>
+                    </div>
+                    <div className="stat-card actions">
+                      <div className="stat-icon">⚡</div>
+                      <div className="stat-content">
+                        <div className="stat-value">2</div>
+                        <div className="stat-label">Quick Actions</div>
+                      </div>
+                    </div>
                   </div>
-                ) : (
-                  <div className="no-patients-message">
-                    <p>No recent patients found</p>
-                    <span>Patients will appear here when registered</span>
-                  </div>
-                )}
-                <div className="dashboard-card-actions">
-                  <button className="btn-primary" onClick={() => navigate('/doctor/patients')}>
-                    <i className="bi bi-people-fill"></i> View All Patients
-                  </button>
                 </div>
               </div>
-            </div>
 
-            {/* Quick Actions */}
-            <div className="dashboard-card">
-              <div className="dashboard-card-header">
-                <h2 className="dashboard-card-title">
-                  <i className="bi bi-lightning-charge-fill"></i> Quick Actions
-                </h2>
-              </div>
-              <div className="dashboard-card-body">
-                <div className="quick-actions-grid">
-                  <button className="quick-action-btn" onClick={() => navigate('/doctor/patients')}>
-                    <i className="bi bi-search"></i>
-                    <span>Search Patients</span>
-                  </button>
-                  <button className="quick-action-btn" onClick={() => navigate('/doctor/notifications')}>
-                    <i className="bi bi-bell-fill"></i>
-                    <span>All Notifications</span>
-                  </button>
+              {/* Notifications */}
+              <div className="dashboard-card">
+                <div className="dashboard-card-header">
+                  <h2 className="dashboard-card-title">
+                    <i className="bi bi-bell-fill"></i> Notifications
+                  </h2>
+                  <div className="dashboard-card-badge">
+                    {notifications.length} New
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
+                <div className="dashboard-card-body">
+                  {notificationsLoading ? (
+                    <div id="table-data-loading">
+                      <span>🔄 Loading notifications...</span>
+                    </div>
+                  ) : notificationsError ? (
+                    <div id="table-data-error">
+                      <span>❌ Error loading notifications</span>
+                      <p>{notificationsError}</p>
+                    </div>
+                  ) : notifications.length === 0 ? (
+                    <div id="no-data-message">
+                      <p>🔔 No new notifications</p>
+                      <span>You'll see updates here</span>
+                    </div>
+                  ) : (
+                    <div className="notifications-list">
+                      {notifications.map(notification => {
+                        const isRead = notification.recipients && notification.recipients.length > 0
+                          ? notification.recipients[0].read
+                          : false;
 
-          <div className="dashboard-sidebar">
-            {/* Notifications */}
-            <div className="dashboard-card">
-              <div className="dashboard-card-header">
-                <h2 className="dashboard-card-title">
-                  <i className="bi bi-bell-fill"></i> Notifications
-                </h2>
-              </div>
-              <div className="dashboard-card-body">
-                {notificationsLoading ? (
-                  <div className="patient-search-loading">
-                    <div className="loading-spinner"></div>
-                    <span>Loading notifications...</span>
-                  </div>
-                ) : notificationsError ? (
-                  <div className="patient-search-error">
-                    <span>Error loading notifications</span>
-                    <p>{notificationsError}</p>
-                  </div>
-                ) : notifications.length === 0 ? (
-                  <div className="no-patients-message">
-                    <p>No new notifications</p>
-                    <span>You'll see updates here</span>
-                  </div>
-                ) : (
-                  <div className="notifications-list">
-                    {notifications.map(notification => {
-                      const isRead = notification.recipients && notification.recipients.length > 0
-                        ? notification.recipients[0].read
-                        : false;
+                        const getNotificationStyle = (type: string, priority: string) => {
+                          if (type === 'WARNING' || priority === 'HIGH') {
+                            return 'high';
+                          } else if (type === 'INFO' && priority === 'MEDIUM') {
+                            return 'medium';
+                          } else {
+                            return 'low';
+                          }
+                        };
 
-                      const getNotificationStyle = (type: string, priority: string) => {
-                        if (type === 'WARNING' || priority === 'HIGH') {
-                          return {
-                            background: 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)',
-                            border: '2px solid #e57373',
-                            icon: 'bi bi-exclamation-triangle-fill',
-                            iconColor: '#d32f2f'
-                          };
-                        } else if (type === 'INFO' && priority === 'MEDIUM') {
-                          return {
-                            background: 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)',
-                            border: '2px solid #ff9800',
-                            icon: 'bi bi-info-circle-fill',
-                            iconColor: '#f57c00'
-                          };
-                        } else {
-                          return {
-                            background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-                            border: '2px solid #dee2e6',
-                            icon: 'bi bi-info-circle',
-                            iconColor: '#6c757d'
-                          };
-                        }
-                      };
+                        const getNotificationEmoji = (type: string, priority: string) => {
+                          if (type === 'WARNING' || priority === 'HIGH') {
+                            return '🚨';
+                          } else if (type === 'INFO' && priority === 'MEDIUM') {
+                            return 'ℹ️';
+                          } else {
+                            return '📝';
+                          }
+                        };
 
-                      const style = getNotificationStyle(notification.type, notification.priority);
+                        const getNotificationIcon = (type: string, priority: string) => {
+                          if (type === 'WARNING' || priority === 'HIGH') {
+                            return 'bi bi-exclamation-triangle-fill';
+                          } else if (type === 'INFO' && priority === 'MEDIUM') {
+                            return 'bi bi-info-circle-fill';
+                          } else {
+                            return 'bi bi-info-circle';
+                          }
+                        };
 
-                      return (
-                        <div
-                          key={notification.id}
-                          className={`notification-card ${!isRead ? 'unread' : ''}`}
-                          style={{
-                            background: style.background,
-                            border: isRead ? 'none' : style.border,
-                          }}
-                          onClick={() => handleNotificationClick(notification)}
-                        >
-                          <div className="notification-header">
-                            <div className="notification-title">
-                              <i className={style.icon} style={{ color: style.iconColor, marginRight: '8px' }}></i>
-                              {notification.title}
+                        const style = getNotificationStyle(notification.type, notification.priority);
+                        const emoji = getNotificationEmoji(notification.type, notification.priority);
+                        const iconClass = getNotificationIcon(notification.type, notification.priority);
+
+                        return (
+                          <div
+                            key={notification.id}
+                            className={`notification-card ${style}`}
+                            onClick={() => handleNotificationClick(notification)}
+                          >
+                            <div className="notification-icon-container">
+                              <span className="notification-emoji">{emoji}</span>
                             </div>
-                            <div className="notification-priority">{notification.priority}</div>
+                            <div className="notification-content">
+                              <div className="notification-header">
+                                <div className="notification-title">
+                                  <i className={iconClass}></i>
+                                  {notification.title}
+                                </div>
+                                <div className="notification-priority">{notification.priority}</div>
+                              </div>
+                              <div className="notification-message">{notification.message}</div>
+                              <div className="notification-footer">
+                                <div className="notification-time">
+                                  <i className="bi bi-clock"></i> {new Date(notification.createdAt).toLocaleString()}
+                                </div>
+                                <div className="notification-category">{notification.category}</div>
+                              </div>
+                            </div>
+                            {!isRead && (
+                              <div className="notification-unread-indicator"></div>
+                            )}
                           </div>
-                          <div className="notification-message">{notification.message}</div>
-                          <div className="notification-footer">
-                            <div className="notification-time">
-                              {new Date(notification.createdAt).toLocaleString()}
-                            </div>
-                            <div className="notification-category">{notification.category}</div>
-                          </div>
-                          {!isRead && (
-                            <div className="notification-unread-indicator">
-                              <i className="bi bi-circle-fill"></i> Unread
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
+                  )}
+                  <div className="card-actions">
+                    <button className="card-action-btn" onClick={() => navigate('/doctor/notifications')}>
+                      <i className="bi bi-bell"></i> View All Notifications
+                    </button>
                   </div>
-                )}
-                <div className="dashboard-card-actions">
-                  <button className="btn-secondary" onClick={() => navigate('/doctor/notifications')}>
-                    <i className="bi bi-bell"></i> View All Notifications
-                  </button>
                 </div>
               </div>
             </div>

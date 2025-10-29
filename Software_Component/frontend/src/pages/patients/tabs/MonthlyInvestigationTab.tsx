@@ -31,8 +31,8 @@ export const MonthlyInvestigationTab: React.FC<MonthlyInvestigationTabProps> = (
   if (monthlyInvestigations.length > 0) {
     const latestInvestigation = monthlyInvestigations[0];
     return (
-      <div className="investigation-details">
-        <div className="investigation-header">
+      <div className="padding-30 border-primary border-radius-5 background-gray">
+        <div className="patient-row">
           <h3>{lang.patient_profile.monthly_investigation.title} {new Date(latestInvestigation.date).toLocaleDateString()}</h3>
           <span>ID: {latestInvestigation.investigationId}</span>
         </div>
@@ -43,7 +43,7 @@ export const MonthlyInvestigationTab: React.FC<MonthlyInvestigationTabProps> = (
         <p><strong>{lang.patient_profile.monthly_investigation.protein_nutrition}:</strong> Albumin: {latestInvestigation.albumin?.toFixed(2)} g/dL, Uric Acid: {latestInvestigation.ua?.toFixed(2)} mg/dL</p>
         <p><strong>{lang.patient_profile.monthly_investigation.iron_studies}:</strong> Serum Iron: {latestInvestigation.serumIron?.toFixed(2)} μg/dL, Serum Ferritin: {latestInvestigation.serumFerritin?.toFixed(2)} ng/mL</p>
         <p><strong>{lang.patient_profile.monthly_investigation.other}:</strong> HbA1C: {latestInvestigation.hbA1C?.toFixed(2)}%, Bicarbonate: {latestInvestigation.hco?.toFixed(2)} mEq/L, Alkaline Phosphatase: {latestInvestigation.al?.toFixed(2)} U/L</p>
-        <div className="lab-info">
+        <div className="padding-10">
           <h4>{lang.patient_profile.monthly_investigation.laboratory_info}</h4>
           <p>{lang.patient_profile.monthly_investigation.requested_by}: {latestInvestigation.laboratoryInfo?.requestedBy?.name || lang.not_available}</p>
           <p>{lang.patient_profile.monthly_investigation.performed_by}: {latestInvestigation.laboratoryInfo?.performedBy?.name || lang.not_available}</p>
@@ -58,7 +58,7 @@ export const MonthlyInvestigationTab: React.FC<MonthlyInvestigationTabProps> = (
   }
 
   return (
-    <div className="no-data">
+    <div className="no-patients-message">
       <p>{lang.patient_profile.monthly_investigation.no_data}</p>
     </div>
   );

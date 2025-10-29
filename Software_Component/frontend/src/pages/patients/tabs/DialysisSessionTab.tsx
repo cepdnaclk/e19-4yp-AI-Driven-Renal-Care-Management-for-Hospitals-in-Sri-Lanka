@@ -31,8 +31,8 @@ export const DialysisSessionTab: React.FC<DialysisSessionTabProps> = ({
   if (dialysisSessions.length > 0) {
     const latestSession = dialysisSessions[0];
     return (
-      <div className="session-details">
-        <div className="session-header">
+      <div className="padding-30 border-primary border-radius-5">
+        <div className="patient-row">
           <h3>{lang.patient_profile.dialysis_session.title} {new Date(latestSession.date).toLocaleDateString()}</h3>
           <span>{lang.patient_profile.dialysis_session.session_id} #{latestSession.sessionId}</span>
         </div>
@@ -49,7 +49,7 @@ export const DialysisSessionTab: React.FC<DialysisSessionTabProps> = ({
   }
 
   return (
-    <div className="no-data">
+    <div className="no-patients-message">
       <p>{lang.patient_profile.dialysis_session.no_data}</p>
     </div>
   );

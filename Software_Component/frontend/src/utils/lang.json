@@ -53,7 +53,8 @@
         "save": "Save",
         "add": "Add",
         "reset": "Reset",
-        "load_more": "Load More"
+        "load_more": "Load More",
+        "add_clinical_decision": "Add Clinical Decision"
     },
     "units": {
         "kg": "kg",

@@ -128,10 +128,10 @@ const PatientProfile: React.FC<PatientProfileProps> = ({ role = 'other', backTo 
   const showDoctorActions = role === 'doctor';
 
   return (
-    <div className="patient-profile-page">
-      <h1 className="general-h1">{lang.patient_profile.title}</h1>
+    <div id='container'>
+      <h1 className="h1">{lang.patient_profile.title}</h1>
       <div className="patient-profile-grid">
-        <div className="patient-profile-left">
+        <div className="patient-profile padding-30">
           {patient && (
             <PersonalInfo
               patient={patient}
@@ -142,7 +142,7 @@ const PatientProfile: React.FC<PatientProfileProps> = ({ role = 'other', backTo 
                     className="btn btn-blue"
                     onClick={() => navigate(`/doctor/patients/${patient.id}/clinical-decisions`)}
                   >
-                    {lang.buttons.update}
+                    {lang.buttons.add_clinical_decision}
                   </button>
                 ) : undefined
               }
@@ -150,75 +150,73 @@ const PatientProfile: React.FC<PatientProfileProps> = ({ role = 'other', backTo 
           )}
         </div>
 
-        <div className="patient-profile-right">
-          <div className="patient-card">
-            <div className="patient-card-body">
-              <div className="custom-tabs">
-                <div className="tab-buttons">
-                  <button className={`tab-button ${activeKey === '0' ? 'active' : ''}`} onClick={() => handleTabChange('0')}>{lang.patient_profile.tabs.ai_predictions}</button>
-                  <button className={`tab-button ${activeKey === '1' ? 'active' : ''}`} onClick={() => handleTabChange('1')}>{lang.patient_profile.tabs.latest_dialysis_session}</button>
-                  <button className={`tab-button ${activeKey === '2' ? 'active' : ''}`} onClick={() => handleTabChange('2')}>{lang.patient_profile.tabs.monthly_investigation}</button>
-                  <button className={`tab-button ${activeKey === '3' ? 'active' : ''}`} onClick={() => handleTabChange('3')}>{lang.patient_profile.tabs.trend_analysis}</button>
-                  <button className={`tab-button ${activeKey === '4' ? 'active' : ''}`} onClick={() => handleTabChange('4')}>{lang.patient_profile.tabs.clinical_decisions}</button>
-                </div>
-                <div className="tab-content">
-                  {activeKey === '0' && (
-                    <div className="tab-panel">
-                      <h2>{lang.patient_profile.ai_predictions.title}</h2>
-                      <AIPredictionsTab
-                        aiPredictions={aiPredictions}
-                        aiPredictionsLoading={aiPredictionsLoading}
-                        aiPredictionsError={aiPredictionsError}
-                        patient={patient}
-                        role={role}
-                        onLoadAIPredictions={loadAIPredictions}
-                        onLoadMonthlyInvestigations={loadMonthlyInvestigations}
-                        monthlyInvestigationsLoading={monthlyInvestigationsLoading}
-                      />
-                    </div>
-                  )}
-
-                  {activeKey === '1' && (
-                    <div className="tab-panel">
-                      <h2>{lang.patient_profile.dialysis_session.title}</h2>
-                      <DialysisSessionTab
-                        dialysisSessions={dialysisSessions}
-                        dialysisSessionsLoading={dialysisSessionsLoading}
-                        dialysisSessionsError={dialysisSessionsError}
-                      />
-                    </div>
-                  )}
-
-                  {activeKey === '2' && (
-                    <div className="tab-panel">
-                      <h2>{lang.patient_profile.monthly_investigation.title}</h2>
-                      <MonthlyInvestigationTab
-                        monthlyInvestigations={monthlyInvestigations}
-                        monthlyInvestigationsLoading={monthlyInvestigationsLoading}
-                        monthlyInvestigationsError={monthlyInvestigationsError}
-                      />
-                    </div>
-                  )}
-
-                  {activeKey === '3' && (
-                    <div className="tab-panel">
-                      <h2>{lang.patient_profile.trend_analysis.title}</h2>
-                      <TrendAnalysisTab
-                        hemoglobinTrend={hemoglobinTrend}
-                        hemoglobinTrendLoading={hemoglobinTrendLoading}
-                        hemoglobinTrendError={hemoglobinTrendError}
-                      />
-                    </div>
-                  )}
-
-                  {activeKey === '4' && (
-                    <ClinicalDecisionsTab
-                      clinicalDecisions={clinicalDecisions}
+        <div className="patient-profile padding-30">
+          <div className="background-primary border-radius-5 padding-30 grey-box-shadow">
+            <div className="width-100-overflow-hidden">
+              <div className="tab-buttons">
+                <button className={`tab-button ${activeKey === '0' ? 'active' : ''}`} onClick={() => handleTabChange('0')}>{lang.patient_profile.tabs.ai_predictions}</button>
+                <button className={`tab-button ${activeKey === '1' ? 'active' : ''}`} onClick={() => handleTabChange('1')}>{lang.patient_profile.tabs.latest_dialysis_session}</button>
+                <button className={`tab-button ${activeKey === '2' ? 'active' : ''}`} onClick={() => handleTabChange('2')}>{lang.patient_profile.tabs.monthly_investigation}</button>
+                <button className={`tab-button ${activeKey === '3' ? 'active' : ''}`} onClick={() => handleTabChange('3')}>{lang.patient_profile.tabs.trend_analysis}</button>
+                <button className={`tab-button ${activeKey === '4' ? 'active' : ''}`} onClick={() => handleTabChange('4')}>{lang.patient_profile.tabs.clinical_decisions}</button>
+              </div>
+              <div className="tab-content">
+                {activeKey === '0' && (
+                  <div className="tab-panel">
+                    <h2>{lang.patient_profile.ai_predictions.title}</h2>
+                    <AIPredictionsTab
+                      aiPredictions={aiPredictions}
+                      aiPredictionsLoading={aiPredictionsLoading}
+                      aiPredictionsError={aiPredictionsError}
                       patient={patient}
                       role={role}
+                      onLoadAIPredictions={loadAIPredictions}
+                      onLoadMonthlyInvestigations={loadMonthlyInvestigations}
+                      monthlyInvestigationsLoading={monthlyInvestigationsLoading}
                     />
-                  )}
-                </div>
+                  </div>
+                )}
+
+                {activeKey === '1' && (
+                  <div className="tab-panel">
+                    <h2>{lang.patient_profile.dialysis_session.title}</h2>
+                    <DialysisSessionTab
+                      dialysisSessions={dialysisSessions}
+                      dialysisSessionsLoading={dialysisSessionsLoading}
+                      dialysisSessionsError={dialysisSessionsError}
+                    />
+                  </div>
+                )}
+
+                {activeKey === '2' && (
+                  <div className="tab-panel">
+                    <h2>{lang.patient_profile.monthly_investigation.title}</h2>
+                    <MonthlyInvestigationTab
+                      monthlyInvestigations={monthlyInvestigations}
+                      monthlyInvestigationsLoading={monthlyInvestigationsLoading}
+                      monthlyInvestigationsError={monthlyInvestigationsError}
+                    />
+                  </div>
+                )}
+
+                {activeKey === '3' && (
+                  <div className="tab-panel">
+                    <h2>{lang.patient_profile.trend_analysis.title}</h2>
+                    <TrendAnalysisTab
+                      hemoglobinTrend={hemoglobinTrend}
+                      hemoglobinTrendLoading={hemoglobinTrendLoading}
+                      hemoglobinTrendError={hemoglobinTrendError}
+                    />
+                  </div>
+                )}
+
+                {activeKey === '4' && (
+                  <ClinicalDecisionsTab
+                    clinicalDecisions={clinicalDecisions}
+                    patient={patient}
+                    role={role}
+                  />
+                )}
               </div>
             </div>
           </div>

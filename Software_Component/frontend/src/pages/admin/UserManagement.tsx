@@ -176,9 +176,9 @@ const AdminUserManagement: React.FC = () => {
   }
 
   return (
-    <div className="general-container">
+    <div id='container'>
       <div className="page-header">
-        <h1 className="general-h1">
+        <h1 className="h1">
           <i className="bi bi-people-fill"></i> User Management
         </h1>
         <p className="page-subtitle">Manage system users, roles, and permissions</p>
@@ -204,7 +204,7 @@ const AdminUserManagement: React.FC = () => {
                 </div>
               ) : (
                 <div className="table-responsive">
-                  <table className="data-table">
+                  <table className="display-table">
                     <thead>
                       <tr>
                         <th>ID</th>

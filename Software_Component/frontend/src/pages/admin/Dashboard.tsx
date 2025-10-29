@@ -50,11 +50,11 @@ const AdminDashboard: React.FC = () => {
   };
 
   return (
-    <div className="general-container">
-      <div className="dashboard-header">
-        <h1 className="general-h1">Admin Dashboard</h1>
-        <p className="dashboard-subtitle">Welcome back! Here's an overview of your system.</p>
-        <div className="dashboard-date">Today: {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+    <div id='container'>
+      <div id="header">
+        <h1>Admin Dashboard</h1>
+        <p className="heading3 color-secondary-text">Welcome back! Here's an overview of your system.</p>
+        <div className="color-primary bold">Today: {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
       </div>
 
       <div className="dashboard-content">
