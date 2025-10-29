@@ -33,7 +33,7 @@ export const TrendAnalysisTab: React.FC<TrendAnalysisTabProps> = ({
     return (
       <div>
         {hemoglobinTrend.statistics && (
-          <div className="statistics">
+          <div className="padding-10 border-primary border-radius-5 margin-bottom-20">
             <h3>{lang.patient_profile.trend_analysis.statistics_title}</h3>
             <div className="stats-grid">
               <p><strong>{lang.patient_profile.trend_analysis.average}:</strong> {hemoglobinTrend.statistics.average?.toFixed(2)} g/dL</p>
@@ -45,7 +45,7 @@ export const TrendAnalysisTab: React.FC<TrendAnalysisTabProps> = ({
           </div>
         )}
 
-        <div className="chart-container">
+        <div className="padding-30">
           <h3>{lang.patient_profile.trend_analysis.chart_title}</h3>
           <ResponsiveContainer width="100%" height={400}>
             <LineChart data={hemoglobinTrend.trendData.map((item: any) => ({ ...item, month: new Date(item.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }), normalMin: hemoglobinTrend.statistics?.normalRange?.min || 12, normalMax: hemoglobinTrend.statistics?.normalRange?.max || 16 }))} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
@@ -63,9 +63,9 @@ export const TrendAnalysisTab: React.FC<TrendAnalysisTabProps> = ({
           </ResponsiveContainer>
         </div>
 
-        <div className="data-table">
+        <div className="padding-10">
           <h3>{lang.patient_profile.trend_analysis.detailed_data_title}</h3>
-          <table>
+          <table className="display-table">
             <thead>
               <tr>
                 <th>{lang.patient_profile.trend_analysis.date}</th>

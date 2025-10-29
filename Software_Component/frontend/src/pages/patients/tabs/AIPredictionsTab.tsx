@@ -45,23 +45,14 @@ export const AIPredictionsTab: React.FC<AIPredictionsTabProps> = ({
   if (aiPredictions) {
     return (
       <div>
-        <div
-          className="risk-assessment"
-          style={{
-            backgroundColor: aiPredictions.hb_risk_predicted ? 'rgba(255, 0, 0, 0.1)' : 'rgba(0, 255, 0, 0.1)',
-            border: aiPredictions.hb_risk_predicted ? '1px solid #d32f2f' : '1px solid #66bb6a',
-            borderRadius: '8px',
-            padding: '16px',
-            marginBottom: '24px'
-          }}
-        >
-          <div className="risk-header">
+        <div className="padding-30 border-primary border-radius-5 margin-bottom-20 background-gray" style={{ backgroundColor: 'transparent' }}>
+          <div>
             <h3>{lang.patient_profile.ai_predictions.risk_assessment_title}</h3>
-            <span className={`risk-status ${aiPredictions.hb_risk_predicted ? 'high-risk' : 'low-risk'}`}>
+            <span className={aiPredictions.hb_risk_predicted ? 'status-error bold' : 'status-good bold'}>
               {aiPredictions.risk_status}
             </span>
           </div>
-          <div className="risk-details">
+          <div className="padding-10">
             <p><strong>{lang.patient_profile.ai_predictions.prediction}:</strong> {aiPredictions.hb_risk_predicted ? lang.patient_profile.ai_predictions.high_risk.toLowerCase() : lang.patient_profile.ai_predictions.low_risk.toLowerCase()}</p>
             <p><strong>{lang.patient_profile.ai_predictions.hemoglobin_trend}:</strong> {aiPredictions.hb_trend}</p>
             <p><strong>{lang.patient_profile.ai_predictions.current_hemoglobin}:</strong> {aiPredictions.current_hb} g/dL</p>
@@ -74,14 +65,14 @@ export const AIPredictionsTab: React.FC<AIPredictionsTabProps> = ({
         </div>
 
         {aiPredictions.recommendations && aiPredictions.recommendations.length > 0 && (
-          <div className="recommendations">
+          <div className="padding-30 border-primary border-radius-5 margin-bottom-20">
             <h3>{lang.patient_profile.ai_predictions.recommendations_title}</h3>
             <ul>
               {aiPredictions.recommendations.map((recommendation: string, index: number) => (
                 <li key={index}>{recommendation}</li>
               ))}
             </ul>
-            <div className="recommendation-actions">
+            <div className="margin-top-10">
               <button className="btn btn-secondary" onClick={() => { console.log('AI recommendations acknowledged'); }}>{lang.patient_profile.ai_predictions.acknowledge_button}</button>
               {showDoctorActions && (
                 <button className="btn btn-outline" onClick={() => navigate(`/doctor/patients/${patient.id}/clinical-decisions`)}>{lang.patient_profile.ai_predictions.record_decision_button}</button>
@@ -94,7 +85,7 @@ export const AIPredictionsTab: React.FC<AIPredictionsTabProps> = ({
           </div>
         )}
 
-        <div className="technical-info">
+        <div className="padding-30 border-primary border-radius-5 background-gray">
           <h3>{lang.patient_profile.ai_predictions.technical_info_title}</h3>
           <p><strong>{lang.patient_profile.ai_predictions.patient_id}:</strong> {aiPredictions.patient_id}</p>
           <p><strong>{lang.patient_profile.ai_predictions.risk_classification}:</strong> {

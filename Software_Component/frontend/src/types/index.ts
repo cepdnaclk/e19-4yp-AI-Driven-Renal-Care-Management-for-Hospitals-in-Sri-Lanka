@@ -206,13 +206,43 @@ export interface ClinicalDecision {
 // Notification interface
 export interface Notification {
   id: string;
-  userId: string;
   title: string;
   message: string;
-  date: string;
-  read: boolean;
-  type: 'info' | 'warning' | 'critical';
-  relatedPatientId?: string;
+  type: 'INFO' | 'WARNING' | 'CRITICAL' | 'SUCCESS';
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+  category: 'PATIENT_ALERT' | 'LAB_RESULT' | 'APPOINTMENT_REMINDER' | 'DIALYSIS_ALERT' | 'AI_PREDICTION' | 'SYSTEM_ALERT';
+  recipient: string; // User ID
+  isRead: boolean;
+  readAt?: string;
+  relatedEntity?: {
+    entityType: 'Patient' | 'DialysisSession' | 'MonthlyInvestigation' | 'User';
+    entityId: string;
+  };
+  data?: {
+    actionRequired?: boolean;
+    actionUrl?: string;
+    labValue?: {
+      parameter: string;
+      value: string;
+      normalRange: string;
+      flag: 'NORMAL' | 'HIGH' | 'LOW' | 'CRITICAL';
+    };
+    appointmentDate?: string;
+    appointmentType?: string;
+  };
+  createdBy?: string; // User ID
+  expiresAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NotificationFilters {
+  page?: number;
+  limit?: number;
+  type?: 'INFO' | 'WARNING' | 'CRITICAL' | 'SUCCESS';
+  category?: 'PATIENT_ALERT' | 'LAB_RESULT' | 'APPOINTMENT_REMINDER' | 'DIALYSIS_ALERT' | 'AI_PREDICTION' | 'SYSTEM_ALERT';
+  priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+  isRead?: boolean;
 }
 
 // AI Prediction interface

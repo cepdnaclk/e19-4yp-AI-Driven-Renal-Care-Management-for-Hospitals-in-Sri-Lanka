@@ -162,22 +162,27 @@ class ScheduledNotificationService {
               });
             }
 
-            // Notify nurses
-            const nurses = await User.find({ role: 'nurse', isActive: true });
-            for (const nurse of nurses.slice(0, 1)) { // Only one nurse to avoid spam
+            // Notify nurses and admins
+            const medicalStaff = await User.find({
+              role: { $in: ['nurse', 'admin'] },
+              isActive: true
+            });
+
+            for (const staff of medicalStaff.slice(0, 2)) { // Limit to 2 staff members to avoid spam
               await notificationService.createNotification({
                 title: 'Patient No-Show Alert',
                 message: `${patient.name} did not attend their scheduled dialysis session yesterday. Please contact patient and reschedule if needed.`,
                 type: 'WARNING',
                 priority: 'HIGH',
                 category: 'PATIENT_ALERT',
-                recipient: nurse._id,
+                recipient: staff._id,
                 relatedEntity: {
                   entityType: 'Patient',
                   entityId: patient._id
                 },
                 data: {
-                  actionRequired: true
+                  actionRequired: staff.role === 'admin' ? false : true, // Admins get notified but may not need to take direct action
+                  actionUrl: staff.role === 'admin' ? null : `/patients/${patient._id}/sessions`
                 }
               });
             }
@@ -239,17 +244,22 @@ class ScheduledNotificationService {
       
       // Weekly maintenance reminder (every Sunday)
       if (dayOfWeek === 0) {
-        for (const nurse of nurses.slice(0, 2)) { // Limit to 2 nurses
+        const maintenanceStaff = await User.find({
+          role: { $in: ['nurse', 'admin'] },
+          isActive: true
+        });
+
+        for (const staff of maintenanceStaff.slice(0, 3)) { // Limit to 3 staff members
           await notificationService.createNotification({
             title: 'Weekly Equipment Maintenance',
             message: 'Weekly equipment maintenance is due. Please check dialysis machines, water treatment system, and other critical equipment.',
             type: 'INFO',
             priority: 'MEDIUM',
             category: 'SYSTEM_ALERT',
-            recipient: nurse._id,
+            recipient: staff._id,
             data: {
-              actionRequired: true,
-              actionUrl: '/maintenance/weekly-checklist'
+              actionRequired: staff.role === 'admin' ? false : true, // Admins get notified but may not need to take direct action
+              actionUrl: staff.role === 'admin' ? null : '/maintenance/weekly-checklist'
             },
             expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
           });
@@ -284,6 +294,7 @@ class ScheduledNotificationService {
 
       for (const lab of criticalLabs) {
         if (lab.patient && lab.patient.assignedDoctor) {
+          // Notify assigned doctor
           await notificationService.createNotification({
             title: 'Critical Lab Follow-up Required',
             message: `Patient ${lab.patient.name} had critical lab results 3 days ago. Please ensure appropriate follow-up actions have been taken.`,
@@ -300,6 +311,27 @@ class ScheduledNotificationService {
               actionUrl: `/patients/${lab.patient._id}/investigations`
             }
           });
+
+          // Notify admins for critical ongoing issues
+          const admins = await User.find({ role: 'admin', isActive: true });
+          for (const admin of admins.slice(0, 1)) { // Limit to 1 admin to avoid spam
+            await notificationService.createNotification({
+              title: 'Critical Lab Follow-up Alert',
+              message: `Patient ${lab.patient.name} had critical lab results 3 days ago and requires follow-up. Monitoring system oversight needed.`,
+              type: 'WARNING',
+              priority: 'HIGH',
+              category: 'LAB_RESULT',
+              recipient: admin._id,
+              relatedEntity: {
+                entityType: 'Patient',
+                entityId: lab.patient._id
+              },
+              data: {
+                actionRequired: false, // Admins get notified for oversight but may not need to take direct action
+                actionUrl: `/admin/patients/${lab.patient._id}/investigations`
+              }
+            });
+          }
         }
       }
       

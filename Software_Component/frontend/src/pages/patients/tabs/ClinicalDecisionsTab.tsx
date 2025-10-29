@@ -18,7 +18,7 @@ export const ClinicalDecisionsTab: React.FC<ClinicalDecisionsTabProps> = ({
   const showDoctorActions = role === 'doctor';
 
   return (
-    <div className="clinical-decisions-header">
+    <div className="main-content padding-30">
       <h2>{lang.patient_profile.clinical_decisions.title}</h2>
       {showDoctorActions && (
         <button className="btn btn-primary" onClick={() => navigate(`/doctor/patients/${patient.id}/clinical-decisions`)}>
@@ -27,7 +27,7 @@ export const ClinicalDecisionsTab: React.FC<ClinicalDecisionsTabProps> = ({
       )}
       {clinicalDecisions.length > 0 ? (
         clinicalDecisions.map(decision => (
-          <div key={decision.id} className="decision-item">
+          <div key={decision.id} className="padding-10 border-primary border-radius-5 margin-bottom-10 background-gray">
             <h3>{lang.patient_profile.clinical_decisions.decision_date} {decision.date}</h3>
             <p><strong>{lang.patient_profile.clinical_decisions.notes}:</strong> {decision.notes}</p>
             <p><strong>{lang.patient_profile.clinical_decisions.prescription}:</strong> {decision.prescription}</p>
@@ -38,7 +38,7 @@ export const ClinicalDecisionsTab: React.FC<ClinicalDecisionsTabProps> = ({
           </div>
         ))
       ) : (
-        <div className="no-data">
+        <div className="no-patients-message">
           <p>{lang.patient_profile.clinical_decisions.no_data}</p>
         </div>
       )}

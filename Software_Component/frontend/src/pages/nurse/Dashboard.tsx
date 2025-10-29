@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Notification, Patient } from '../../types';
 import { fetchAllPatients, fetchNotifications } from '../patients/PatientService';
+import { patientTableConfig } from '../patients/patientTableConfig';
+import LoadingSpinner from '../../components/layout/LoadingSpinner';
 import '../../main.css';
 
 const NurseDashboard: React.FC = () => {
@@ -94,12 +96,13 @@ const NurseDashboard: React.FC = () => {
 
   return (
     <div id="container">
-      <div id="header">
-        <h1>Nurse Dashboard</h1>
-      </div>
-
-      <div className="dashboard-content" style={{ maxWidth: 1400, margin: '0 auto', padding: '0 20px' }}>
-        <div className="dashboard-grid-modern">
+    <div className="dashboard-header">
+      <h1 className="dashboard-title">
+        <i className="bi bi-speedometer2"></i> Nurse Dashboard
+      </h1>
+      <p className="dashboard-subtitle">Welcome back! Here's an overview of your patients and notifications.</p>
+    </div>      <div className="dashboard-content">
+        <div className="dashboard-grid">
           <div className="dashboard-main">
             {/* Recent Patients */}
             <div className="dashboard-card">
@@ -110,35 +113,40 @@ const NurseDashboard: React.FC = () => {
               </div>
               <div className="dashboard-card-body">
                 {patientsLoading ? (
-                  <div className="patient-search-loading">
-                    <div className="loading-spinner"></div>
-                    <span>Loading recent patients...</span>
-                  </div>
+                  <LoadingSpinner message="Loading recent patients..." />
                 ) : patientsError ? (
                   <div className="patient-search-error">
                     <span>Error loading patients</span>
                     <p>{patientsError}</p>
                   </div>
                 ) : recentPatients.length > 0 ? (
-                  <div className="patients-review-list">
-                    {recentPatients.map(patient => (
-                      <div key={patient.id} className="patient-review-card">
-                        <div className="patient-review-info">
-                          <div className="patient-review-name">{patient.name}</div>
-                          <div className="patient-review-details">
-                            <span className="patient-id">ID: {patient.patientId || patient.id}</span>
-                            <span className="patient-date">Age: {patient.age}, Gender: {patient.gender}</span>
-                            <span className="patient-status">Blood Type: {patient.bloodType}</span>
-                          </div>
-                        </div>
-                        <button
-                          className="patient-action-btn"
-                          onClick={() => handlePatientClick(patient.patientId || patient.id)}
-                        >
-                          <i className="bi bi-eye-fill"></i> View Profile
-                        </button>
-                      </div>
-                    ))}
+                  <div id="table-container">
+                    <table id="table" className="patient-table">
+                      <thead>
+                        <tr>
+                          {patientTableConfig.nurse.map((col: any) => (
+                            <th key={col.key}>{col.label}</th>
+                          ))}
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {recentPatients.map((patient: any) => (
+                          <tr key={patient.id}>
+                            {patientTableConfig.nurse.map((col: any) => (
+                              <td key={col.key}>
+                                {col.render ? col.render(patient) : (patient[col.key] ?? 'N/A')}
+                              </td>
+                            ))}
+                            <td>
+                              <button className="btn btn-blue" onClick={() => handlePatientClick(patient.patientId || patient.id)}>
+                                <i className="bi bi-eye-fill"></i> View
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 ) : (
                   <div className="no-patients-message">
@@ -147,7 +155,7 @@ const NurseDashboard: React.FC = () => {
                   </div>
                 )}
                 <div className="dashboard-card-actions">
-                  <button className="btn-primary" onClick={() => navigate('/nurse/patients')}>
+                  <button className="btn btn-blue" onClick={() => navigate('/nurse/patients')}>
                     <i className="bi bi-people-fill"></i> View All Patients
                   </button>
                 </div>
@@ -163,19 +171,19 @@ const NurseDashboard: React.FC = () => {
               </div>
               <div className="dashboard-card-body">
                 <div className="quick-actions-grid">
-                  <button className="quick-action-btn" onClick={() => navigate('/nurse/patients')}>
+                  <button className="btn btn-blue" onClick={() => navigate('/nurse/patients')}>
                     <i className="bi bi-search"></i>
                     <span>Search Patients</span>
                   </button>
-                  <button className="quick-action-btn" onClick={() => navigate('/nurse/submission-status')}>
+                  <button className="btn btn-blue" onClick={() => navigate('/nurse/submission-status')}>
                     <i className="bi bi-clipboard-check-fill"></i>
                     <span>View Submissions</span>
                   </button>
-                  <button className="quick-action-btn" onClick={() => navigate('/nurse/notifications')}>
+                  <button className="btn btn-blue" onClick={() => navigate('/nurse/notifications')}>
                     <i className="bi bi-bell-fill"></i>
                     <span>All Notifications</span>
                   </button>
-                  <button className="quick-action-btn" onClick={() => navigate('/nurse/add-patient')}>
+                  <button className="btn btn-blue" onClick={() => navigate('/nurse/add-patient')}>
                     <i className="bi bi-person-plus-fill"></i>
                     <span>Add New Patient</span>
                   </button>
@@ -194,10 +202,7 @@ const NurseDashboard: React.FC = () => {
               </div>
               <div className="dashboard-card-body">
                 {notificationsLoading ? (
-                  <div className="patient-search-loading">
-                    <div className="loading-spinner"></div>
-                    <span>Loading notifications...</span>
-                  </div>
+                  <LoadingSpinner message="Loading notifications..." />
                 ) : notificationsError ? (
                   <div className="patient-search-error">
                     <span>Error loading notifications</span>
@@ -245,16 +250,12 @@ const NurseDashboard: React.FC = () => {
                       return (
                         <div
                           key={notification.id}
-                          className={`notification-card ${!isRead ? 'unread' : ''}`}
-                          style={{
-                            background: style.background,
-                            border: isRead ? 'none' : style.border,
-                          }}
+                          className={`notification-card ${!isRead ? 'unread' : ''} ${notification.type.toLowerCase()} ${notification.priority.toLowerCase()}`}
                           onClick={() => handleNotificationClick(notification)}
                         >
                           <div className="notification-header">
                             <div className="notification-title">
-                              <i className={style.icon} style={{ color: style.iconColor, marginRight: '8px' }}></i>
+                              <i className={`${style.icon} notification-icon`}></i>
                               {notification.title}
                             </div>
                             <div className="notification-priority">
@@ -282,7 +283,7 @@ const NurseDashboard: React.FC = () => {
                   </div>
                 )}
                 <div className="dashboard-card-actions">
-                  <button className="btn-secondary" onClick={() => navigate('/nurse/notifications')}>
+                  <button className="btn btn-green" onClick={() => navigate('/nurse/notifications')}>
                     <i className="bi bi-bell"></i> View All Notifications
                   </button>
                 </div>

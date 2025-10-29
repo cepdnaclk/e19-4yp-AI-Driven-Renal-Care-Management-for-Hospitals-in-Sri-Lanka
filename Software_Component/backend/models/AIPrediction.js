@@ -629,29 +629,30 @@ aiPredictionSchema.post('save', async function(doc) {
       });
     }
 
-    // For critical predictions, also notify nurses
+    // For critical predictions, also notify nurses and admins
     if (doc.prediction.severity === 'CRITICAL' || doc.prediction.probability > 90) {
-      const nurses = await User.find({
-        role: 'nurse',
+      const medicalStaff = await User.find({
+        role: { $in: ['nurse', 'admin'] },
         isActive: true
       });
 
-      for (const nurse of nurses) {
+      for (const staff of medicalStaff) {
         await notificationService.createNotification({
           title: `Critical AI Alert: ${patient.name}`,
           message: `High-risk prediction for ${doc.predictionType.replace('_', ' ')}: ${doc.prediction.outcome}`,
           type: 'CRITICAL',
           priority: 'URGENT',
           category: 'AI_PREDICTION',
-          recipient: nurse._id,
+          recipient: staff._id,
           relatedEntity: {
             entityType: 'Patient',
             entityId: patient._id
           },
           data: {
-            actionRequired: true
+            actionRequired: staff.role === 'admin' ? false : true, // Admins get notified but may not need to take direct action
+            actionUrl: `/patients/${patient._id}/predictions/${doc._id}`
           },
-          expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000) // 8 hours
+          expiresAt: new Date(Date.now() + (staff.role === 'admin' ? 24 : 8) * 60 * 60 * 1000) // 24 hours for admins, 8 for nurses
         });
       }
     }

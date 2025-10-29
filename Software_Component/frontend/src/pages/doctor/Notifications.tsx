@@ -4,7 +4,7 @@ import notificationService from '../../services/notificationService';
 import LoadingSpinner from '../../components/layout/LoadingSpinner';
 import '../../main.css';
 
-const NurseNotifications: React.FC = () => {
+const DoctorNotifications: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
@@ -85,6 +85,79 @@ const NurseNotifications: React.FC = () => {
     }
   };
 
+  const filteredNotifications = notifications.filter(notification => {
+    const matchesSearch = searchTerm === '' ||
+      notification.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      notification.message.toLowerCase().includes(searchTerm.toLowerCase());
+
+    return matchesSearch;
+  });
+
+  const getNotificationStyle = (type: string, priority: string) => {
+    const isHighPriority = priority === 'HIGH' || priority === 'URGENT';
+
+    if (type === 'CRITICAL') {
+      return {
+        background: 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)',
+        border: isHighPriority ? '3px solid #e57373' : '2px solid #e57373',
+        icon: 'bi bi-exclamation-triangle-fill',
+        iconColor: '#d32f2f',
+        hoverBorder: '#d32f2f'
+      };
+    } else if (type === 'WARNING') {
+      return {
+        background: 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)',
+        border: isHighPriority ? '3px solid #ff9800' : '2px solid #ff9800',
+        icon: 'bi bi-exclamation-circle-fill',
+        iconColor: '#f57c00',
+        hoverBorder: '#f57c00'
+      };
+    } else if (type === 'SUCCESS') {
+      return {
+        background: 'linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%)',
+        border: '2px solid #4caf50',
+        icon: 'bi bi-check-circle-fill',
+        iconColor: '#2e7d32',
+        hoverBorder: '#4caf50'
+      };
+    } else {
+      return {
+        background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+        border: '2px solid #dee2e6',
+        icon: 'bi bi-info-circle-fill',
+        iconColor: '#6c757d',
+        hoverBorder: '#6c757d'
+      };
+    }
+  };
+
+  const getPriorityBadge = (priority: string) => {
+    const priorityStyles = {
+      URGENT: { color: '#d32f2f', bg: 'rgba(211, 47, 47, 0.1)', text: 'URGENT' },
+      HIGH: { color: '#f57c00', bg: 'rgba(245, 124, 0, 0.1)', text: 'HIGH' },
+      MEDIUM: { color: '#1976d2', bg: 'rgba(25, 118, 210, 0.1)', text: 'MEDIUM' },
+      LOW: { color: '#666', bg: 'rgba(102, 102, 102, 0.1)', text: 'LOW' }
+    };
+
+    const style = priorityStyles[priority as keyof typeof priorityStyles] || priorityStyles.MEDIUM;
+
+    return (
+      <span style={{
+        fontSize: '0.7rem',
+        fontWeight: '700',
+        padding: '2px 6px',
+        borderRadius: '8px',
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px',
+        background: style.bg,
+        color: style.color,
+        marginLeft: '8px'
+      }}>
+        {style.text}
+      </span>
+    );
+  };
+
   if (loading && notifications.length === 0) {
     return (
       <div id="container">
@@ -97,14 +170,6 @@ const NurseNotifications: React.FC = () => {
       </div>
     );
   }
-
-  const filteredNotifications = notifications.filter(notification => {
-    const matchesSearch = searchTerm === '' ||
-      notification.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      notification.message.toLowerCase().includes(searchTerm.toLowerCase());
-
-    return matchesSearch;
-  });
 
   return (
     <div id="container">
@@ -126,6 +191,7 @@ const NurseNotifications: React.FC = () => {
               ></button>
             </div>
           )}
+
           {/* Search and Filter Section */}
           <div className="dashboard-card" style={{ width: '100%' }}>
             <div className="dashboard-card-body">
@@ -200,6 +266,7 @@ const NurseNotifications: React.FC = () => {
               </div>
             </div>
           </div>
+
           <div className="dashboard-card" style={{ width: '100%' }}>
             <div className="dashboard-card-header">
               <h2 className="dashboard-card-title">
@@ -250,44 +317,6 @@ const NurseNotifications: React.FC = () => {
               ) : (
                 <div className="notifications-list" style={{ maxHeight: '600px', overflowY: 'auto' }}>
                   {filteredNotifications.map(notification => {
-                    const getNotificationStyle = (type: string, priority: string) => {
-                      const isHighPriority = priority === 'HIGH' || priority === 'URGENT';
-
-                      if (type === 'CRITICAL') {
-                        return {
-                          background: 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)',
-                          border: isHighPriority ? '3px solid #e57373' : '2px solid #e57373',
-                          icon: 'bi bi-exclamation-triangle-fill',
-                          iconColor: '#d32f2f',
-                          hoverBorder: '#d32f2f'
-                        };
-                      } else if (type === 'WARNING') {
-                        return {
-                          background: 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)',
-                          border: isHighPriority ? '3px solid #ff9800' : '2px solid #ff9800',
-                          icon: 'bi bi-exclamation-circle-fill',
-                          iconColor: '#f57c00',
-                          hoverBorder: '#f57c00'
-                        };
-                      } else if (type === 'SUCCESS') {
-                        return {
-                          background: 'linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%)',
-                          border: '2px solid #4caf50',
-                          icon: 'bi bi-check-circle-fill',
-                          iconColor: '#2e7d32',
-                          hoverBorder: '#4caf50'
-                        };
-                      } else {
-                        return {
-                          background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-                          border: '2px solid #dee2e6',
-                          icon: 'bi bi-info-circle-fill',
-                          iconColor: '#6c757d',
-                          hoverBorder: '#6c757d'
-                        };
-                      }
-                    };
-
                     const style = getNotificationStyle(notification.type, notification.priority);
 
                     return (
@@ -342,25 +371,7 @@ const NurseNotifications: React.FC = () => {
                               fontSize: '1.2rem'
                             }}></i>
                             {notification.title}
-                            {notification.priority && (
-                              <span style={{
-                                fontSize: '0.7rem',
-                                fontWeight: '700',
-                                padding: '2px 6px',
-                                borderRadius: '8px',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.5px',
-                                marginLeft: '8px',
-                                background: notification.priority === 'URGENT' ? 'rgba(211, 47, 47, 0.1)' :
-                                          notification.priority === 'HIGH' ? 'rgba(245, 124, 0, 0.1)' :
-                                          notification.priority === 'MEDIUM' ? 'rgba(25, 118, 210, 0.1)' : 'rgba(102, 102, 102, 0.1)',
-                                color: notification.priority === 'URGENT' ? '#d32f2f' :
-                                       notification.priority === 'HIGH' ? '#f57c00' :
-                                       notification.priority === 'MEDIUM' ? '#1976d2' : '#666'
-                              }}>
-                                {notification.priority}
-                              </span>
-                            )}
+                            {getPriorityBadge(notification.priority)}
                           </div>
                           <div className="notification-category" style={{
                             fontSize: '0.8rem',
@@ -648,4 +659,4 @@ const NurseNotifications: React.FC = () => {
   );
 };
 
-export default NurseNotifications;
+export default DoctorNotifications;

@@ -7,6 +7,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 
 // Layout Components
 import Layout from './components/layout/Layout';
+import LoadingSpinner from './components/layout/LoadingSpinner';
 
 // Role-based Pages
 import NurseDashboard from './pages/nurse/Dashboard';
@@ -23,6 +24,7 @@ import DoctorDashboard from './pages/doctor/Dashboard';
 import DoctorPatientSearch from './pages/doctor/DoctorPatientSearch';
 import DoctorPatientProfile from './pages/doctor/PatientProfile';
 import DoctorClinicalDecisions from './pages/doctor/ClinicalDecisions';
+import DoctorNotifications from './pages/doctor/Notifications';
 
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminUserManagement from './pages/admin/UserManagement';
@@ -60,7 +62,7 @@ function App() {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <LoadingSpinner message="Loading application..." />;
   }
 
   return (
@@ -105,6 +107,7 @@ function App() {
           <Route path="patients" element={<DoctorPatientSearch />} />
           <Route path="patients/:id" element={<DoctorPatientProfile />} />
           <Route path="patients/:id/clinical-decisions" element={<DoctorClinicalDecisions />} />
+          <Route path="notifications" element={<DoctorNotifications />} />
         </Route>
 
         {/* Admin Routes */}
