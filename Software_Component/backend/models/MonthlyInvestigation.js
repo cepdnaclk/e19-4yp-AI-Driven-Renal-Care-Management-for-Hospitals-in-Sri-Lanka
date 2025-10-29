@@ -292,9 +292,9 @@ monthlyInvestigationSchema.post('save', async function(doc) {
         });
       }
 
-      // Notify all active doctors and nurses for critical values
+      // Notify all active doctors, nurses, and admins for critical values
       const medicalStaff = await User.find({
-        role: { $in: ['doctor', 'nurse'] },
+        role: { $in: ['doctor', 'nurse', 'admin'] },
         isActive: true
       });
 
@@ -312,10 +312,10 @@ monthlyInvestigationSchema.post('save', async function(doc) {
               entityId: patient._id
             },
             data: {
-              actionRequired: true,
+              actionRequired: staff.role === 'admin' ? false : true, // Admins get notified but may not need to take direct action
               labValue: criticalValue
             },
-            expiresAt: new Date(Date.now() + 12 * 60 * 60 * 1000) // 12 hours
+            expiresAt: new Date(Date.now() + (staff.role === 'admin' ? 24 : 12) * 60 * 60 * 1000) // 24 hours for admins, 12 for staff
           });
         }
       }

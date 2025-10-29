@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Notification, NotificationFilters } from '../../types';
 import notificationService from '../../services/notificationService';
+import LoadingSpinner from '../../components/layout/LoadingSpinner';
 import '../../main.css';
 
 const DoctorNotifications: React.FC = () => {
@@ -164,9 +165,7 @@ const DoctorNotifications: React.FC = () => {
           <h1>Notifications</h1>
         </div>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
-          <div className="spinner-border" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </div>
+          <LoadingSpinner message="Loading notifications..." />
         </div>
       </div>
     );

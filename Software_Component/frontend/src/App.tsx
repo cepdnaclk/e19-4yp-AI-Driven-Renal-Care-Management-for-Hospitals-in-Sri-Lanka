@@ -7,6 +7,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 
 // Layout Components
 import Layout from './components/layout/Layout';
+import LoadingSpinner from './components/layout/LoadingSpinner';
 
 // Role-based Pages
 import NurseDashboard from './pages/nurse/Dashboard';
@@ -61,7 +62,7 @@ function App() {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <LoadingSpinner message="Loading application..." />;
   }
 
   return (

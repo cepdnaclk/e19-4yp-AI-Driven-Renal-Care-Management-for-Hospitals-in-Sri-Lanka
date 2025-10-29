@@ -1,58 +1,66 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Notification } from '../../types';
-
-// Mock data
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    title: 'New Doctor Registered',
-    message: 'Dr. James Wilson has registered and is awaiting role assignment.',
-    type: 'INFO',
-    priority: 'MEDIUM',
-    category: 'SYSTEM_ALERT',
-    recipient: '3',
-    isRead: false,
-    createdAt: '2025-05-31T08:00:00',
-    updatedAt: '2025-05-31T08:00:00',
-  },
-  {
-    id: '2',
-    title: 'System Update',
-    message: 'System will be updated to version 2.5 on June 5th. Please inform all staff.',
-    type: 'INFO',
-    priority: 'LOW',
-    category: 'SYSTEM_ALERT',
-    recipient: '3',
-    isRead: true,
-    createdAt: '2025-05-30T14:30:00',
-    updatedAt: '2025-05-30T14:30:00',
-  },
-];
-
-// Mock user stats
-const userStats = {
-  totalDoctors: 12,
-  totalNurses: 28,
-  pendingApprovals: 3,
-  recentlyActive: 35,
-};
+import notificationService from '../../services/notificationService';
+import userService from '../../services/userService';
 
 const AdminDashboard: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [userStats, setUserStats] = useState({
+    totalDoctors: 0,
+    totalNurses: 0,
+    pendingApprovals: 0,
+    recentlyActive: 0,
+  });
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // In a real app, this would fetch from an API
-    setNotifications(mockNotifications);
+    const fetchDashboardData = async () => {
+      try {
+        // Fetch notifications
+        const notificationResponse = await notificationService.getNotifications({ limit: 10 });
+        setNotifications(notificationResponse.data.notifications);
+
+        // Fetch user statistics
+        const userStatsResponse = await userService.getUserStats();
+        const stats = userStatsResponse.stats;
+
+        // Calculate stats for dashboard display
+        const totalDoctors = stats.usersByRole.find(role => role._id === 'doctor')?.count || 0;
+        const totalNurses = stats.usersByRole.find(role => role._id === 'nurse')?.count || 0;
+        const pendingApprovals = stats.inactiveUsers; // Assuming inactive users need approval
+        const recentlyActive = stats.activeUsers;
+
+        setUserStats({
+          totalDoctors,
+          totalNurses,
+          pendingApprovals,
+          recentlyActive,
+        });
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
   }, []);
 
-  const handleNotificationClick = (notification: Notification) => {
-    setNotifications((prevNotifications) =>
-      prevNotifications.map((n) =>
-        n.id === notification.id ? { ...n, isRead: true } : n
-      )
-    );
+  const handleNotificationClick = async (notification: Notification) => {
+    if (!notification.isRead) {
+      try {
+        await notificationService.markAsRead(notification.id);
+        setNotifications((prevNotifications) =>
+          prevNotifications.map((n) =>
+            n.id === notification.id ? { ...n, isRead: true } : n
+          )
+        );
+      } catch (error) {
+        console.error('Error marking notification as read:', error);
+      }
+    }
   };
 
   return (
@@ -73,44 +81,51 @@ const AdminDashboard: React.FC = () => {
                 </h2>
               </div>
               <div className="dashboard-card-body">
-                <div className="stats-grid">
-                  {[
-                    {
-                      label: 'Total Doctors',
-                      value: userStats.totalDoctors,
-                      icon: 'bi bi-person-badge',
-                      color: '#4CAF50',
-                    },
-                    {
-                      label: 'Total Nurses',
-                      value: userStats.totalNurses,
-                      icon: 'bi bi-heart-pulse',
-                      color: '#2196F3',
-                    },
-                    {
-                      label: 'Pending Approvals',
-                      value: userStats.pendingApprovals,
-                      icon: 'bi bi-clock',
-                      color: userStats.pendingApprovals > 0 ? '#FF9800' : '#4CAF50',
-                    },
-                    {
-                      label: 'Recently Active Users',
-                      value: userStats.recentlyActive,
-                      icon: 'bi bi-activity',
-                      color: '#9C27B0',
-                    },
-                  ].map(({ label, value, icon, color }) => (
-                    <div key={label} className="stat-card" style={{ borderLeft: `4px solid ${color}` }}>
-                      <div className="stat-icon">
-                        <i className={icon} style={{ color }}></i>
+                {loading ? (
+                  <div className="loading-stats">
+                    <i className="bi bi-arrow-repeat"></i>
+                    <span>Loading statistics...</span>
+                  </div>
+                ) : (
+                  <div className="stats-grid">
+                    {[
+                      {
+                        label: 'Total Doctors',
+                        value: userStats.totalDoctors,
+                        icon: 'bi bi-person-badge',
+                        color: '#4CAF50',
+                      },
+                      {
+                        label: 'Total Nurses',
+                        value: userStats.totalNurses,
+                        icon: 'bi bi-heart-pulse',
+                        color: '#2196F3',
+                      },
+                      {
+                        label: 'Pending Approvals',
+                        value: userStats.pendingApprovals,
+                        icon: 'bi bi-clock',
+                        color: userStats.pendingApprovals > 0 ? '#FF9800' : '#4CAF50',
+                      },
+                      {
+                        label: 'Recently Active Users',
+                        value: userStats.recentlyActive,
+                        icon: 'bi bi-activity',
+                        color: '#9C27B0',
+                      },
+                    ].map(({ label, value, icon, color }) => (
+                      <div key={label} className="stat-card" style={{ borderLeft: `4px solid ${color}` }}>
+                        <div className="stat-icon">
+                          <i className={icon} style={{ color }}></i>
+                        </div>
+                        <div className="stat-content">
+                          <div className="stat-label">{label}</div>
+                          <div className="stat-value" style={{ color }}>{value}</div>
+                        </div>
                       </div>
-                      <div className="stat-content">
-                        <div className="stat-label">{label}</div>
-                        <div className="stat-value" style={{ color }}>{value}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
 
                 <div className="dashboard-card-actions">
                   <button className="btn btn-primary" onClick={() => navigate('/admin/user-management')}>
@@ -131,10 +146,6 @@ const AdminDashboard: React.FC = () => {
                   <button className="action-btn" onClick={() => navigate('/admin/user-management')}>
                     <i className="bi bi-person-plus"></i>
                     <span>User Management</span>
-                  </button>
-                  <button className="action-btn" onClick={() => navigate('/admin/notifications')}>
-                    <i className="bi bi-bell"></i>
-                    <span>All Notifications</span>
                   </button>
                   <button className="action-btn" onClick={() => navigate('/admin/reports')}>
                     <i className="bi bi-file-earmark-text"></i>
@@ -157,7 +168,12 @@ const AdminDashboard: React.FC = () => {
                 </h2>
               </div>
               <div className="dashboard-card-body">
-                {notifications.length === 0 ? (
+                {loading ? (
+                  <div className="loading-notifications">
+                    <i className="bi bi-arrow-repeat"></i>
+                    <span>Loading notifications...</span>
+                  </div>
+                ) : notifications.length === 0 ? (
                   <div className="no-notifications">
                     <i className="bi bi-check-circle"></i>
                     <span>No new notifications</span>
@@ -189,12 +205,6 @@ const AdminDashboard: React.FC = () => {
                     ))}
                   </div>
                 )}
-
-                <div className="dashboard-card-actions">
-                  <button className="btn btn-outline" onClick={() => navigate('/admin/notifications')}>
-                    <i className="bi bi-arrow-right"></i> View All Notifications
-                  </button>
-                </div>
               </div>
             </div>
 

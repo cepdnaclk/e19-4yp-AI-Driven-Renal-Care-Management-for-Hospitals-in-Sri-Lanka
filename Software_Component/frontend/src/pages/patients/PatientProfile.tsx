@@ -12,6 +12,7 @@ import { MonthlyInvestigationTab } from './tabs/MonthlyInvestigationTab';
 import { TrendAnalysisTab } from './tabs/TrendAnalysisTab';
 import { ClinicalDecisionsTab } from './tabs/ClinicalDecisionsTab';
 import { usePatientData } from './usePatientData';
+import LoadingSpinner from '../../components/layout/LoadingSpinner';
 
 export type ProfileRole = 'doctor' | 'nurse' | 'admin' | 'other'
 
@@ -75,9 +76,7 @@ const PatientProfile: React.FC<PatientProfileProps> = ({ role = 'other', backTo 
 
   if (loading) {
     return (
-      <div className="loading-container">
-        <div>{lang.patient_profile.loading_patient}</div>
-      </div>
+      <LoadingSpinner message={lang.patient_profile.loading_patient} />
     );
   }
 
@@ -184,6 +183,9 @@ const PatientProfile: React.FC<PatientProfileProps> = ({ role = 'other', backTo 
                       dialysisSessions={dialysisSessions}
                       dialysisSessionsLoading={dialysisSessionsLoading}
                       dialysisSessionsError={dialysisSessionsError}
+                      role={role}
+                      patientId={id}
+                      onLoadDialysisSessions={loadDialysisSessions}
                     />
                   </div>
                 )}
@@ -195,6 +197,9 @@ const PatientProfile: React.FC<PatientProfileProps> = ({ role = 'other', backTo 
                       monthlyInvestigations={monthlyInvestigations}
                       monthlyInvestigationsLoading={monthlyInvestigationsLoading}
                       monthlyInvestigationsError={monthlyInvestigationsError}
+                      role={role}
+                      patientId={id}
+                      onLoadMonthlyInvestigations={loadMonthlyInvestigations}
                     />
                   </div>
                 )}

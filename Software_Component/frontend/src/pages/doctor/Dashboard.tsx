@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Notification, Patient } from '../../types';
 import { fetchAllPatients, fetchNotifications } from '../patients/PatientService';
+import LoadingSpinner from '../../components/layout/LoadingSpinner';
 import '../../main.css';
 
 const DoctorDashboard: React.FC = () => {
@@ -116,9 +117,7 @@ const DoctorDashboard: React.FC = () => {
                 </div>
                 <div className="dashboard-card-body">
                   {patientsLoading ? (
-                    <div id="table-data-loading">
-                      <span>🔄 Loading recent patients...</span>
-                    </div>
+                    <LoadingSpinner message="Loading recent patients..." />
                   ) : patientsError ? (
                     <div id="table-data-error">
                       <span>❌ Error loading patients</span>
@@ -225,13 +224,6 @@ const DoctorDashboard: React.FC = () => {
                         <div className="stat-label">New Notifications</div>
                       </div>
                     </div>
-                    <div className="stat-card actions">
-                      <div className="stat-icon">⚡</div>
-                      <div className="stat-content">
-                        <div className="stat-value">2</div>
-                        <div className="stat-label">Quick Actions</div>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -248,9 +240,7 @@ const DoctorDashboard: React.FC = () => {
                 </div>
                 <div className="dashboard-card-body">
                   {notificationsLoading ? (
-                    <div id="table-data-loading">
-                      <span>🔄 Loading notifications...</span>
-                    </div>
+                    <LoadingSpinner message="Loading notifications..." />
                   ) : notificationsError ? (
                     <div id="table-data-error">
                       <span>❌ Error loading notifications</span>

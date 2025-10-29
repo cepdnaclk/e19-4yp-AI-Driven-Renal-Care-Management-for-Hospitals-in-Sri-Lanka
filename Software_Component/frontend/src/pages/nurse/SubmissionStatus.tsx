@@ -1,71 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Notification } from '../../types';
+import submissionsService from '../../services/submissionsService';
 import '../../main.css';
-
-// Mock data
-const mockSubmissions = [
-  {
-    id: '1',
-    patientId: '101',
-    patientName: 'John Doe',
-    type: 'Dialysis Session',
-    date: '2025-05-29',
-    status: 'Completed',
-    reviewedBy: 'Dr. Smith',
-    reviewDate: '2025-05-30'
-  },
-  {
-    id: '2',
-    patientId: '102',
-    patientName: 'Sarah Smith',
-    type: 'Monthly Investigation',
-    date: '2025-05-15',
-    status: 'Completed',
-    reviewedBy: 'Dr. Johnson',
-    reviewDate: '2025-05-16'
-  },
-  {
-    id: '3',
-    patientId: '103',
-    patientName: 'Michael Johnson',
-    type: 'Dialysis Session',
-    date: '2025-05-30',
-    status: 'Pending Review',
-    reviewedBy: '',
-    reviewDate: ''
-  },
-  {
-    id: '4',
-    patientId: '104',
-    patientName: 'Emily Davis',
-    type: 'Monthly Investigation',
-    date: '2025-05-28',
-    status: 'Pending Review',
-    reviewedBy: '',
-    reviewDate: ''
-  },
-  {
-    id: '5',
-    patientId: '105',
-    patientName: 'Robert Wilson',
-    type: 'Dialysis Session',
-    date: '2025-05-27',
-    status: 'Completed',
-    reviewedBy: 'Dr. Williams',
-    reviewDate: '2025-05-28'
-  }
-];
 
 const NurseSubmissionStatus: React.FC = () => {
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [pendingCount, setPendingCount] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // In a real app, this would fetch from an API
-    setSubmissions(mockSubmissions);
-    setPendingCount(mockSubmissions.filter(s => s.status === 'Pending Review').length);
+    const fetchSubmissions = async () => {
+      try {
+        const response = await submissionsService.getRecentSubmissions();
+        setSubmissions(response.submissions);
+        setPendingCount(response.pendingCount);
+      } catch (error) {
+        console.error('Error fetching submissions:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSubmissions();
   }, []);
 
   const handleViewPatient = (patientId: string) => {
@@ -99,7 +57,11 @@ const NurseSubmissionStatus: React.FC = () => {
                 </h2>
               </div>
               <div className="dashboard-card-body">
-                {submissions.length === 0 ? (
+                {loading ? (
+                  <div className="no-patients-message">
+                    <p>Loading submissions...</p>
+                  </div>
+                ) : submissions.length === 0 ? (
                   <div className="no-patients-message">
                     <p>No submissions found</p>
                     <span>Submissions will appear here when patients submit data</span>

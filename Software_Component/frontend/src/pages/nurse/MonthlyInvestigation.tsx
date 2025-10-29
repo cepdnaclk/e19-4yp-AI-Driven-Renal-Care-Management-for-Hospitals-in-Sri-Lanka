@@ -1,301 +1,259 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { MonthlyInvestigation } from '../../types';
+import LoadingSpinner from '../../components/layout/LoadingSpinner';
+import { AddInvestigationModal } from '../../components/AddInvestigationModal';
+import monthlyInvestigationService, { MonthlyInvestigationData } from '../../services/monthlyInvestigationService';
 
 const NurseMonthlyInvestigation: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [investigation, setInvestigation] = useState<Partial<MonthlyInvestigation>>({
-    patientId: id || '',
-    date: new Date().toISOString().split('T')[0],
-    hemoglobin: 0,
-    hematocrit: 0,
-    whiteBloodCellCount: 0,
-    plateletCount: 0,
-    sodium: 0,
-    potassium: 0,
-    chloride: 0,
-    bicarbonate: 0,
-    bun: 0,
-    creatinine: 0,
-    glucose: 0,
-    calcium: 0,
-    phosphorus: 0,
-    albumin: 0,
-    totalProtein: 0,
-    alt: 0,
-    ast: 0,
-    alkalinePhosphatase: 0,
-    notes: '',
-    nurseId: '1' // In a real app, this would come from the logged-in user
+  const [investigations, setInvestigations] = useState<MonthlyInvestigationData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [sortField, setSortField] = useState<string>('date');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  const fetchInvestigations = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await monthlyInvestigationService.getPatientInvestigations(id!);
+      setInvestigations(response.investigations);
+    } catch (err) {
+      setError('Failed to load monthly investigations');
+      console.error('Error fetching investigations:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      fetchInvestigations();
+    }
+  }, [id, fetchInvestigations]);
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
+    }
+  };
+
+  const sortedInvestigations = [...investigations].sort((a, b) => {
+    const aValue = a[sortField as keyof MonthlyInvestigationData];
+    const bValue = b[sortField as keyof MonthlyInvestigationData];
+
+    // Handle undefined/null values
+    if (aValue == null && bValue == null) return 0;
+    if (aValue == null) return sortDirection === 'asc' ? -1 : 1;
+    if (bValue == null) return sortDirection === 'asc' ? 1 : -1;
+
+    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
   });
 
-  const handleInputChange = (field: keyof MonthlyInvestigation, value: any) => {
-    setInvestigation(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
+  const handleModalSubmit = async (formData: any) => {
+    try {
+      const investigationData = {
+        date: formData.date,
+        scrPreHD: formData.scrPreHD ? parseFloat(formData.scrPreHD) : undefined,
+        scrPostHD: formData.scrPostHD ? parseFloat(formData.scrPostHD) : undefined,
+        bu_pre_hd: formData.bu_pre_hd ? parseFloat(formData.bu_pre_hd) : undefined,
+        bu_post_hd: formData.bu_post_hd ? parseFloat(formData.bu_post_hd) : undefined,
+        hb: formData.hb ? parseFloat(formData.hb) : undefined,
+        serumNaPreHD: formData.serumNaPreHD ? parseFloat(formData.serumNaPreHD) : undefined,
+        serumNaPostHD: formData.serumNaPostHD ? parseFloat(formData.serumNaPostHD) : undefined,
+        serumKPreHD: formData.serumKPreHD ? parseFloat(formData.serumKPreHD) : undefined,
+        serumKPostHD: formData.serumKPostHD ? parseFloat(formData.serumKPostHD) : undefined,
+        sCa: formData.sCa ? parseFloat(formData.sCa) : undefined,
+        sPhosphate: formData.sPhosphate ? parseFloat(formData.sPhosphate) : undefined,
+        albumin: formData.albumin ? parseFloat(formData.albumin) : undefined,
+        ua: formData.ua ? parseFloat(formData.ua) : undefined,
+        hco: formData.hco ? parseFloat(formData.hco) : undefined,
+        al: formData.al ? parseFloat(formData.al) : undefined,
+        hbA1C: formData.hbA1C ? parseFloat(formData.hbA1C) : undefined,
+        pth: formData.pth ? parseFloat(formData.pth) : undefined,
+        vitD: formData.vitD ? parseFloat(formData.vitD) : undefined,
+        serumIron: formData.serumIron ? parseFloat(formData.serumIron) : undefined,
+        serumFerritin: formData.serumFerritin ? parseFloat(formData.serumFerritin) : undefined,
+        notes: formData.notes || undefined
+      };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!investigation.date) {
-      alert('Please fill in all required fields');
-      return;
+      await monthlyInvestigationService.createInvestigation(id!, investigationData);
+      setShowModal(false);
+      fetchInvestigations();
+      alert('Monthly investigation saved successfully');
+    } catch (err) {
+      console.error('Error saving investigation:', err);
+      alert('Failed to save monthly investigation');
     }
-
-    console.log('Saving monthly investigation:', investigation);
-    alert('Monthly investigation saved successfully');
   };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const formatValue = (value: number | undefined) => {
+    return value !== undefined ? value.toString() : '-';
+  };
+
+  if (loading) {
+    return <LoadingSpinner message="Loading monthly investigations..." />;
+  }
+
+  if (error) {
+    return (
+      <div style={{ padding: '2rem', textAlign: 'center' }}>
+        <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>
+        <button onClick={fetchInvestigations} style={{ padding: '8px 16px' }}>
+          Try Again
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: '2rem' }}>
-      <h1>New Monthly Investigation</h1>
-      <h2>Patient ID: {id}</h2>
-      
-      <form onSubmit={handleSubmit} style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem' }}>
-          <div style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '1rem' }}>
-            <h3>Investigation Details</h3>
-            
-            <div style={{ marginBottom: '1rem' }}>
-              <label>Date *</label>
-              <input
-                value={investigation.date}
-                onChange={(e) => handleInputChange('date', e.target.value)}
-                type="date"
-                style={{ width: '100%', padding: '8px', marginTop: '4px' }}
-              />
-            </div>
-            
-            <h3 style={{ marginTop: '24px' }}>Complete Blood Count</h3>
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
-              <div style={{ flex: 1 }}>
-                <label>Hemoglobin (g/dL)</label>
-                <input
-                  value={investigation.hemoglobin || ''}
-                  onChange={(e) => handleInputChange('hemoglobin', parseFloat(e.target.value) || 0)}
-                  type="number"
-                  step={0.1}
-                  style={{ width: '100%', padding: '8px', marginTop: '4px' }}
-                />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label>Hematocrit (%)</label>
-                <input
-                  value={investigation.hematocrit || ''}
-                  onChange={(e) => handleInputChange('hematocrit', parseFloat(e.target.value) || 0)}
-                  type="number"
-                  step={0.1}
-                  style={{ width: '100%', padding: '8px', marginTop: '4px' }}
-                />
-              </div>
-            </div>
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
-              <div style={{ flex: 1 }}>
-                <label>White Blood Cell Count (K/μL)</label>
-                <input
-                  value={investigation.whiteBloodCellCount || ''}
-                  onChange={(e) => handleInputChange('whiteBloodCellCount', parseFloat(e.target.value) || 0)}
-                  type="number"
-                  step={0.1}
-                  style={{ width: '100%', padding: '8px', marginTop: '4px' }}
-                />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label>Platelet Count (K/μL)</label>
-                <input
-                  value={investigation.plateletCount || ''}
-                  onChange={(e) => handleInputChange('plateletCount', parseFloat(e.target.value) || 0)}
-                  type="number"
-                  style={{ width: '100%', padding: '8px', marginTop: '4px' }}
-                />
-              </div>
-            </div>
-            
-            <h3 style={{ marginTop: '24px' }}>Electrolytes</h3>
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
-              <div style={{ flex: 1 }}>
-                <label>Sodium (mEq/L)</label>
-                <input
-                  value={investigation.sodium || ''}
-                  onChange={(e) => handleInputChange('sodium', parseFloat(e.target.value) || 0)}
-                  type="number"
-                  style={{ width: '100%', padding: '8px', marginTop: '4px' }}
-                />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label>Potassium (mEq/L)</label>
-                <input
-                  value={investigation.potassium || ''}
-                  onChange={(e) => handleInputChange('potassium', parseFloat(e.target.value) || 0)}
-                  type="number"
-                  step={0.1}
-                  style={{ width: '100%', padding: '8px', marginTop: '4px' }}
-                />
-              </div>
-            </div>
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
-              <div style={{ flex: 1 }}>
-                <label>Chloride (mEq/L)</label>
-                <input
-                  value={investigation.chloride || ''}
-                  onChange={(e) => handleInputChange('chloride', parseFloat(e.target.value) || 0)}
-                  type="number"
-                  style={{ width: '100%', padding: '8px', marginTop: '4px' }}
-                />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label>Bicarbonate (mEq/L)</label>
-                <input
-                  value={investigation.bicarbonate || ''}
-                  onChange={(e) => handleInputChange('bicarbonate', parseFloat(e.target.value) || 0)}
-                  type="number"
-                  style={{ width: '100%', padding: '8px', marginTop: '4px' }}
-                />
-              </div>
-            </div>
-          </div>
-          
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '1rem' }}>
-              <h3>Renal Function</h3>
-              
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
-                <div style={{ flex: 1 }}>
-                  <label>BUN (mg/dL)</label>
-                  <input
-                    value={investigation.bun || ''}
-                    onChange={(e) => handleInputChange('bun', parseFloat(e.target.value) || 0)}
-                    type="number"
-                    style={{ width: '100%', padding: '8px', marginTop: '4px' }}
-                  />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label>Creatinine (mg/dL)</label>
-                  <input
-                    value={investigation.creatinine || ''}
-                    onChange={(e) => handleInputChange('creatinine', parseFloat(e.target.value) || 0)}
-                    type="number"
-                    step={0.1}
-                    style={{ width: '100%', padding: '8px', marginTop: '4px' }}
-                  />
-                </div>
-              </div>
-              
-              <div style={{ marginBottom: '1rem' }}>
-                <label>Glucose (mg/dL)</label>
-                <input
-                  value={investigation.glucose || ''}
-                  onChange={(e) => handleInputChange('glucose', parseFloat(e.target.value) || 0)}
-                  type="number"
-                  style={{ width: '100%', padding: '8px', marginTop: '4px' }}
-                />
-              </div>
-              
-              <h3 style={{ marginTop: '24px' }}>Other Parameters</h3>
-              
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
-                <div style={{ flex: 1 }}>
-                  <label>Calcium (mg/dL)</label>
-                  <input
-                    value={investigation.calcium || ''}
-                    onChange={(e) => handleInputChange('calcium', parseFloat(e.target.value) || 0)}
-                    type="number"
-                    step={0.1}
-                    style={{ width: '100%', padding: '8px', marginTop: '4px' }}
-                  />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label>Phosphorus (mg/dL)</label>
-                  <input
-                    value={investigation.phosphorus || ''}
-                    onChange={(e) => handleInputChange('phosphorus', parseFloat(e.target.value) || 0)}
-                    type="number"
-                    step={0.1}
-                    style={{ width: '100%', padding: '8px', marginTop: '4px' }}
-                  />
-                </div>
-              </div>
-              
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
-                <div style={{ flex: 1 }}>
-                  <label>Albumin (g/dL)</label>
-                  <input
-                    value={investigation.albumin || ''}
-                    onChange={(e) => handleInputChange('albumin', parseFloat(e.target.value) || 0)}
-                    type="number"
-                    step={0.1}
-                    style={{ width: '100%', padding: '8px', marginTop: '4px' }}
-                  />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label>Total Protein (g/dL)</label>
-                  <input
-                    value={investigation.totalProtein || ''}
-                    onChange={(e) => handleInputChange('totalProtein', parseFloat(e.target.value) || 0)}
-                    type="number"
-                    step={0.1}
-                    style={{ width: '100%', padding: '8px', marginTop: '4px' }}
-                  />
-                </div>
-              </div>
-              
-              <h3 style={{ marginTop: '24px' }}>Liver Function</h3>
-              
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
-                <div style={{ flex: 1 }}>
-                  <label>ALT (U/L)</label>
-                  <input
-                    value={investigation.alt || ''}
-                    onChange={(e) => handleInputChange('alt', parseFloat(e.target.value) || 0)}
-                    type="number"
-                    style={{ width: '100%', padding: '8px', marginTop: '4px' }}
-                  />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label>AST (U/L)</label>
-                  <input
-                    value={investigation.ast || ''}
-                    onChange={(e) => handleInputChange('ast', parseFloat(e.target.value) || 0)}
-                    type="number"
-                    style={{ width: '100%', padding: '8px', marginTop: '4px' }}
-                  />
-                </div>
-              </div>
-              
-              <div style={{ marginBottom: '1rem' }}>
-                <label>Alkaline Phosphatase (U/L)</label>
-                <input
-                  value={investigation.alkalinePhosphatase || ''}
-                  onChange={(e) => handleInputChange('alkalinePhosphatase', parseFloat(e.target.value) || 0)}
-                  type="number"
-                  style={{ width: '100%', padding: '8px', marginTop: '4px' }}
-                />
-              </div>
-              
-              <div style={{ marginBottom: '1rem' }}>
-                <label>Notes</label>
-                <textarea
-                  value={investigation.notes}
-                  onChange={(e) => handleInputChange('notes', e.target.value)}
-                  placeholder="Enter any additional notes about the investigation"
-                  rows={4}
-                  style={{ width: '100%', padding: '8px', marginTop: '4px', minHeight: '100px' }}
-                />
-              </div>
-              
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '32px' }}>
-                <button type="submit" style={{ padding: '8px 16px' }}>Save Investigation</button>
-              </div>
-            </div>
-          </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <div>
+          <h1>Monthly Investigations</h1>
+          <h2>Patient ID: {id}</h2>
         </div>
-      </form>
+        <button
+          onClick={() => setShowModal(true)}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: '#007bff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer'
+          }}
+        >
+          Add New Investigation
+        </button>
+      </div>
+
+      <AddInvestigationModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onSubmit={handleModalSubmit}
+        patientId={id!}
+      />
+
+      <div style={{ border: '1px solid #ccc', borderRadius: '8px', overflow: 'hidden' }}>
+        <div style={{ backgroundColor: '#f8f9fa', padding: '1rem', borderBottom: '1px solid #ccc' }}>
+          <h3>Investigation History ({investigations.length} records)</h3>
+        </div>
+
+        {investigations.length === 0 ? (
+          <div style={{ padding: '2rem', textAlign: 'center', color: '#6c757d' }}>
+            No monthly investigations found for this patient.
+          </div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#f8f9fa' }}>
+                  <th
+                    onClick={() => handleSort('date')}
+                    style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', cursor: 'pointer' }}
+                  >
+                    Date {sortField === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th
+                    onClick={() => handleSort('hb')}
+                    style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', cursor: 'pointer' }}
+                  >
+                    Hb {sortField === 'hb' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th
+                    onClick={() => handleSort('scrPreHD')}
+                    style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', cursor: 'pointer' }}
+                  >
+                    SCR Pre {sortField === 'scrPreHD' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th
+                    onClick={() => handleSort('scrPostHD')}
+                    style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', cursor: 'pointer' }}
+                  >
+                    SCR Post {sortField === 'scrPostHD' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th
+                    onClick={() => handleSort('bu_pre_hd')}
+                    style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', cursor: 'pointer' }}
+                  >
+                    BU Pre {sortField === 'bu_pre_hd' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th
+                    onClick={() => handleSort('bu_post_hd')}
+                    style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', cursor: 'pointer' }}
+                  >
+                    BU Post {sortField === 'bu_post_hd' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th
+                    onClick={() => handleSort('serumKPreHD')}
+                    style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', cursor: 'pointer' }}
+                  >
+                    K+ Pre {sortField === 'serumKPreHD' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th
+                    onClick={() => handleSort('serumKPostHD')}
+                    style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', cursor: 'pointer' }}
+                  >
+                    K+ Post {sortField === 'serumKPostHD' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th
+                    onClick={() => handleSort('sCa')}
+                    style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', cursor: 'pointer' }}
+                  >
+                    Ca {sortField === 'sCa' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th
+                    onClick={() => handleSort('sPhosphate')}
+                    style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', cursor: 'pointer' }}
+                  >
+                    P {sortField === 'sPhosphate' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th
+                    onClick={() => handleSort('albumin')}
+                    style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', cursor: 'pointer' }}
+                  >
+                    Albumin {sortField === 'albumin' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>
+                    Notes
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedInvestigations.map((investigation) => (
+                  <tr key={investigation.id} style={{ borderBottom: '1px solid #dee2e6' }}>
+                    <td style={{ padding: '12px' }}>{formatDate(investigation.date)}</td>
+                    <td style={{ padding: '12px' }}>{formatValue(investigation.hb)}</td>
+                    <td style={{ padding: '12px' }}>{formatValue(investigation.scrPreHD)}</td>
+                    <td style={{ padding: '12px' }}>{formatValue(investigation.scrPostHD)}</td>
+                    <td style={{ padding: '12px' }}>{formatValue(investigation.bu_pre_hd)}</td>
+                    <td style={{ padding: '12px' }}>{formatValue(investigation.bu_post_hd)}</td>
+                    <td style={{ padding: '12px' }}>{formatValue(investigation.serumKPreHD)}</td>
+                    <td style={{ padding: '12px' }}>{formatValue(investigation.serumKPostHD)}</td>
+                    <td style={{ padding: '12px' }}>{formatValue(investigation.sCa)}</td>
+                    <td style={{ padding: '12px' }}>{formatValue(investigation.sPhosphate)}</td>
+                    <td style={{ padding: '12px' }}>{formatValue(investigation.albumin)}</td>
+                    <td style={{ padding: '12px', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {investigation.notes || '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

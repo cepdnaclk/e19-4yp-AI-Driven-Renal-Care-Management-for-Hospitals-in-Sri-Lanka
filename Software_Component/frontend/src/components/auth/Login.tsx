@@ -134,17 +134,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             className="login-btn"
             disabled={isLoading}
           >
-            {isLoading ? (
-              <>
-                <div className="spinner"></div>
-                Signing In...
-              </>
-            ) : (
-              <>
-                <i className="bi bi-box-arrow-in-right"></i>
-                Sign In
-              </>
-            )}
+            <i className="bi bi-box-arrow-in-right"></i>
+            Sign In
           </button>
         </form>
 

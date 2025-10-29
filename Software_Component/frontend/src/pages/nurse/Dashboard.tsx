@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Notification, Patient } from '../../types';
 import { fetchAllPatients, fetchNotifications } from '../patients/PatientService';
 import { patientTableConfig } from '../patients/patientTableConfig';
+import LoadingSpinner from '../../components/layout/LoadingSpinner';
 import '../../main.css';
 
 const NurseDashboard: React.FC = () => {
@@ -112,10 +113,7 @@ const NurseDashboard: React.FC = () => {
               </div>
               <div className="dashboard-card-body">
                 {patientsLoading ? (
-                  <div className="patient-search-loading">
-                    <div className="loading-spinner"></div>
-                    <span>Loading recent patients...</span>
-                  </div>
+                  <LoadingSpinner message="Loading recent patients..." />
                 ) : patientsError ? (
                   <div className="patient-search-error">
                     <span>Error loading patients</span>
@@ -204,10 +202,7 @@ const NurseDashboard: React.FC = () => {
               </div>
               <div className="dashboard-card-body">
                 {notificationsLoading ? (
-                  <div className="patient-search-loading">
-                    <div className="loading-spinner"></div>
-                    <span>Loading notifications...</span>
-                  </div>
+                  <LoadingSpinner message="Loading notifications..." />
                 ) : notificationsError ? (
                   <div className="patient-search-error">
                     <span>Error loading notifications</span>
