@@ -6,21 +6,27 @@ import { Notification } from '../../types';
 const mockNotifications: Notification[] = [
   {
     id: '1',
-    userId: '3',
     title: 'New Doctor Registered',
     message: 'Dr. James Wilson has registered and is awaiting role assignment.',
-    date: '2025-05-31T08:00:00',
-    read: false,
-    type: 'info',
+    type: 'INFO',
+    priority: 'MEDIUM',
+    category: 'SYSTEM_ALERT',
+    recipient: '3',
+    isRead: false,
+    createdAt: '2025-05-31T08:00:00',
+    updatedAt: '2025-05-31T08:00:00',
   },
   {
     id: '2',
-    userId: '3',
     title: 'System Update',
     message: 'System will be updated to version 2.5 on June 5th. Please inform all staff.',
-    date: '2025-05-30T14:30:00',
-    read: true,
-    type: 'info',
+    type: 'INFO',
+    priority: 'LOW',
+    category: 'SYSTEM_ALERT',
+    recipient: '3',
+    isRead: true,
+    createdAt: '2025-05-30T14:30:00',
+    updatedAt: '2025-05-30T14:30:00',
   },
 ];
 
@@ -44,7 +50,7 @@ const AdminDashboard: React.FC = () => {
   const handleNotificationClick = (notification: Notification) => {
     setNotifications((prevNotifications) =>
       prevNotifications.map((n) =>
-        n.id === notification.id ? { ...n, read: true } : n
+        n.id === notification.id ? { ...n, isRead: true } : n
       )
     );
   };
@@ -162,12 +168,12 @@ const AdminDashboard: React.FC = () => {
                       <div
                         key={notification.id}
                         onClick={() => handleNotificationClick(notification)}
-                        className={`notification-item ${!notification.read ? 'unread' : ''} ${notification.type}`}
+                        className={`notification-item ${!notification.isRead ? 'unread' : ''} ${notification.type}`}
                       >
                         <div className="notification-icon">
                           <i className={`bi ${
-                            notification.type === 'critical' ? 'bi-exclamation-triangle-fill' :
-                            notification.type === 'warning' ? 'bi-exclamation-circle-fill' :
+                            notification.type === 'CRITICAL' ? 'bi-exclamation-triangle-fill' :
+                            notification.type === 'WARNING' ? 'bi-exclamation-circle-fill' :
                             'bi-info-circle-fill'
                           }`}></i>
                         </div>
@@ -175,10 +181,10 @@ const AdminDashboard: React.FC = () => {
                           <div className="notification-title">{notification.title}</div>
                           <div className="notification-message">{notification.message}</div>
                           <div className="notification-time">
-                            {new Date(notification.date).toLocaleString()}
+                            {new Date(notification.createdAt).toLocaleString()}
                           </div>
                         </div>
-                        {!notification.read && <div className="notification-unread-indicator"></div>}
+                        {!notification.isRead && <div className="notification-unread-indicator"></div>}
                       </div>
                     ))}
                   </div>

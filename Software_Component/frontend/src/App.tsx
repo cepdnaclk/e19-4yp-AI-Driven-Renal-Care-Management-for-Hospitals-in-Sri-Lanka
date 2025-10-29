@@ -23,6 +23,7 @@ import DoctorDashboard from './pages/doctor/Dashboard';
 import DoctorPatientSearch from './pages/doctor/DoctorPatientSearch';
 import DoctorPatientProfile from './pages/doctor/PatientProfile';
 import DoctorClinicalDecisions from './pages/doctor/ClinicalDecisions';
+import DoctorNotifications from './pages/doctor/Notifications';
 
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminUserManagement from './pages/admin/UserManagement';
@@ -105,6 +106,7 @@ function App() {
           <Route path="patients" element={<DoctorPatientSearch />} />
           <Route path="patients/:id" element={<DoctorPatientProfile />} />
           <Route path="patients/:id/clinical-decisions" element={<DoctorClinicalDecisions />} />
+          <Route path="notifications" element={<DoctorNotifications />} />
         </Route>
 
         {/* Admin Routes */}
