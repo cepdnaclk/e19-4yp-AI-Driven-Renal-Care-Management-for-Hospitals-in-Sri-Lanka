@@ -151,7 +151,7 @@ export const AddInvestigationModal: React.FC<AddInvestigationModalProps> = ({
             <h4 style={{ marginBottom: '1rem', color: '#495057' }}>Renal Function Tests</h4>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem' }}>SCR Pre-HD (mg/dL)</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem' }}>SCR Pre-HD (µmol/L)</label>
                 <input
                   value={formData.scrPreHD}
                   onChange={(e) => handleInputChange('scrPreHD', e.target.value)}
@@ -161,7 +161,7 @@ export const AddInvestigationModal: React.FC<AddInvestigationModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem' }}>SCR Post-HD (mg/dL)</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem' }}>SCR Post-HD (µmol/L)</label>
                 <input
                   value={formData.scrPostHD}
                   onChange={(e) => handleInputChange('scrPostHD', e.target.value)}
@@ -207,7 +207,7 @@ export const AddInvestigationModal: React.FC<AddInvestigationModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Sodium Pre-HD (mEq/L)</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Sodium Pre-HD (mmol/L)</label>
                 <input
                   value={formData.serumNaPreHD}
                   onChange={(e) => handleInputChange('serumNaPreHD', e.target.value)}
@@ -217,7 +217,7 @@ export const AddInvestigationModal: React.FC<AddInvestigationModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Sodium Post-HD (mEq/L)</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Sodium Post-HD (mmol/L)</label>
                 <input
                   value={formData.serumNaPostHD}
                   onChange={(e) => handleInputChange('serumNaPostHD', e.target.value)}
@@ -237,7 +237,7 @@ export const AddInvestigationModal: React.FC<AddInvestigationModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Potassium Post-HD (mEq/L)</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Potassium Post-HD (mmol/L)</label>
                 <input
                   value={formData.serumKPostHD}
                   onChange={(e) => handleInputChange('serumKPostHD', e.target.value)}
@@ -253,7 +253,7 @@ export const AddInvestigationModal: React.FC<AddInvestigationModalProps> = ({
             <h4 style={{ marginBottom: '1rem', color: '#495057' }}>Minerals & Proteins</h4>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Calcium (mg/dL)</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Calcium (mmol/L)</label>
                 <input
                   value={formData.sCa}
                   onChange={(e) => handleInputChange('sCa', e.target.value)}
@@ -263,7 +263,7 @@ export const AddInvestigationModal: React.FC<AddInvestigationModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Phosphorus (mg/dL)</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Phosphorus (mmol/L)</label>
                 <input
                   value={formData.sPhosphate}
                   onChange={(e) => handleInputChange('sPhosphate', e.target.value)}
@@ -273,7 +273,7 @@ export const AddInvestigationModal: React.FC<AddInvestigationModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Albumin (g/dL)</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Albumin (g/L)</label>
                 <input
                   value={formData.albumin}
                   onChange={(e) => handleInputChange('albumin', e.target.value)}
@@ -283,7 +283,7 @@ export const AddInvestigationModal: React.FC<AddInvestigationModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Uric Acid (mg/dL)</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Uric Acid (µmol/L)</label>
                 <input
                   value={formData.ua}
                   onChange={(e) => handleInputChange('ua', e.target.value)}
@@ -293,7 +293,7 @@ export const AddInvestigationModal: React.FC<AddInvestigationModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Bicarbonate (mEq/L)</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Bicarbonate (mmol/L)</label>
                 <input
                   value={formData.hco}
                   onChange={(e) => handleInputChange('hco', e.target.value)}
@@ -328,7 +328,7 @@ export const AddInvestigationModal: React.FC<AddInvestigationModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem' }}>PTH (pg/mL)</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem' }}>PTH (mmol/L)</label>
                 <input
                   value={formData.pth}
                   onChange={(e) => handleInputChange('pth', e.target.value)}
@@ -337,7 +337,7 @@ export const AddInvestigationModal: React.FC<AddInvestigationModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Vitamin D (ng/mL)</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Vitamin D (mmol/L)</label>
                 <input
                   value={formData.vitD}
                   onChange={(e) => handleInputChange('vitD', e.target.value)}

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { fetchMonthlyInvestigations, fetchDialysisSessions, fetchHemoglobinTrend, fetchAIPrediction } from './PatientService';
+import { fetchMonthlyInvestigations, fetchDialysisSessions, fetchHemoglobinTrend, fetchAIPredictions } from './PatientService';
 
 export const usePatientData = (patientId: string | undefined) => {
   const [dialysisSessions, setDialysisSessions] = useState<any[]>([]);
@@ -83,30 +83,10 @@ export const usePatientData = (patientId: string | undefined) => {
     try {
       setAIPredictionsLoading(true);
       setAIPredictionsError(null);
-      const investigations = await fetchMonthlyInvestigations(patientId);
-      if (investigations && investigations.length > 0) {
-        const latestInvestigation = investigations[0];
-        const predictionData = {
-          patient_id: patientId,
-          albumin: latestInvestigation.albumin || 35.2,
-          bu_post_hd: latestInvestigation.bu || 8.5,
-          bu_pre_hd: latestInvestigation.bu || 25.3,
-          s_ca: latestInvestigation.sCa || 2.3,
-          scr_post_hd: latestInvestigation.scrPostHD || 450,
-          scr_pre_hd: latestInvestigation.scrPreHD || 890,
-          serum_k_post_hd: latestInvestigation.serumKPostHD || 3.8,
-          serum_k_pre_hd: latestInvestigation.serumKPreHD || 5.2,
-          serum_na_pre_hd: latestInvestigation.serumNaPreHD || 138,
-          ua: latestInvestigation.ua || 400,
-          hb_diff: -0.5,
-          hb: latestInvestigation.hb || 9
-        };
-        const prediction = await fetchAIPrediction(predictionData);
-        setAIPredictions(prediction);
-      } else {
-        setAIPredictionsError('No investigation data available for AI prediction');
-        setAIPredictions(null);
-      }
+      
+      // Call backend endpoints which handle data fetching automatically
+      const predictions = await fetchAIPredictions(patientId);
+      setAIPredictions(predictions);
     } catch (err: any) {
       console.error('Error loading AI predictions:', err);
       if (err.message?.includes('Authentication failed') || err.message?.includes('No authentication token')) {

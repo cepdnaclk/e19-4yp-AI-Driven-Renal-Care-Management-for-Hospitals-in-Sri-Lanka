@@ -1,5 +1,4 @@
 import apiClient from '../../services/apiConfig'
-import axios from 'axios'
 import { Patient } from '../../types'
 
 export const fetchPatientById = async (id: string): Promise<Patient | null> => {
@@ -128,61 +127,38 @@ export const fetchNotifications = async (): Promise<any> => {
   }
 }
 
-export const fetchAIPrediction = async (predictionData: {
-  patient_id: string
-  albumin: number
-  bu_post_hd: number
-  bu_pre_hd: number
-  s_ca: number
-  scr_post_hd: number
-  scr_pre_hd: number
-  serum_k_post_hd: number
-  serum_k_pre_hd: number
-  serum_na_pre_hd: number
-  ua: number
-  hb_diff: number
-  hb: number
-}): Promise<any> => {
+export const fetchAIPredictions = async (patientId: string): Promise<any> => {
   try {
-    // Use axios directly for the ML API since it's on a different port
-    const token = localStorage.getItem('userToken')
-    const headers: any = {
-      'Content-Type': 'application/json',
-    }
+    const [hbResponse, urrResponse, dryWeightResponse] = await Promise.allSettled([
+      apiClient.get(`/ai-predictions/predict/hb/${patientId}`),
+      apiClient.get(`/ai-predictions/predict/urr/${patientId}`),
+      apiClient.get(`/ai-predictions/predict/dry-weight/${patientId}`)
+    ]);
 
-    if (token) {
-      headers.Authorization = `Bearer ${token}`
-    }
+    const predictions: any = {};
 
-    // Use hardcoded values except for patient_id
-    const requestBody = {
-      patient_id: predictionData.patient_id, // Use the actual patient ID
-      albumin: 35.2,
-      bu_post_hd: 8.5,
-      bu_pre_hd: 25.3,
-      s_ca: 2.3,
-      scr_post_hd: 450,
-      scr_pre_hd: 890,
-      serum_k_post_hd: 3.8,
-      serum_k_pre_hd: 5.2,
-      serum_na_pre_hd: 138,
-      ua: 4,
-      hb_diff: -0.5,
-      hb: 9
-    }
-
-    const response = await axios.post(
-      'http://127.0.0.1:8001/api/ml/predict/hb/',
-      requestBody,
-      { headers }
-    )
-
-    if (response.data) {
-      return response.data
+    // Process HB prediction
+    if (hbResponse.status === 'fulfilled' && hbResponse.value.data.success) {
+      predictions.hb = hbResponse.value.data.prediction.prediction;
     } else {
-      console.error('AI prediction API responded without data')
-      return null
+      predictions.hbError = hbResponse.status === 'rejected' ? hbResponse.reason.message : 'HB prediction failed';
     }
+
+    // Process URR prediction
+    if (urrResponse.status === 'fulfilled' && urrResponse.value.data.success) {
+      predictions.urr = urrResponse.value.data.prediction.prediction;
+    } else {
+      predictions.urrError = urrResponse.status === 'rejected' ? urrResponse.reason.message : 'URR prediction failed';
+    }
+
+    // Process Dry Weight prediction
+    if (dryWeightResponse.status === 'fulfilled' && dryWeightResponse.value.data.success) {
+      predictions.dryWeight = dryWeightResponse.value.data.prediction.prediction;
+    } else {
+      predictions.dryWeightError = dryWeightResponse.status === 'rejected' ? dryWeightResponse.reason.message : 'Dry weight prediction failed';
+    }
+
+    return predictions;
   } 
   catch (error: any) {
     if (error.response?.status === 401) {
@@ -190,7 +166,13 @@ export const fetchAIPrediction = async (predictionData: {
       localStorage.removeItem('userToken')
       throw new Error('Authentication failed. Please log in again.')
     }
-    console.error('Error fetching AI prediction:', error)
+    console.error('Error fetching AI predictions:', error)
     throw error // Re-throw to let the component handle it
   }
+}
+
+// Keep the old function for backward compatibility but deprecated
+export const fetchAIPrediction = async (predictionData: any): Promise<any> => {
+  console.warn('fetchAIPrediction is deprecated. Use fetchAIPredictions instead.');
+  return fetchAIPredictions(predictionData.patient_id);
 }

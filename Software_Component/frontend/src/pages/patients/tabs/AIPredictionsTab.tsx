@@ -45,55 +45,125 @@ export const AIPredictionsTab: React.FC<AIPredictionsTabProps> = ({
   if (aiPredictions) {
     return (
       <div>
-        <div className="padding-30 border-primary border-radius-5 margin-bottom-20 background-gray" style={{ backgroundColor: 'transparent' }}>
-          <div>
-            <h3>{lang.patient_profile.ai_predictions.risk_assessment_title}</h3>
-            <span className={aiPredictions.hb_risk_predicted ? 'status-error bold' : 'status-good bold'}>
-              {aiPredictions.risk_status}
-            </span>
-          </div>
-          <div className="padding-10">
-            <p><strong>{lang.patient_profile.ai_predictions.prediction}:</strong> {aiPredictions.hb_risk_predicted ? lang.patient_profile.ai_predictions.high_risk.toLowerCase() : lang.patient_profile.ai_predictions.low_risk.toLowerCase()}</p>
-            <p><strong>{lang.patient_profile.ai_predictions.hemoglobin_trend}:</strong> {aiPredictions.hb_trend}</p>
-            <p><strong>{lang.patient_profile.ai_predictions.current_hemoglobin}:</strong> {aiPredictions.current_hb} g/dL</p>
-            <p><strong>{lang.patient_profile.ai_predictions.target_range}:</strong> {aiPredictions.target_hb_range.min} - {aiPredictions.target_hb_range.max} g/dL</p>
-            <p><strong>{lang.patient_profile.ai_predictions.risk_probability}:</strong> {(aiPredictions.risk_probability * 100).toFixed(1)}%</p>
-            <p><strong>{lang.patient_profile.ai_predictions.confidence_score}:</strong> {(aiPredictions.confidence_score * 100).toFixed(1)}%</p>
-            <p><strong>{lang.patient_profile.ai_predictions.prediction_date}:</strong> {new Date(aiPredictions.prediction_date).toLocaleString()}</p>
-            <p><strong>{lang.patient_profile.ai_predictions.model_version}:</strong> {aiPredictions.model_version}</p>
-          </div>
+        {/* Action Buttons */}
+        <div className="margin-bottom-20">
+          <button className="btn btn-primary" onClick={async () => {
+            onLoadMonthlyInvestigations();
+            onLoadAIPredictions();
+          }} disabled={aiPredictionsLoading || monthlyInvestigationsLoading}>
+            {lang.patient_profile.ai_predictions.refresh_button}
+          </button>
+          {showDoctorActions && (
+            <button className="btn btn-outline margin-left-10" onClick={() => navigate(`/doctor/patients/${patient.id}/clinical-decisions`)}>
+              {lang.patient_profile.ai_predictions.record_decision_button}
+            </button>
+          )}
         </div>
 
-        {aiPredictions.recommendations && aiPredictions.recommendations.length > 0 && (
-          <div className="padding-30 border-primary border-radius-5 margin-bottom-20">
-            <h3>{lang.patient_profile.ai_predictions.recommendations_title}</h3>
-            <ul>
-              {aiPredictions.recommendations.map((recommendation: string, index: number) => (
-                <li key={index}>{recommendation}</li>
-              ))}
-            </ul>
-            <div className="margin-top-10">
-              <button className="btn btn-secondary" onClick={() => { console.log('AI recommendations acknowledged'); }}>{lang.patient_profile.ai_predictions.acknowledge_button}</button>
-              {showDoctorActions && (
-                <button className="btn btn-outline" onClick={() => navigate(`/doctor/patients/${patient.id}/clinical-decisions`)}>{lang.patient_profile.ai_predictions.record_decision_button}</button>
-              )}
-              <button className="btn btn-primary" onClick={async () => {
-                onLoadMonthlyInvestigations();
-                onLoadAIPredictions();
-              }} disabled={aiPredictionsLoading || monthlyInvestigationsLoading}>{lang.patient_profile.ai_predictions.refresh_button}</button>
+        {/* HB Prediction */}
+        {aiPredictions.hb && (
+          <div className={`padding-30 border-primary border-radius-5 margin-bottom-20 ${aiPredictions.hb.hb_risk_predicted ? 'bg-danger-light' : 'bg-success-light'}`}>
+            <div className="margin-bottom-15">
+              <h3>🩸 Hemoglobin Risk Prediction</h3>
+              <span className={aiPredictions.hb.hb_risk_predicted ? 'status-error bold' : 'status-good bold'}>
+                {aiPredictions.hb.risk_status}
+              </span>
             </div>
+            <div className="padding-10">
+              <p><strong>Prediction:</strong> {aiPredictions.hb.hb_risk_predicted ? 'High Risk' : 'Low Risk'}</p>
+              <p><strong>Trend:</strong> {aiPredictions.hb.hb_trend}</p>
+              <p><strong>Current Hb:</strong> {aiPredictions.hb.current_hb} g/dL</p>
+              <p><strong>Target Range:</strong> {aiPredictions.hb.target_hb_range.min} - {aiPredictions.hb.target_hb_range.max} g/dL</p>
+              <p><strong>Risk Probability:</strong> {(aiPredictions.hb.risk_probability * 100).toFixed(1)}%</p>
+              <p><strong>Confidence:</strong> {(aiPredictions.hb.confidence_score * 100).toFixed(1)}%</p>
+            </div>
+            {aiPredictions.hb.recommendations && aiPredictions.hb.recommendations.length > 0 && (
+              <div className="margin-top-15">
+                <h4>Recommendations:</h4>
+                <ul>
+                  {aiPredictions.hb.recommendations.map((rec: string, idx: number) => (
+                    <li key={idx}>{rec}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         )}
 
+        {/* URR Prediction */}
+        {aiPredictions.urr && (
+          <div className={`padding-30 border-primary border-radius-5 margin-bottom-20 ${aiPredictions.urr.urr_risk_predicted ? 'bg-danger-light' : 'bg-success-light'}`}>
+            <div className="margin-bottom-15">
+              <h3>⚗️ URR Risk Prediction</h3>
+              <span className={aiPredictions.urr.urr_risk_predicted ? 'status-error bold' : 'status-good bold'}>
+                {aiPredictions.urr.risk_status}
+              </span>
+            </div>
+            <div className="padding-10">
+              <p><strong>Adequacy Status:</strong> {aiPredictions.urr.adequacy_status}</p>
+              <p><strong>Current URR:</strong> {aiPredictions.urr.current_urr.toFixed(1)}%</p>
+              <p><strong>Target Range:</strong> {aiPredictions.urr.target_urr_range.min} - {aiPredictions.urr.target_urr_range.max}%</p>
+              <p><strong>Risk Probability:</strong> {(aiPredictions.urr.risk_probability * 100).toFixed(1)}%</p>
+              <p><strong>Confidence:</strong> {(aiPredictions.urr.confidence_score * 100).toFixed(1)}%</p>
+            </div>
+            {aiPredictions.urr.recommendations && aiPredictions.urr.recommendations.length > 0 && (
+              <div className="margin-top-15">
+                <h4>Recommendations:</h4>
+                <ul>
+                  {aiPredictions.urr.recommendations.map((rec: string, idx: number) => (
+                    <li key={idx}>{rec}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Dry Weight Prediction */}
+        {aiPredictions.dryWeight && (
+          <div className={`padding-30 border-primary border-radius-5 margin-bottom-20 ${aiPredictions.dryWeight.dry_weight_change_predicted ? 'bg-danger-light' : 'bg-success-light'}`}>
+            <div className="margin-bottom-15">
+              <h3>⚖️ Dry Weight Change Prediction</h3>
+              <span className={aiPredictions.dryWeight.dry_weight_change_predicted ? 'status-error bold' : 'status-good bold'}>
+                {aiPredictions.dryWeight.prediction_status}
+              </span>
+            </div>
+            <div className="padding-10">
+              <p><strong>Prediction:</strong> {aiPredictions.dryWeight.dry_weight_change_predicted ? 'Change Expected' : 'Stable'}</p>
+              <p><strong>Current Dry Weight:</strong> {aiPredictions.dryWeight.current_dry_weight} kg</p>
+              <p><strong>Current Weight Gain:</strong> {aiPredictions.dryWeight.current_weight_gain} kg</p>
+              <p><strong>Change Probability:</strong> {(aiPredictions.dryWeight.change_probability * 100).toFixed(1)}%</p>
+              <p><strong>Confidence:</strong> {(aiPredictions.dryWeight.confidence_score * 100).toFixed(1)}%</p>
+            </div>
+            {aiPredictions.dryWeight.recommendations && aiPredictions.dryWeight.recommendations.length > 0 && (
+              <div className="margin-top-15">
+                <h4>Recommendations:</h4>
+                <ul>
+                  {aiPredictions.dryWeight.recommendations.map((rec: string, idx: number) => (
+                    <li key={idx}>{rec}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Error Messages */}
+        {(aiPredictions.hbError || aiPredictions.urrError || aiPredictions.dryWeightError) && (
+          <div className="padding-30 border-primary border-radius-5 margin-bottom-20 background-gray">
+            <h3>⚠️ Prediction Errors</h3>
+            {aiPredictions.hbError && <p><strong>HB Prediction:</strong> {aiPredictions.hbError}</p>}
+            {aiPredictions.urrError && <p><strong>URR Prediction:</strong> {aiPredictions.urrError}</p>}
+            {aiPredictions.dryWeightError && <p><strong>Dry Weight Prediction:</strong> {aiPredictions.dryWeightError}</p>}
+          </div>
+        )}
+
+        {/* Technical Info */}
         <div className="padding-30 border-primary border-radius-5 background-gray">
-          <h3>{lang.patient_profile.ai_predictions.technical_info_title}</h3>
-          <p><strong>{lang.patient_profile.ai_predictions.patient_id}:</strong> {aiPredictions.patient_id}</p>
-          <p><strong>{lang.patient_profile.ai_predictions.risk_classification}:</strong> {
-            aiPredictions.risk_probability > 0.8 ? lang.patient_profile.ai_predictions.high_risk :
-            aiPredictions.risk_probability > 0.6 ? lang.patient_profile.ai_predictions.moderate_risk :
-            aiPredictions.risk_probability > 0.4 ? lang.patient_profile.ai_predictions.low_risk : lang.patient_profile.ai_predictions.very_low_risk
-          }</p>
-          <p>{lang.patient_profile.ai_predictions.technical_note}</p>
+          <h3>Technical Information</h3>
+          <p><strong>Patient ID:</strong> {patient.patientId}</p>
+          <p><strong>Generated:</strong> {new Date().toLocaleString()}</p>
+          <p>Predictions are generated using advanced machine learning models based on the patient's latest clinical data.</p>
         </div>
       </div>
     );
