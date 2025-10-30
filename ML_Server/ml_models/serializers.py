@@ -3,28 +3,49 @@ from rest_framework import serializers
 
 class DryWeightPredictionSerializer(serializers.Serializer):
     """
-    Serializer for dry weight prediction input data
+    Serializer for dry weight prediction input data using LightGBM model
+    Based on dialysis session parameters with 19 features
     """
-    age = serializers.IntegerField(min_value=0, max_value=120, help_text="Patient age")
-    gender = serializers.CharField(max_length=10, help_text="Patient gender (Male/Female)")
-    height = serializers.FloatField(min_value=50, max_value=250, help_text="Height in cm")
-    weight = serializers.FloatField(min_value=20, max_value=300, help_text="Current weight in kg")
-    systolic_bp = serializers.FloatField(min_value=60, max_value=250, help_text="Systolic blood pressure")
-    diastolic_bp = serializers.FloatField(min_value=40, max_value=150, help_text="Diastolic blood pressure")
-    pre_dialysis_weight = serializers.FloatField(min_value=20, max_value=300, help_text="Pre-dialysis weight")
-    post_dialysis_weight = serializers.FloatField(min_value=20, max_value=300, help_text="Post-dialysis weight")
-    ultrafiltration_volume = serializers.FloatField(min_value=0, max_value=10, help_text="Ultrafiltration volume in L")
-    dialysis_duration = serializers.FloatField(min_value=1, max_value=8, help_text="Dialysis duration in hours")
+    # Patient identifier
+    patient_id = serializers.CharField(max_length=50, help_text="Patient identifier")
+    
+    # Original features from dialysis session data
+    ap = serializers.FloatField(min_value=-500, max_value=0, help_text="AP (mmHg)")
+    auf = serializers.FloatField(min_value=0, max_value=10000, help_text="AUF (ml)")
+    bfr = serializers.FloatField(min_value=100, max_value=500, help_text="BFR (ml/min)")
+    hd_duration = serializers.FloatField(min_value=1, max_value=8, help_text="HD duration (h)")
+    puf = serializers.FloatField(min_value=0, max_value=10000, help_text="PUF (ml)")
+    tmp = serializers.FloatField(min_value=0, max_value=500, help_text="TMP (mmHg)")
+    vp = serializers.FloatField(min_value=0, max_value=500, help_text="VP (mmHg)")
+    weight_gain = serializers.FloatField(min_value=0, max_value=10, help_text="Weight gain (kg)")
+    sys = serializers.FloatField(min_value=60, max_value=250, help_text="SYS (mmHg)")
+    dia = serializers.FloatField(min_value=40, max_value=150, help_text="DIA (mmHg)")
+    pre_hd_weight = serializers.FloatField(min_value=20, max_value=300, help_text="Pre HD weight (kg)")
+    post_hd_weight = serializers.FloatField(min_value=20, max_value=300, help_text="Post HD weight (kg)")
+    dry_weight = serializers.FloatField(min_value=20, max_value=300, help_text="Dry weight (kg)")
+    
+    # Optional rolling averages (will use current session values if not provided)
+    weight_gain_avg_3 = serializers.FloatField(required=False, min_value=0, max_value=10, 
+                                               help_text="3-session rolling average of Weight gain (kg)")
+    sys_avg_3 = serializers.FloatField(required=False, min_value=60, max_value=250, 
+                                       help_text="3-session rolling average of SYS (mmHg)")
 
 
 class DryWeightPredictionResponseSerializer(serializers.Serializer):
     """
     Serializer for dry weight change prediction response
     """
+    patient_id = serializers.CharField()
     dry_weight_change_predicted = serializers.BooleanField()
     prediction_status = serializers.CharField()  # "Change Expected" or "Stable"
     change_probability = serializers.FloatField()
     confidence_score = serializers.FloatField()
+    current_dry_weight = serializers.FloatField()
+    current_weight_gain = serializers.FloatField()
+    recommendations = serializers.ListField(
+        child=serializers.CharField(),
+        help_text="Clinical recommendations based on dry weight prediction"
+    )
     model_version = serializers.CharField()
     prediction_date = serializers.DateTimeField()
 

@@ -175,44 +175,81 @@ def models_info(request):
     """
     models_info = {
         'dry_weight': {
-            'name': 'Dry Weight Change Prediction',
-            'description': 'Predicts if dry weight will change in next dialysis session',
+            'name': 'Dry Weight Change Prediction (LightGBM)',
+            'description': 'Predicts if dry weight will change in next dialysis session using LightGBM with 19 features from dialysis session data',
+            'model_type': 'LightGBM with 50 estimators',
+            'test_performance': 'ROC-AUC: 0.637',
+            'data_source': 'Dialysis session parameters',
             'input_parameters': [
-                'age', 'gender', 'height', 'weight',
-                'systolic_bp', 'diastolic_bp', 'pre_dialysis_weight',
-                'post_dialysis_weight', 'ultrafiltration_volume', 'dialysis_duration'
+                'patient_id', 'ap', 'auf', 'bfr', 'hd_duration', 'puf', 'tmp', 'vp',
+                'weight_gain', 'sys', 'dia', 'pre_hd_weight', 'post_hd_weight', 'dry_weight',
+                'weight_gain_avg_3 (optional)', 'sys_avg_3 (optional)'
             ],
-            'output': 'Binary classification: will dry weight change (True/False) with probability'
+            'feature_order': [
+                '1. SYS_avg_3', '2. VP (mmHg)', '3. AP (mmHg)', '4. Pre HD weight (kg)',
+                '5. Weight_gain_avg_3', '6. SYS (mmHg)', '7. Post HD weight (kg)', '8. Weight_gain_pct',
+                '9. UFR', '10. TMP (mmHg)', '11. DIA (mmHg)', '12. Dry weight (kg)',
+                '13. Weight gain (kg)', '14. AUF (ml)', '15. PUF (ml)', '16. BFR (ml/min)',
+                '17. High_SBP', '18. HD duration (h)', '19. UFR_below_15'
+            ],
+            'calculated_features': [
+                'High_SBP (1 if SYS > 140, else 0)',
+                'UFR (PUF / (HD duration × Pre HD weight))',
+                'UFR_below_15 (1 if UFR < 15, else 0)',
+                'Weight_gain_pct ((Weight gain / Dry weight) × 100)',
+                'SYS_avg_3 (3-session rolling average of SYS, uses current if not provided)',
+                'Weight_gain_avg_3 (3-session rolling average of Weight gain, uses current if not provided)'
+            ],
+            'total_features': 19,
+            'feature_engineering': 'Server automatically calculates 6 derived features from 13 original dialysis parameters',
+            'output': 'Binary classification: will dry weight change (True/False) with probability and clinical recommendations'
         },
         'urr': {
             'name': 'URR Risk Prediction (LightGBM)',
             'description': 'Predicts if URR will go to risk region (inadequate) next month using LightGBM model',
             'model_type': 'LightGBM',
             'input_parameters': [
-                'albumin', 'hb', 's_ca', 'serum_na_pre_hd',
+                'patient_id (optional)', 'albumin', 'hb', 's_ca', 'serum_na_pre_hd',
                 'urr', 'urr_diff', 'serum_k_pre_hd', 'serum_k_post_hd',
                 'bu_pre_hd', 'bu_post_hd', 'scr_pre_hd', 'scr_post_hd'
+            ],
+            'feature_order': [
+                '1. Albumin (g/L)', '2. Hb (g/dL)', '3. S Ca (mmol/L)',
+                '4. Serum Na Pre-HD (mmol/L)', '5. URR', '6. URR_diff',
+                '7. K_Diff', '8. BU_Diff', '9. SCR_Diff'
             ],
             'calculated_features': [
                 'K_Diff (serum_k_pre_hd - serum_k_post_hd)',
                 'BU_Diff (bu_pre_hd - bu_post_hd)',
                 'SCR_Diff (scr_pre_hd - scr_post_hd)'
             ],
+            'total_features': 9,
+            'feature_engineering': 'Server automatically calculates URR and 3 difference features from laboratory parameters',
             'output': 'Binary classification: URR at risk (True/False) with probability, adequacy status and clinical recommendations'
         },
         'hb': {
-            'name': 'Hemoglobin Risk Prediction',
+            'name': 'Hemoglobin Risk Prediction (Ensemble)',
             'description': 'Predicts if hemoglobin will go to risk region next month using ensemble model',
+            'model_type': 'Ensemble (XGBoost + LightGBM) with weighted averaging',
             'input_parameters': [
                 'albumin', 'bu_post_hd', 'bu_pre_hd', 's_ca',
                 'scr_post_hd', 'scr_pre_hd', 'serum_k_post_hd', 'serum_k_pre_hd',
                 'serum_na_pre_hd', 'ua', 'hb_diff', 'hb'
             ],
-            'calculated_features': [
-                'albumin_bu_ratio', 'k_diff', 'bu_diff', 'scr_diff'
+            'feature_order': [
+                '1. Albumin (g/L)', '2. S Ca (mmol/L)', '3. Serum Na Pre-HD (mmol/L)',
+                '4. UA (mg/dL)', '5. Hb_diff', '6. Hb (g/dL)',
+                '7. Albumin_BU_Ratio', '8. K_Diff', '9. BU_Diff', '10. SCR_Diff'
             ],
-            'feature_engineering': 'Server automatically calculates derived features from input parameters',
-            'model_type': 'Ensemble (XGBoost + LightGBM) with weighted averaging',
+            'calculated_features': [
+                'Albumin_BU_Ratio (albumin / (bu_pre_hd + 1))',
+                'K_Diff (serum_k_pre_hd - serum_k_post_hd)',
+                'BU_Diff (bu_pre_hd - bu_post_hd)',
+                'SCR_Diff (scr_pre_hd - scr_post_hd)'
+            ],
+            'total_features': 10,
+            'feature_engineering': 'Server automatically calculates 4 derived features from 12 laboratory parameters',
+            'ensemble_details': 'XGBoost + LightGBM with optimized weights and threshold',
             'output': 'Binary classification: Hb at risk (True/False) with probability and clinical recommendations'
         }
     }

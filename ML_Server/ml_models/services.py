@@ -79,7 +79,7 @@ class MLModelManager:
 
 class DryWeightPredictor:
     """
-    Dry weight prediction service
+    Dry weight prediction service using LightGBM with dialysis session data
     """
     
     def __init__(self, model_manager: MLModelManager):
@@ -88,7 +88,7 @@ class DryWeightPredictor:
         
     def predict(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Predict if dry weight will change in next session
+        Predict if dry weight will change in next session using LightGBM model
         """
         try:
             # Load model
@@ -96,13 +96,26 @@ class DryWeightPredictor:
             
             # Prepare features
             features = self._prepare_features(input_data)
+
+            print(features)
+            
+            # Convert features to DataFrame for LightGBM compatibility
+            import pandas as pd
+            feature_names = [
+                'SYS_avg_3', 'VP (mmHg)', 'AP (mmHg)', 'Pre HD weight (kg)',
+                'Weight_gain_avg_3', 'SYS (mmHg)', 'Post HD weight (kg)', 'Weight_gain_pct',
+                'UFR', 'TMP (mmHg)', 'DIA (mmHg)', 'Dry weight (kg)',
+                'Weight gain (kg)', 'AUF (ml)', 'PUF (ml)', 'BFR (ml/min)',
+                'High_SBP', 'HD duration (h)', 'UFR_below_15'
+            ]
+            X = pd.DataFrame([features], columns=feature_names)
             
             # Make classification prediction
-            prediction = model.predict([features])[0]
+            prediction = model.predict(X)[0]
             
             # Get prediction probabilities
             if hasattr(model, 'predict_proba'):
-                probabilities = model.predict_proba([features])[0]
+                probabilities = model.predict_proba(X)[0]
                 confidence = max(probabilities)
                 risk_probability = probabilities[1] if len(probabilities) > 1 else probabilities[0]
             else:
@@ -112,12 +125,18 @@ class DryWeightPredictor:
             will_change = bool(prediction)
             status = "Change Expected" if will_change else "Stable"
             
+            # Generate recommendations
+            recommendations = self._generate_recommendations(input_data, will_change)
+            
             return {
                 'patient_id': input_data['patient_id'],
                 'dry_weight_change_predicted': will_change,
                 'prediction_status': status,
                 'change_probability': round(float(risk_probability), 3),
                 'confidence_score': round(float(confidence), 3),
+                'current_dry_weight': float(input_data['dry_weight']),
+                'current_weight_gain': float(input_data['weight_gain']),
+                'recommendations': recommendations,
                 'model_version': self.model_manager.get_model_version(self.model_name),
                 'prediction_date': datetime.now().isoformat()
             }
@@ -127,21 +146,87 @@ class DryWeightPredictor:
             raise
     
     def _prepare_features(self, input_data: Dict[str, Any]) -> List[float]:
-        """Prepare features for the model"""
-        # Feature engineering for dry weight prediction
+        """Prepare 19 features for the LightGBM dry weight model"""
+        
+        # Calculate derived features
+        high_sbp = 1 if input_data['sys'] > 140 else 0
+        
+        # UFR calculation: PUF (ml) / (HD duration (h) × Pre HD weight (kg))
+        hd_duration_hours = input_data['hd_duration']
+        pre_hd_weight = input_data['pre_hd_weight']
+        ufr = input_data['puf'] / (hd_duration_hours * pre_hd_weight) if (hd_duration_hours * pre_hd_weight) > 0 else 0
+        
+        # UFR_below_15
+        ufr_below_15 = 1 if ufr < 15 else 0
+        
+        # Weight_gain_pct = (Weight gain (kg) / Dry weight (kg)) × 100
+        weight_gain_pct = (input_data['weight_gain'] / input_data['dry_weight']) * 100 if input_data['dry_weight'] > 0 else 0
+        
+        # Rolling averages (use provided values or defaults if not available)
+        weight_gain_avg_3 = input_data.get('weight_gain_avg_3', input_data['weight_gain'])
+        sys_avg_3 = input_data.get('sys_avg_3', input_data['sys'])
+        
+        # Prepare feature array in the exact order expected by the model
         features = [
-            input_data['age'],
-            1 if input_data['gender'].lower() == 'male' else 0,
-            input_data['height'],
-            input_data['weight'],
-            input_data['systolic_bp'],
-            input_data['diastolic_bp'],
-            input_data['pre_dialysis_weight'],
-            input_data['post_dialysis_weight'],
-            input_data['ultrafiltration_volume'],
-            input_data['dialysis_duration']
+            sys_avg_3,                           # SYS_avg_3 (rolling average)
+            input_data['vp'],                    # VP (mmHg)
+            input_data['ap'],                    # AP (mmHg)
+            input_data['pre_hd_weight'],         # Pre HD weight (kg)
+            weight_gain_avg_3,                   # Weight_gain_avg_3 (rolling average)
+            input_data['sys'],                   # SYS (mmHg)
+            input_data['post_hd_weight'],        # Post HD weight (kg)
+            weight_gain_pct,                     # Weight_gain_pct (calculated)
+            ufr,                                 # UFR (calculated)
+            input_data['tmp'],                   # TMP (mmHg)
+            input_data['dia'],                   # DIA (mmHg)
+            input_data['dry_weight'],            # Dry weight (kg)
+            input_data['weight_gain'],           # Weight gain (kg)
+            input_data['auf'],                   # AUF (ml)
+            input_data['puf'],                   # PUF (ml)
+            input_data['bfr'],                   # BFR (ml/min)
+            high_sbp,                            # High_SBP (calculated)
+            input_data['hd_duration'],           # HD duration (h)
+            ufr_below_15                         # UFR_below_15 (calculated)
         ]
         return features
+    
+    def _generate_recommendations(self, input_data: Dict[str, Any], will_change: bool) -> List[str]:
+        """Generate clinical recommendations based on dry weight prediction"""
+        recommendations = []
+        
+        # Main prediction recommendation
+        if will_change:
+            recommendations.append("⚠️ Dry weight adjustment predicted for next session")
+            recommendations.append("Monitor fluid status closely and reassess dry weight")
+        else:
+            recommendations.append("✅ Current dry weight appears stable")
+            recommendations.append("Continue with current dry weight target")
+        
+        # Clinical parameter recommendations
+        if input_data['sys'] > 140:
+            recommendations.append("High systolic BP detected - consider antihypertensive adjustment")
+        
+        if input_data['weight_gain'] > 3.0:
+            recommendations.append("Excessive interdialytic weight gain - patient education needed")
+        elif input_data['weight_gain'] < 1.0:
+            recommendations.append("Low weight gain - monitor for signs of volume depletion")
+        
+        # UFR recommendations
+        ufr = input_data['puf'] / (input_data['hd_duration'] * input_data['pre_hd_weight']) if (input_data['hd_duration'] * input_data['pre_hd_weight']) > 0 else 0
+        if ufr > 13:
+            recommendations.append("High UFR detected - risk of hypotension and cramping")
+        elif ufr < 10:
+            recommendations.append("Low UFR - consider longer treatment time if volume overloaded")
+        
+        # TMP recommendations
+        if input_data['tmp'] > 200:
+            recommendations.append("High transmembrane pressure - check for access issues")
+        
+        # Blood flow recommendations
+        if input_data['bfr'] < 300:
+            recommendations.append("Low blood flow rate - consider access evaluation")
+        
+        return recommendations
 
 
 class URRPredictor:
@@ -163,6 +248,8 @@ class URRPredictor:
             
             # Prepare features
             features = self._prepare_features(input_data)
+
+            print(features)
             
             # Convert features to DataFrame for LightGBM compatibility
             import pandas as pd

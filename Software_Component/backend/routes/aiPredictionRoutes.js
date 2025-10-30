@@ -4,7 +4,9 @@ const { validateHbPrediction, validateWeightLogic, validatePatientIdParam } = re
 const {
   predictHemoglobin,
   predictURR,
-  checkMLServerHealth
+  predictDryWeight,
+  checkMLServerHealth,
+  getMLModelsInfo
 } = require('../controllers/aiPredictionController');
 
 const router = express.Router();
@@ -98,6 +100,44 @@ router.get('/predict/urr/:patientId', protect, authorize('doctor', 'nurse'), val
 
 /**
  * @swagger
+ * /api/ai-predictions/predict/dry-weight/{patientId}:
+ *   get:
+ *     summary: Predict dry weight changes using patient's latest dialysis session data
+ *     tags: [AI Predictions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: patientId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Patient ID
+ *     responses:
+ *       200:
+ *         description: Dry weight prediction completed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 patient:
+ *                   type: object
+ *                 prediction:
+ *                   type: object
+ *       400:
+ *         description: Missing required data or validation error
+ *       503:
+ *         description: ML server unavailable
+ */
+router.get('/predict/dry-weight/:patientId', protect, authorize('doctor', 'nurse'), validatePatientIdParam, predictDryWeight);
+
+/**
+ * @swagger
  * /api/ai-predictions/health:
  *   get:
  *     summary: Check ML server health status
@@ -130,15 +170,15 @@ router.get('/health', protect, checkMLServerHealth);
 
 /**
  * @swagger
- * /api/ai-predictions/predict/hb/schema:
+ * /api/ai-predictions/models:
  *   get:
- *     summary: Get Hemoglobin prediction input schema and requirements
+ *     summary: Get detailed information about available ML models
  *     tags: [AI Predictions]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Prediction schema retrieved successfully
+ *         description: Model information retrieved successfully
  *         content:
  *           application/json:
  *             schema:
@@ -148,8 +188,29 @@ router.get('/health', protect, checkMLServerHealth);
  *                   type: boolean
  *                 message:
  *                   type: string
- *                 schema:
- *                   $ref: '#/components/schemas/HbPredictionSchema'
+ *                 models:
+ *                   type: object
+ *                   properties:
+ *                     dry_weight:
+ *                       type: object
+ *                       description: Dry weight prediction model information
+ *                     urr:
+ *                       type: object
+ *                       description: URR prediction model information
+ *                     hb:
+ *                       type: object
+ *                       description: Hemoglobin prediction model information
+ *                 endpoints:
+ *                   type: object
+ *                   description: Available prediction endpoints
+ *                 retrievedAt:
+ *                   type: string
+ *                   format: date-time
+ *       503:
+ *         description: ML server is unavailable
  */
+router.get('/models', protect, getMLModelsInfo);
+
+
 
 module.exports = router;

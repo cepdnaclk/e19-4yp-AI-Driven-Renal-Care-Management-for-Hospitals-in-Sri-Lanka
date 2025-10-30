@@ -313,6 +313,166 @@ class AIPredictionService {
   }
 
   /**
+   * Get patient data and latest dialysis sessions for dry weight prediction
+   * @param {String} patientId - Patient ID
+   * @returns {Object} Patient data formatted for dry weight ML prediction
+   */
+  static async getPatientDataForDryWeightPrediction(patientId) {
+    try {
+      // Get patient basic information
+      const patient = await Patient.findOne({ patientId })
+        .select('patientId name');
+      
+      if (!patient) {
+        throw new Error('Patient not found');
+      }
+
+      // Get latest dialysis session
+      const latestSession = await DialysisSession.findOne({ patient: patient._id })
+        .sort({ date: -1 });
+
+      if (!latestSession) {
+        throw new Error('No dialysis session data found for this patient');
+      }
+
+      // Check for required fields for dry weight prediction
+      const requiredFields = [
+        { field: 'ap', value: latestSession.ap, label: 'Arterial Pressure (AP)' },
+        { field: 'auf', value: latestSession.auf, label: 'Achieved UF (AUF)' },
+        { field: 'bfr', value: latestSession.bfr, label: 'Blood Flow Rate (BFR)' },
+        { field: 'hdDuration', value: latestSession.hdDuration, label: 'HD Duration' },
+        { field: 'puf', value: latestSession.puf, label: 'Prescribed UF (PUF)' },
+        { field: 'tmp', value: latestSession.tmp, label: 'Transmembrane Pressure (TMP)' },
+        { field: 'vp', value: latestSession.vp, label: 'Venous Pressure (VP)' },
+        { field: 'preHDDryWeight', value: latestSession.preHDDryWeight, label: 'Pre-HD Weight' },
+        { field: 'postHDDryWeight', value: latestSession.postHDDryWeight, label: 'Post-HD Weight' },
+        { field: 'dryWeight', value: latestSession.dryWeight, label: 'Dry Weight' },
+        { field: 'bloodPressure.systolic', value: latestSession.bloodPressure?.systolic, label: 'Systolic BP' },
+        { field: 'bloodPressure.diastolic', value: latestSession.bloodPressure?.diastolic, label: 'Diastolic BP' }
+      ];
+
+      const missingFields = requiredFields
+        .filter(item => item.value === null || item.value === undefined || item.value === '')
+        .map(item => item.label);
+
+      if (missingFields.length > 0) {
+        throw new Error(`Missing required dialysis session parameters: ${missingFields.join(', ')}. Please ensure all required parameters are recorded before making a prediction.`);
+      }
+
+      // Calculate weight gain
+      const weightGain = latestSession.preHDDryWeight - latestSession.dryWeight;
+
+      // Get previous sessions for rolling averages (last 3 sessions)
+      const previousSessions = await DialysisSession.find({ 
+        patient: patient._id,
+        date: { $lt: latestSession.date }
+      })
+      .sort({ date: -1 })
+      .limit(3)
+      .select('preHDDryWeight dryWeight bloodPressure');
+
+      // Calculate rolling averages
+      let weightGainAvg3 = weightGain;
+      let sysAvg3 = latestSession.bloodPressure.systolic;
+
+      if (previousSessions.length > 0) {
+        const weightGains = [weightGain];
+        const systolicValues = [latestSession.bloodPressure.systolic];
+
+        previousSessions.forEach(session => {
+          if (session.preHDDryWeight && session.dryWeight) {
+            weightGains.push(session.preHDDryWeight - session.dryWeight);
+          }
+          if (session.bloodPressure?.systolic) {
+            systolicValues.push(session.bloodPressure.systolic);
+          }
+        });
+
+        weightGainAvg3 = weightGains.reduce((sum, val) => sum + val, 0) / weightGains.length;
+        sysAvg3 = systolicValues.reduce((sum, val) => sum + val, 0) / systolicValues.length;
+      }
+
+      // Format data for ML server - required fields for dry weight prediction
+      const predictionData = {
+        patient_id: patientId,
+        ap: latestSession.ap,
+        auf: latestSession.auf,
+        bfr: latestSession.bfr,
+        hd_duration: latestSession.hdDuration / 60, // Convert minutes to hours
+        puf: latestSession.puf,
+        tmp: latestSession.tmp,
+        vp: latestSession.vp,
+        weight_gain: weightGain,
+        sys: latestSession.bloodPressure.systolic,
+        dia: latestSession.bloodPressure.diastolic,
+        pre_hd_weight: latestSession.preHDDryWeight,
+        post_hd_weight: latestSession.postHDDryWeight,
+        dry_weight: latestSession.dryWeight,
+        weight_gain_avg_3: Math.round(weightGainAvg3 * 100) / 100,
+        sys_avg_3: Math.round(sysAvg3 * 100) / 100
+      };
+
+      return {
+        patient: {
+          patientId: patient.patientId,
+          name: patient.name,
+          latestSessionDate: latestSession.date,
+          weightGain: Math.round(weightGain * 100) / 100
+        },
+        predictionData
+      };
+    } catch (error) {
+      throw new Error(`Failed to prepare patient data for dry weight prediction: ${error.message}`);
+    }
+  }
+
+  /**
+   * Predict dry weight change using ML server
+   * @param {Object} patientData - Patient data for dry weight prediction
+   * @param {String} authToken - Authentication token from frontend
+   * @returns {Object} Dry weight prediction result from ML server
+   */
+  static async predictDryWeight(patientData, authToken) {
+    try {
+      const response = await axios.post(
+        `${this.ML_SERVER_BASE_URL}/api/ml/predict/dry-weight/`,
+        patientData,
+        {
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 15000, // 15 seconds timeout for prediction
+        }
+      );
+
+      return {
+        success: true,
+        prediction: response.data,
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      if (error.response) {
+        // ML server responded with error
+        const errorData = error.response.data;
+        throw new Error(`ML Server Error (${error.response.status}): ${errorData.message || errorData.error || 'Unknown error'}`);
+      } else if (error.code === 'ECONNREFUSED') {
+        // ML server is not available
+        throw new Error('ML prediction server is currently unavailable. Please try again later.');
+      } else if (error.code === 'ENOTFOUND') {
+        // DNS resolution failed
+        throw new Error('Cannot connect to ML prediction server. Please check server configuration.');
+      } else if (error.code === 'ETIMEDOUT') {
+        // Request timeout
+        throw new Error('ML prediction request timed out. The server may be overloaded.');
+      } else {
+        // Other error
+        throw new Error(`Dry weight prediction service error: ${error.message}`);
+      }
+    }
+  }
+
+  /**
    * Check if ML server is available
    * @param {String} authToken - Authentication token from frontend
    * @returns {Object} Health status of ML server
@@ -340,6 +500,40 @@ class AIPredictionService {
         status: 'offline',
         error: error.message
       };
+    }
+  }
+
+  /**
+   * Get detailed information about available ML models from ML server
+   * @param {String} authToken - Authentication token from frontend
+   * @returns {Object} Models information from ML server
+   */
+  static async getMLModelsInfo(authToken) {
+    try {
+      const response = await axios.get(
+        `${this.ML_SERVER_BASE_URL}/api/ml/models/`,
+        {
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+          },
+          timeout: 10000, // 10 seconds timeout
+        }
+      );
+      
+      return response.data;
+    } catch (error) {
+      console.error('ML Models Info Error:', error.message);
+      
+      if (error.response) {
+        // ML server responded with an error
+        throw new Error(`ML Server Error: ${error.response.status} - ${error.response.data?.message || error.response.data?.error || 'Unknown error'}`);
+      } else if (error.request) {
+        // ML server is not reachable
+        throw new Error('ML Server is not reachable. Please check if the ML server is running.');
+      } else {
+        // Other error
+        throw new Error(`Models info service error: ${error.message}`);
+      }
     }
   }
 
