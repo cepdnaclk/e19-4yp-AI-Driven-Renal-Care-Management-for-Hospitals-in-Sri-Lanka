@@ -129,8 +129,79 @@ const checkMLServerHealth = async (req, res) => {
 
 
 
+/**
+ * @desc    Predict URR risk using patient's latest data
+ * @route   GET /api/ai-predictions/predict/urr/:patientId
+ * @access  Private
+ */
+const predictURR = async (req, res) => {
+  try {
+    const { patientId } = req.params;
+    
+    if (!patientId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Patient ID is required'
+      });
+    }
+
+    // Get patient data and latest monthly investigation
+    const patientDataResult = await AIPredictionService.getPatientDataForUrrPrediction(patientId);
+
+    // Extract token from request headers
+    const authToken = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
+    
+    if (!authToken) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication token is required for ML server access'
+      });
+    }
+
+    // Make prediction request to ML server using patient's actual data
+    const predictionResult = await AIPredictionService.predictURR(patientDataResult.predictionData, authToken);
+
+    res.json({
+      success: true,
+      message: 'URR prediction completed successfully',
+      patient: patientDataResult.patient,
+      prediction: predictionResult,
+      requestedBy: req.user.id,
+      requestedAt: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('URR prediction error:', error.message);
+    
+    // Check if this is a validation error or data missing error
+    if (error.message.includes('Missing required') || error.message.includes('not found')) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+        type: 'validation_error'
+      });
+    }
+    
+    // Check if this is an ML server error
+    if (error.message.includes('ML Server Error') || error.message.includes('ML prediction server')) {
+      return res.status(503).json({
+        success: false,
+        message: error.message,
+        type: 'ml_server_error'
+      });
+    }
+    
+    // General server error
+    res.status(500).json({
+      success: false,
+      message: 'Failed to predict URR levels',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   predictHemoglobin,
+  predictURR,
   checkMLServerHealth,
-  
 };

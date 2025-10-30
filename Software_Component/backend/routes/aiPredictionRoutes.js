@@ -3,8 +3,8 @@ const { protect, authorize } = require('../middleware/auth');
 const { validateHbPrediction, validateWeightLogic, validatePatientIdParam } = require('../middleware/aiPredictionValidation');
 const {
   predictHemoglobin,
-  checkMLServerHealth,
-  getHbPredictionSchema
+  predictURR,
+  checkMLServerHealth
 } = require('../controllers/aiPredictionController');
 
 const router = express.Router();
@@ -57,6 +57,44 @@ const router = express.Router();
  *         description: ML server is unavailable
  */
 router.get('/predict/hb/:patientId', protect, authorize('doctor', 'nurse'), validatePatientIdParam, predictHemoglobin);
+
+/**
+ * @swagger
+ * /api/ai-predictions/predict/urr/{patientId}:
+ *   get:
+ *     summary: Predict URR risk using patient's latest monthly investigation data
+ *     tags: [AI Predictions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: patientId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Patient ID
+ *     responses:
+ *       200:
+ *         description: URR prediction completed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 patient:
+ *                   type: object
+ *                 prediction:
+ *                   type: object
+ *       400:
+ *         description: Missing required data or validation error
+ *       503:
+ *         description: ML server unavailable
+ */
+router.get('/predict/urr/:patientId', protect, authorize('doctor', 'nurse'), validatePatientIdParam, predictURR);
 
 /**
  * @swagger

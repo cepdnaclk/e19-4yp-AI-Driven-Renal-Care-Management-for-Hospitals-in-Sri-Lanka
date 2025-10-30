@@ -146,7 +146,7 @@ class DryWeightPredictor:
 
 class URRPredictor:
     """
-    URR (Urea Reduction Ratio) prediction service
+    URR (Urea Reduction Ratio) prediction service using LightGBM
     """
     
     def __init__(self, model_manager: MLModelManager):
@@ -155,7 +155,7 @@ class URRPredictor:
         
     def predict(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Predict if URR will go to risk region next month
+        Predict if URR will go to risk region next month using LightGBM model
         """
         try:
             # Load model
@@ -164,12 +164,21 @@ class URRPredictor:
             # Prepare features
             features = self._prepare_features(input_data)
             
+            # Convert features to DataFrame for LightGBM compatibility
+            import pandas as pd
+            feature_names = [
+                'Albumin (g/L)', 'Hb (g/dL)', 'S Ca (mmol/L)',
+                'Serum Na Pre-HD (mmol/L)', 'URR', 'URR_diff', 
+                'K_Diff', 'BU_Diff', 'SCR_Diff'
+            ]
+            X = pd.DataFrame([features], columns=feature_names)
+            
             # Make classification prediction
             prediction = model.predict([features])[0]
             
             # Get prediction probabilities
             if hasattr(model, 'predict_proba'):
-                probabilities = model.predict_proba([features])[0]
+                probabilities = model.predict_proba(X)[0]
                 confidence = max(probabilities)
                 risk_probability = probabilities[1] if len(probabilities) > 1 else probabilities[0]
             else:
@@ -180,13 +189,19 @@ class URRPredictor:
             risk_status = "At Risk" if at_risk else "Safe"
             adequacy_status = "Predicted Inadequate" if at_risk else "Predicted Adequate"
             
+            # Generate URR-specific recommendations
+            recommendations = self._generate_recommendations(input_data, at_risk)
+            
             return {
-                'patient_id': input_data['patient_id'],
+                'patient_id': input_data.get('patient_id'),
                 'urr_risk_predicted': at_risk,
                 'risk_status': risk_status,
                 'adequacy_status': adequacy_status,
+                'current_urr': float(input_data['urr']),
+                'target_urr_range': {'min': 65.0, 'max': 100.0},
                 'risk_probability': round(float(risk_probability), 3),
                 'confidence_score': round(float(confidence), 3),
+                'recommendations': recommendations,
                 'model_version': self.model_manager.get_model_version(self.model_name),
                 'prediction_date': datetime.now().isoformat()
             }
@@ -196,17 +211,72 @@ class URRPredictor:
             raise
     
     def _prepare_features(self, input_data: Dict[str, Any]) -> List[float]:
-        """Prepare features for the model"""
+        """Prepare features for the LightGBM URR model"""
+        # New feature order based on updated model training:
+        # ['Albumin (g/L)', 'Hb (g/dL)', 'S Ca (mmol/L)', 'Serum Na Pre-HD (mmol/L)', 
+        #  'URR', 'URR_diff', 'K_Diff', 'BU_Diff', 'SCR_Diff']
+        
+        # Calculate derived features
+        k_diff = input_data['serum_k_pre_hd'] - input_data['serum_k_post_hd']
+        bu_diff = input_data['bu_pre_hd'] - input_data['bu_post_hd']
+        scr_diff = input_data['scr_pre_hd'] - input_data['scr_post_hd']
+        
         features = [
-            input_data['pre_dialysis_urea'],
-            input_data['dialysis_duration'],
-            input_data['blood_flow_rate'],
-            input_data['dialysate_flow_rate'],
-            input_data['ultrafiltration_rate'],
-            1 if input_data['access_type'].lower() == 'fistula' else 0,
-            input_data.get('kt_v', 1.2)  # Default Kt/V if not provided
+            input_data['albumin'],                  # Albumin (g/L)
+            input_data['hb'],                      # Hb (g/dL)
+            input_data['s_ca'],                    # S Ca (mmol/L)
+            input_data['serum_na_pre_hd'],         # Serum Na Pre-HD (mmol/L)
+            input_data['urr'],                     # URR
+            input_data['urr_diff'],                # URR_diff
+            k_diff,                                # K_Diff (calculated)
+            bu_diff,                               # BU_Diff (calculated)
+            scr_diff                               # SCR_Diff (calculated)
         ]
         return features
+    
+    def _generate_recommendations(self, input_data: Dict[str, Any], at_risk: bool) -> List[str]:
+        """Generate clinical recommendations based on URR risk prediction"""
+        recommendations = []
+        current_urr = input_data['urr']
+        
+        # URR-specific recommendations
+        if at_risk:
+            recommendations.append("⚠️ Patient predicted to have inadequate URR next month")
+            if current_urr < 65:
+                recommendations.append("Current URR below target - dialysis inadequacy detected")
+                recommendations.append("Consider increasing treatment time or frequency")
+                recommendations.append("Evaluate vascular access function")
+            else:
+                recommendations.append("Monitor closely - risk of URR decline detected")
+                recommendations.append("Review dialysis prescription parameters")
+        else:
+            recommendations.append("✅ URR levels predicted to remain adequate")
+            recommendations.append("Continue current dialysis regimen")
+        
+        # Lab-based recommendations for URR optimization
+        if input_data['albumin'] < 35:
+            recommendations.append("Low albumin may affect dialysis efficiency - nutritional support needed")
+        
+        if input_data['hb'] < 10:
+            recommendations.append("Low hemoglobin - may impact dialysis tolerance and adequacy")
+        
+        # Access-related recommendations based on calculated differences
+        bu_diff = input_data['bu_pre_hd'] - input_data['bu_post_hd']
+        bu_reduction = (bu_diff / input_data['bu_pre_hd']) * 100 if input_data['bu_pre_hd'] > 0 else 0
+        
+        if bu_reduction < 65:
+            recommendations.append("Inadequate urea reduction - check access flow and dialyzer function")
+        
+        # Electrolyte balance recommendations
+        if input_data['serum_k_pre_hd'] > 5.5:
+            recommendations.append("High potassium - dietary counseling and dialysate adjustment needed")
+        
+        if input_data['s_ca'] < 2.1:
+            recommendations.append("Low calcium - consider calcium supplementation")
+        elif input_data['s_ca'] > 2.6:
+            recommendations.append("High calcium - review phosphate binders and vitamin D therapy")
+        
+        return recommendations
 
 
 class HbPredictor:

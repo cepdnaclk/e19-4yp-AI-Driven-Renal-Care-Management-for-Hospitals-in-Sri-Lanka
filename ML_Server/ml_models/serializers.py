@@ -31,26 +31,48 @@ class DryWeightPredictionResponseSerializer(serializers.Serializer):
 
 class URRPredictionSerializer(serializers.Serializer):
     """
-    Serializer for URR (Urea Reduction Ratio) prediction input data
+    Serializer for URR (Urea Reduction Ratio) prediction input data using LightGBM model
+    Features: ['Albumin (g/L)', 'Hb (g/dL)', 'S Ca (mmol/L)', 'Serum Na Pre-HD (mmol/L)', 
+              'URR', 'URR_diff', 'K_Diff', 'BU_Diff', 'SCR_Diff']
     """
-    pre_dialysis_urea = serializers.FloatField(min_value=5, max_value=200, help_text="Pre-dialysis urea level")
-    dialysis_duration = serializers.FloatField(min_value=1, max_value=8, help_text="Dialysis duration in hours")
-    blood_flow_rate = serializers.FloatField(min_value=200, max_value=500, help_text="Blood flow rate ml/min")
-    dialysate_flow_rate = serializers.FloatField(min_value=300, max_value=800, help_text="Dialysate flow rate ml/min")
-    ultrafiltration_rate = serializers.FloatField(min_value=0, max_value=2000, help_text="Ultrafiltration rate ml/hr")
-    access_type = serializers.CharField(max_length=20, help_text="Vascular access type")
-    kt_v = serializers.FloatField(min_value=0.5, max_value=3.0, help_text="Kt/V ratio", required=False)
+    # Laboratory parameters
+    albumin = serializers.FloatField(min_value=10, max_value=60, help_text="Albumin (g/L)")
+    hb = serializers.FloatField(min_value=2, max_value=20, help_text="Hemoglobin (g/dL)")
+    s_ca = serializers.FloatField(min_value=1.5, max_value=10, help_text="S Ca (mmol/L)")
+    serum_na_pre_hd = serializers.FloatField(min_value=120, max_value=150, help_text="Serum Na Pre-HD (mmol/L)")
+    
+    # URR parameters
+    urr = serializers.FloatField(min_value=30, max_value=95, help_text="Current URR (%)")
+    urr_diff = serializers.FloatField(min_value=-30, max_value=30, help_text="URR difference from previous session (%)")
+    
+    # Dialysis efficiency parameters (for calculating differences)
+    serum_k_pre_hd = serializers.FloatField(min_value=2.0, max_value=8.0, help_text="Serum K Pre-HD (mmol/L)")
+    serum_k_post_hd = serializers.FloatField(min_value=2.0, max_value=7.0, help_text="Serum K Post-HD (mmol/L)")
+    bu_pre_hd = serializers.FloatField(min_value=10, max_value=100, help_text="BU - pre HD (mmol/L)")
+    bu_post_hd = serializers.FloatField(min_value=5, max_value=50, help_text="BU - post HD (mmol/L)")
+    scr_pre_hd = serializers.FloatField(min_value=10, max_value=2000, help_text="SCR- pre HD (µmol/L)")
+    scr_post_hd = serializers.FloatField(min_value=10, max_value=1500, help_text="SCR- post HD (µmol/L)")
+    
+    # Optional patient ID
+    patient_id = serializers.CharField(max_length=50, required=False, help_text="Patient identifier")
 
 
 class URRPredictionResponseSerializer(serializers.Serializer):
     """
     Serializer for URR risk prediction response
     """
+    patient_id = serializers.CharField(required=False)
     urr_risk_predicted = serializers.BooleanField()
     risk_status = serializers.CharField()  # "At Risk" or "Safe"
     adequacy_status = serializers.CharField()  # "Predicted Adequate" or "Predicted Inadequate"
+    current_urr = serializers.FloatField()
+    target_urr_range = serializers.DictField()  # {min: 65.0, max: 100.0}
     risk_probability = serializers.FloatField()
     confidence_score = serializers.FloatField()
+    recommendations = serializers.ListField(
+        child=serializers.CharField(),
+        help_text="Clinical recommendations based on URR risk prediction"
+    )
     model_version = serializers.CharField()
     prediction_date = serializers.DateTimeField()
 

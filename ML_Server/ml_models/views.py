@@ -185,14 +185,20 @@ def models_info(request):
             'output': 'Binary classification: will dry weight change (True/False) with probability'
         },
         'urr': {
-            'name': 'URR Risk Prediction',
-            'description': 'Predicts if URR will go to risk region (inadequate) next month',
+            'name': 'URR Risk Prediction (LightGBM)',
+            'description': 'Predicts if URR will go to risk region (inadequate) next month using LightGBM model',
+            'model_type': 'LightGBM',
             'input_parameters': [
-                'pre_dialysis_urea', 'dialysis_duration',
-                'blood_flow_rate', 'dialysate_flow_rate', 'ultrafiltration_rate',
-                'access_type', 'kt_v'
+                'albumin', 'hb', 's_ca', 'serum_na_pre_hd',
+                'urr', 'urr_diff', 'serum_k_pre_hd', 'serum_k_post_hd',
+                'bu_pre_hd', 'bu_post_hd', 'scr_pre_hd', 'scr_post_hd'
             ],
-            'output': 'Binary classification: URR at risk (True/False) with probability and adequacy status'
+            'calculated_features': [
+                'K_Diff (serum_k_pre_hd - serum_k_post_hd)',
+                'BU_Diff (bu_pre_hd - bu_post_hd)',
+                'SCR_Diff (scr_pre_hd - scr_post_hd)'
+            ],
+            'output': 'Binary classification: URR at risk (True/False) with probability, adequacy status and clinical recommendations'
         },
         'hb': {
             'name': 'Hemoglobin Risk Prediction',
